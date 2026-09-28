@@ -1,0 +1,88 @@
+{
+  "bridge": "TrollBridge",
+  "started_at": "2026-09-28T18:06:25.643Z",
+  "lanes": {
+    "/bounties": {
+      "challenged": 7,
+      "paid": 1,
+      "visits": 0,
+      "payers": [
+        "0x248620c2BE60865884597A83f40589d7Bf300BB8"
+      ],
+      "first_seen": "2026-09-28T18:08:08.872Z",
+      "last_seen": "2026-09-28T18:17:26.062Z"
+    },
+    "/fresh": {
+      "challenged": 1,
+      "paid": 0,
+      "visits": 0,
+      "payers": [],
+      "first_seen": "2026-09-28T18:11:36.266Z",
+      "last_seen": "2026-09-28T18:11:36.266Z"
+    },
+    "/verdicts": {
+      "challenged": 1,
+      "paid": 0,
+      "visits": 0,
+      "payers": [],
+      "first_seen": "2026-09-28T18:11:36.332Z",
+      "last_seen": "2026-09-28T18:11:36.332Z"
+    },
+    "/deadlines": {
+      "challenged": 1,
+      "paid": 0,
+      "visits": 0,
+      "payers": [],
+      "first_seen": "2026-09-28T18:11:36.381Z",
+      "last_seen": "2026-09-28T18:11:36.381Z"
+    },
+    "/sweepstakes": {
+      "challenged": 1,
+      "paid": 0,
+      "visits": 0,
+      "payers": [],
+      "first_seen": "2026-09-28T18:11:36.427Z",
+      "last_seen": "2026-09-28T18:11:36.427Z"
+    },
+    "/": {
+      "challenged": 0,
+      "paid": 0,
+      "visits": 1,
+      "payers": [],
+      "first_seen": "2026-09-28T18:26:50.392Z",
+      "last_seen": "2026-09-28T18:26:50.392Z"
+    },
+    "/skill.md": {
+      "challenged": 0,
+      "paid": 0,
+      "visits": 1,
+      "payers": [],
+      "first_seen": "2026-09-28T18:26:50.401Z",
+      "last_seen": "2026-09-28T18:26:50.401Z"
+    },
+    "/openapi.json": {
+      "challenged": 0,
+      "paid": 0,
+      "visits": 1,
+      "payers": [],
+      "first_seen": "2026-09-28T18:26:50.409Z",
+      "last_seen": "2026-09-28T18:26:50.409Z"
+    },
+    "/.well-known/x402": {
+      "challenged": 0,
+      "paid": 0,
+      "visits": 1,
+      "payers": [],
+      "first_seen": "2026-09-28T18:26:50.417Z",
+      "last_seen": "2026-09-28T18:26:50.417Z"
+    },
+    "/tools": {
+      "challenged": 0,
+      "paid": 0,
+      "visits": 1,
+      "payers": [],
+      "first_seen": "2026-09-28T18:26:50.427Z",
+      "last_seen": "2026-09-28T18:26:50.427Z"
+    }
+  }
+}
