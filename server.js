@@ -103,6 +103,29 @@ function payerFromHeader(req) {
     return null;
   }
 }
+// Traffic history for the dashboard graph: snapshot the totals at most
+// every 15 minutes (piggybacked on real traffic, so idle stretches just
+// show gaps). Capped at 672 snapshots (~7 days). The graph starts sparse
+// and fills in — honest from the first knock.
+const HISTORY_INTERVAL_MS = 15 * 60 * 1000;
+const HISTORY_MAX = 672;
+function snapshotTraffic() {
+  const s = trafficSummary().totals;
+  const now = new Date().toISOString();
+  usage.history = usage.history || [];
+  const last = usage.history[usage.history.length - 1];
+  if (last && new Date(now) - new Date(last.t) < HISTORY_INTERVAL_MS) return;
+  usage.history.push({
+    t: now,
+    challenged: s.challenged,
+    paid: s.paid_crossings,
+    discovery: s.discovery_views,
+    directory: s.directory_visits,
+    payers: s.unique_payers,
+  });
+  while (usage.history.length > HISTORY_MAX) usage.history.shift();
+  usageDirty = true;
+}
 app.use((req, res, next) => {
   if (!TRACKED_ROUTES[req.path]) return next();
   res.on("finish", () => {
@@ -122,6 +145,7 @@ app.use((req, res, next) => {
       }
     }
     usageDirty = true;
+    snapshotTraffic();
   });
   next();
 });
@@ -305,7 +329,104 @@ app.get("/traffic", (req, res) => {
   full.payers = Object.fromEntries(
     Object.entries(usage.lanes).map(([route, st]) => [route, st.payers])
   );
+  full.history = usage.history || [];
   res.json(full);
+});
+
+// The troll's tally, drawn pretty: a live visual dashboard of bridge traffic.
+// Untracked (like /traffic) so the troll's own lookers don't pollute the count.
+app.get("/dashboard", (req, res) => {
+  res.type("html").send(`<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TrollBridge Traffic — the troll's tally</title>
+<style>
+body{background:#0d0f14;color:#e8ecf4;font-family:-apple-system,system-ui,"Segoe UI",sans-serif;margin:0;padding:20px;max-width:960px;margin-left:auto;margin-right:auto}
+h1{font-size:1.6rem;margin:0.2em 0}
+.sub{color:#8b93a7;margin:0 0 1.2em}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:1.6em}
+.card{background:#161a23;border:1px solid #232a3a;border-radius:12px;padding:14px}
+.num{font-size:2rem;font-weight:700}
+.lbl{color:#8b93a7;font-size:0.85rem;margin-top:4px}
+.green{color:#3ddc84}.amber{color:#f5a623}.blue{color:#5aa9ff}.gray{color:#e8ecf4}
+h2{font-size:1.1rem;color:#8b93a7;text-transform:uppercase;letter-spacing:0.08em;margin:1.6em 0 0.6em}
+canvas{width:100%;background:#11141c;border:1px solid #232a3a;border-radius:12px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;color:#8b93a7;font-size:0.85rem;margin:0.6em 0}
+.dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px}
+.foot{color:#5c6478;font-size:0.8rem;margin-top:2em}
+.empty{color:#5c6478;padding:60px 0;text-align:center}
+</style></head><body>
+<h1>🌉 TrollBridge Traffic</h1>
+<p class="sub">Every knock on the bridge, counted honest. <span id="since"></span></p>
+<div class="cards">
+<div class="card"><div class="num gray" id="c-challenged">–</div><div class="lbl">Toll knocks (402s)</div></div>
+<div class="card"><div class="num green" id="c-paid">–</div><div class="lbl">Paid crossings</div></div>
+<div class="card"><div class="num blue" id="c-discovery">–</div><div class="lbl">Discovery views</div></div>
+<div class="card"><div class="num amber" id="c-payers">–</div><div class="lbl">Unique payers</div></div>
+</div>
+<h2>Per lane</h2>
+<div class="legend"><span><span class="dot" style="background:#f5a623"></span>knocks</span><span><span class="dot" style="background:#3ddc84"></span>paid</span><span><span class="dot" style="background:#5aa9ff"></span>views</span></div>
+<canvas id="lanes" height="300"></canvas>
+<h2>Over time</h2>
+<div class="legend"><span><span class="dot" style="background:#f5a623"></span>knocks</span><span><span class="dot" style="background:#3ddc84"></span>paid</span><span><span class="dot" style="background:#5aa9ff"></span>discovery + directory</span></div>
+<canvas id="trend" height="300"></canvas>
+<div class="empty" id="trend-empty" style="display:none">Gathering data — the graph fills in as traffic arrives.</div>
+<p class="foot">Auto-refreshes every 60s · The chain is the money record — this is just the troll's tally.</p>
+<script>
+var C = {knock:"#f5a623", paid:"#3ddc84", view:"#5aa9ff", grid:"#232a3a", text:"#8b93a7"};
+function fit(cv){var r=cv.getBoundingClientRect(),d=window.devicePixelRatio||1;cv.width=r.width*d;cv.height=300*d;var x=cv.getContext("2d");x.setTransform(d,0,0,d,0,0);return [x,r.width,300];}
+function short(r){return r.replace(/^\\//,"")||"home";}
+function drawBars(lanes){
+  var cv=document.getElementById("lanes"),f=fit(cv),x=f[0],W=f[1],H=f[2];
+  var routes=Object.keys(lanes);if(!routes.length)return;
+  var pad={l:36,r:10,t:14,b:34},iw=W-pad.l-pad.r,ih=H-pad.t-pad.b;
+  var max=1;routes.forEach(function(r){var s=lanes[r];max=Math.max(max,s.challenged,s.paid,s.visits||0);});
+  var gw=iw/routes.length,bw=Math.min(26,(gw-16)/3);
+  routes.forEach(function(r,i){
+    var s=lanes[r],cx=pad.l+gw*i+gw/2;
+    var bars=[[s.challenged,C.knock],[s.paid,C.paid],[s.visits||0,C.view]];
+    bars.forEach(function(b,j){
+      var v=b[0];if(!v)return;var h=ih*v/max,bx=cx-(bars.length*bw)/2+j*bw;
+      x.fillStyle=b[1];x.fillRect(bx,pad.t+ih-h,bw-3,h);
+      x.fillStyle="#e8ecf4";x.font="11px system-ui";x.textAlign="center";x.fillText(v,bx+(bw-3)/2,pad.t+ih-h-5);
+    });
+    x.fillStyle=C.text;x.font="11px system-ui";x.textAlign="center";x.fillText(short(r),cx,H-12);
+  });
+  x.strokeStyle=C.grid;x.beginPath();x.moveTo(pad.l,pad.t+ih);x.lineTo(W-pad.r,pad.t+ih);x.stroke();
+}
+function drawTrend(hist){
+  var cv=document.getElementById("trend"),empty=document.getElementById("trend-empty");
+  if(!hist||hist.length<2){cv.style.display="none";empty.style.display="block";return;}
+  cv.style.display="block";empty.style.display="none";
+  var f=fit(cv),x=f[0],W=f[1],H=f[2],pad={l:36,r:10,t:14,b:34},iw=W-pad.l-pad.r,ih=H-pad.t-pad.b;
+  var series=[["challenged",C.knock],["paid",C.paid],["disc",C.view]];
+  var max=1;hist.forEach(function(p){max=Math.max(max,p.challenged,p.paid,p.discovery+p.directory);});
+  var t0=new Date(hist[0].t).getTime(),t1=new Date(hist[hist.length-1].t).getTime()||t0+1;
+  series.forEach(function(s){
+    x.strokeStyle=s[1];x.lineWidth=2;x.beginPath();
+    hist.forEach(function(p,i){
+      var v=s[0]==="disc"?p.discovery+p.directory:p[s[0]];
+      var px=pad.l+iw*(new Date(p.t).getTime()-t0)/(t1-t0),py=pad.t+ih-ih*v/max;
+      if(i===0)x.moveTo(px,py);else x.lineTo(px,py);
+    });
+    x.stroke();
+  });
+  x.strokeStyle=C.grid;x.beginPath();x.moveTo(pad.l,pad.t+ih);x.lineTo(W-pad.r,pad.t+ih);x.stroke();
+  x.fillStyle=C.text;x.font="11px system-ui";x.textAlign="left";
+  x.fillText(new Date(hist[0].t).toLocaleString(),pad.l,H-12);
+  x.textAlign="right";x.fillText(new Date(hist[hist.length-1].t).toLocaleString(),W-pad.r,H-12);
+}
+function load(){
+  fetch("/traffic").then(function(r){return r.json();}).then(function(d){
+    document.getElementById("c-challenged").textContent=d.totals.challenged;
+    document.getElementById("c-paid").textContent=d.totals.paid_crossings;
+    document.getElementById("c-discovery").textContent=d.totals.discovery_views+d.totals.directory_visits;
+    document.getElementById("c-payers").textContent=d.totals.unique_payers;
+    document.getElementById("since").textContent="Counting since "+new Date(d.since).toLocaleString()+".";
+    drawBars(d.lanes);drawTrend(d.history);
+  });
+}
+load();setInterval(load,60000);window.addEventListener("resize",load);
+</script></body></html>`);
 });
 
 // ---- TrollBridge marketplace: free directory, paid listings ----
@@ -473,6 +594,7 @@ app.get("/.well-known/x402", (req, res) => {
     })),
     directory: `${base}/tools`,
     traffic: `${base}/traffic`,
+    dashboard: `${base}/dashboard`,
   });
 });
 
