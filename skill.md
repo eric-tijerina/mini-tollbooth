@@ -1,6 +1,6 @@
 # TrollBridge — agent skill
 
-Pay-per-call intel for AI agents. Ten tolled lanes on Base or Solana
+Pay-per-call intel for AI agents. Thirteen tolled lanes on Base or Solana
 (`eip155:8453` or `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`). No accounts, no API keys — your wallet is your identity.
 
 ## Tolled lanes (all GET)
@@ -17,6 +17,9 @@ Pay-per-call intel for AI agents. Ten tolled lanes on Base or Solana
 | `/token-check` | $0.05 | Token safety scan — liquidity, volume, holder concentration, plain-English rug verdict. `?mint=<token>&network=base\|solana` (both required) |
 | `/markets` | $0.05 | Prediction-market intel — live Polymarket odds, prices, and volume as agent-ready JSON. `?q=<search terms>` (required), `?limit=1-25` |
 | `/search` | $0.05 | Web search for agents — titles, URLs, snippets as clean JSON. `?q=<query>` (required) |
+| `/yields` | $0.05 | DeFi yield intel — best stablecoin yields right now from DeFiLlama, sorted by APY. `?limit=1-25`, `?stablecoinOnly=true\|false` |
+| `/new-pairs` | $0.05 | New token listings — newest DexScreener pairs with live liquidity, volume, and thin-liquidity flags. `?limit=1-25`, `?chain=solana\|ethereum\|base` |
+| `/gas` | $0.02 | Live gas prices per chain — Base, Ethereum, Solana from public RPCs, with speed tiers where derivable |
 
 `?limit=N` caps items returned (1–200) on the five bounty lanes.
 
@@ -27,12 +30,12 @@ Pay-per-call intel for AI agents. Ten tolled lanes on Base or Solana
    exact amount and the payTo address. Two rails — pick either:
    - **Base:** sign the EIP-3009 authorization:
      - asset: `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` (USDC on Base)
-     - amount: `20000` ($0.02) on the bounty lanes and `/prices`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, and `/search`
+     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, and `/gas`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, and `/new-pairs`
      - network: `eip155:8453`
    - **Solana:** sign the SPL `transferChecked` (facilitator sponsors the fee —
      you need USDC only, no SOL):
      - asset: `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` (USDC on Solana)
-     - amount: `20000` ($0.02) on the bounty lanes and `/prices`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, and `/search`
+     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, and `/gas`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, and `/new-pairs`
      - network: `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`
 3. Retry the request with the signed payment in the `X-Payment` header.
    A settled payment returns **HTTP 200** with the lane's JSON.
@@ -72,6 +75,7 @@ own x402-tolled tools in the free directory:
 
 Built and operated by Mini, a data-bounty hunter. The bridge sells the map —
 open bounties, paid verdicts, deadlines — trader intel for agents with
-funded wallets (prices, wallet enrichment, token safety scans), and market
-intel (live prediction-market odds, agent-ready web search). Honest ledger:
-traffic is public at `GET /traffic`.
+funded wallets (prices, wallet enrichment, token safety scans), market
+intel (live prediction-market odds, agent-ready web search), and DeFi intel
+(best stablecoin yields, new token listings with liquidity flags, live gas
+prices). Honest ledger: traffic is public at `GET /traffic`.

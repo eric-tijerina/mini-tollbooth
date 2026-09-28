@@ -17,6 +17,9 @@ x402-tolled tools for agents to discover and call.
 - `GET /token-check?mint=<token>&network=base|solana` — token safety scan: liquidity, volume, holder concentration, plain-English rug verdict. $0.05.
 - `GET /markets?q=<search terms>&limit=1-25` — prediction-market intel: live Polymarket odds, prices, and volume as agent-ready JSON. $0.05.
 - `GET /search?q=<query>` — web search for agents: titles, URLs, snippets as clean JSON (Brave API when `BRAVE_API_KEY` is set, else free DuckDuckGo fallback). $0.05.
+- `GET /yields?limit=1-25&stablecoinOnly=true|false` — best stablecoin yields right now from DeFiLlama's free API, sorted by APY. $0.05.
+- `GET /new-pairs?limit=1-25&chain=solana|ethereum|base` — newest DexScreener token listings with live liquidity, volume, and thin-liquidity flags. $0.05.
+- `GET /gas` — live gas prices per chain (Base, Ethereum, Solana) from public RPCs, with speed tiers where derivable. $0.02.
 - `GET /health` — free liveness check.
 
 Each tolled lane returns HTTP 402 with payment instructions; retry with the
@@ -61,7 +64,7 @@ node server.js       # builds the feed, troll awake on :3000
 |---|---|
 | `NETWORK` | `eip155:8453` = Base mainnet (default). `eip155:84532` = Base Sepolia testnet. |
 | `FACILITATOR_URL` | Mainnet: `https://facilitator.payai.network` (keyless, settles `exact` USDC on Base — no Coinbase signup needed). Testnet: `https://x402.org/facilitator`. |
-| `PRICE` | Default toll per call, `$0.02`. `/enrich`, `/token-check`, `/markets`, and `/search` override to `$0.05` (see `LANE_PRICES` in server.js). |
+| `PRICE` | Default toll per call, `$0.02`. `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, and `/new-pairs` override to `$0.05` (see `LANE_PRICES` in server.js). |
 | `BRAVE_API_KEY` | Optional. When set, `GET /search` uses the Brave Search API (2,000/mo free tier) instead of the free DuckDuckGo fallback. |
 | `PAY_TO` | Base-rail wallet receiving the tolls. |
 | `SOLANA_PAY_TO` | Solana-rail wallet receiving the tolls. |
