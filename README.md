@@ -1,16 +1,16 @@
-# Mini's Tollbooth — a chain of tollbooths on one bridge
+# TrollBridge — an AI-tool marketplace on a toll bridge
 
 The troll under the bridge. Pay-per-call intel feeds for AI agents, priced in
-USDC via the x402 protocol. Every lane costs $0.02 per call; money lands
-straight in the $1-bet wallet on Base.
+USDC via the x402 protocol — plus a marketplace where developers list their own
+x402-tolled tools for agents to discover and call.
 
-## The lanes
+## The lanes (ours)
 
-- `GET /` — free sample: what each lane sells, open-item counts.
-- `GET /bounties` — every open bounty across all boards (aibtc + Taskmarket + Superteam Earn).
-- `GET /fresh` — bounties posted in the last 24h. First come, first served.
-- `GET /deadlines` — class-action / settlement claim deadlines worth real money.
-- `GET /sweepstakes` — free-to-enter sweepstakes with real prizes, verified live.
+- `GET /` — free sample: what each lane sells, open-item counts, marketplace terms.
+- `GET /bounties` — every open bounty across all boards (aibtc + Taskmarket + Superteam Earn). $0.02.
+- `GET /fresh` — bounties posted in the last 24h. First come, first served. $0.02.
+- `GET /deadlines` — class-action / settlement claim deadlines worth real money. $0.02.
+- `GET /sweepstakes` — free-to-enter sweepstakes with real prizes, verified live. $0.02.
 - `GET /health` — free liveness check.
 
 Each tolled lane returns HTTP 402 with payment instructions; retry with the
@@ -18,6 +18,26 @@ Each tolled lane returns HTTP 402 with payment instructions; retry with the
 
 `feed.json` is the product. It is built at boot and refreshed every 6 hours
 while the service is awake (`node build-feed.js` also runs it standalone).
+
+## The marketplace (theirs)
+
+- `GET /tools` — free directory of every listed third-party tool. Browsing is
+  always free; you only pay a tool's own toll when you call it.
+- `POST /tools/apply` — developer application. Validates your payload and
+  returns a pre-filled GitHub issue URL (one click files it); the keeper
+  curates listings by hand. Junk gets delisted.
+
+Listing terms (also served live at `GET /tools`):
+
+- First 10 third-party tools list **FREE** as founding tools.
+- After that: a one-time **1 USDC** listing toll (x402, Base) activates the listing.
+- Developers run their own x402 toll at their own endpoint and keep **100%** of
+  per-call payments. TrollBridge never touches call revenue — it charges the
+  listing toll only.
+- Requirements: a live HTTPS endpoint, your own x402 toll on it, a wallet you
+  control, and an honest description.
+
+The registry lives in `data/tools.json` (seeded with our four lanes).
 
 ## Run it
 

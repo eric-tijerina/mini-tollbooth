@@ -31,12 +31,23 @@ const app = express();
 // Required behind Render/Railway/Fly proxies: without this the middleware
 // reports http:// URLs and facilitators reject the route metadata.
 app.set("trust proxy", 1);
+app.use(express.json({ limit: "64kb" }));
 
 function loadFeed() {
   try {
     return JSON.parse(fs.readFileSync(path.join(__dirname, "feed.json"), "utf8"));
   } catch {
     return { generated_at: null, bounties: [], fresh: [], deadlines: [], sweepstakes: [], count: {} };
+  }
+}
+
+// TrollBridge marketplace registry: third-party tools listed on the bridge.
+// Curated by the keeper; developers apply via POST /tools/apply.
+function loadTools() {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(__dirname, "data", "tools.json"), "utf8"));
+  } catch {
+    return { marketplace: "TrollBridge", updated_at: null, listing_terms: {}, tools: [] };
   }
 }
 
@@ -60,16 +71,24 @@ app.use(paymentMiddleware(tollConfig, server));
 // Free sample: the troll lets you peek at the bridge before paying.
 app.get("/", (req, res) => {
   const feed = loadFeed();
+  const registry = loadTools();
+  const liveTools = registry.tools.filter((t) => t.status === "live");
   res.json({
-    booth: "mini-tollbooth",
+    bridge: "TrollBridge",
     keeper: "Mini, data-bounty hunter",
-    deal: `Four tolled lanes, ${PRICE} USDC each on Base. Pay the troll, cross the bridge.`,
+    deal: `An AI-tool marketplace on a toll bridge. Four tolled bounty-intel lanes, ${PRICE} USDC each on Base — plus a directory of third-party tools. Pay the troll, cross the bridge.`,
     lanes: Object.fromEntries(
       Object.entries(LANES).map(([route, desc]) => [
         `GET ${route}`,
         `${desc} (open items: ${(feed.count && feed.count[route.slice(1)]) || 0})`,
       ])
     ),
+    marketplace: {
+      tools_live: liveTools.length,
+      browse_free: "GET /tools — the directory is always free. You only pay a tool's own toll when you call it.",
+      list_yours: "POST /tools/apply — developers list their x402-tolled tools here. First 10 third-party listings are FREE (founding tools).",
+      terms: registry.listing_terms,
+    },
     network: NETWORK + (IS_MAINNET ? " (MAINNET — real money)" : " (testnet — proving the flow)"),
     payTo: PAY_TO,
     feed_generated_at: feed.generated_at,
@@ -77,7 +96,102 @@ app.get("/", (req, res) => {
   });
 });
 
-app.get("/health", (req, res) => res.json({ status: "ok", troll: "awake", lanes: Object.keys(LANES).length }));
+app.get("/health", (req, res) => {
+  const registry = loadTools();
+  res.json({
+    status: "ok",
+    troll: "awake",
+    lanes: Object.keys(LANES).length,
+    marketplace: "TrollBridge",
+    tools_listed: registry.tools.filter((t) => t.status === "live").length,
+  });
+});
+
+// ---- TrollBridge marketplace: free directory, paid listings ----
+
+// The directory is always free — you toll the crossing, not the map.
+app.get("/tools", (req, res) => {
+  const registry = loadTools();
+  res.json({
+    marketplace: "TrollBridge",
+    updated_at: registry.updated_at,
+    listing_terms: registry.listing_terms,
+    tools: registry.tools,
+  });
+});
+
+// Developer application intake. Validates the payload and returns a
+// pre-filled GitHub issue URL — one click files the application durably,
+// since the bridge keeps no database (the keeper curates listings by hand).
+app.post("/tools/apply", (req, res) => {
+  const b = req.body || {};
+  const required = ["name", "developer", "description", "endpoint", "price", "pay_to"];
+  const missing = required.filter((k) => typeof b[k] !== "string" || !b[k].trim());
+  if (missing.length) {
+    return res.status(400).json({
+      status: "rejected",
+      reason: `missing fields: ${missing.join(", ")}`,
+      required,
+      example: {
+        name: "My Tool",
+        developer: "your-handle",
+        description: "What it does, in one honest sentence.",
+        endpoint: "https://your-tool.example.com/call",
+        method: "GET (optional, default GET)",
+        price: "$0.05 (your own x402 toll, USDC on Base)",
+        pay_to: "0xYourWallet...",
+        category: "data (optional)",
+        contact: "where to reach you (optional)",
+      },
+    });
+  }
+  let endpointOk = false;
+  try {
+    const u = new URL(b.endpoint);
+    endpointOk = u.protocol === "https:";
+  } catch { /* invalid */ }
+  if (!endpointOk) {
+    return res.status(400).json({ status: "rejected", reason: "endpoint must be a valid https:// URL" });
+  }
+  if (!/^0x[0-9a-fA-F]{40}$/.test(b.pay_to.trim())) {
+    return res.status(400).json({ status: "rejected", reason: "pay_to must be a valid EVM wallet address (0x + 40 hex chars)" });
+  }
+  const appId = `tb-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+  const issueTitle = `[tool-listing] ${b.name} by ${b.developer}`;
+  const issueBody = [
+    `Application: ${appId}`,
+    ``,
+    `**Tool:** ${b.name}`,
+    `**Developer:** ${b.developer}`,
+    `**Description:** ${b.description}`,
+    `**Endpoint:** ${b.endpoint}`,
+    `**Method:** ${(b.method || "GET").toUpperCase()}`,
+    `**Price:** ${b.price}`,
+    `**Pay to:** ${b.pay_to}`,
+    `**Category:** ${b.category || "general"}`,
+    `**Contact:** ${b.contact || "n/a"}`,
+  ].join("\n");
+  const issueUrl =
+    "https://github.com/eric-tijerina/mini-tollbooth/issues/new?title=" +
+    encodeURIComponent(issueTitle) +
+    "&body=" +
+    encodeURIComponent(issueBody);
+  // Best-effort local log for the keeper (ephemeral on free-tier hosting;
+  // the GitHub issue is the durable record).
+  try {
+    fs.appendFileSync(
+      path.join(__dirname, "data", "applications.jsonl"),
+      JSON.stringify({ application_id: appId, received_at: new Date().toISOString(), ...b }) + "\n"
+    );
+  } catch { /* log is best-effort */ }
+  res.json({
+    status: "received",
+    application_id: appId,
+    next_step: "Open the issue URL below to file your application — one click, pre-filled. The keeper reviews every application; junk gets delisted.",
+    issue_url: issueUrl,
+    listing_terms: loadTools().listing_terms,
+  });
+});
 
 function lane(route, key) {
   app.get(route, (req, res) => {
@@ -103,6 +217,6 @@ build()
   .finally(() => {
     setInterval(() => build().catch((e) => console.error("refresh failed:", e.message)), REFRESH_MS);
     app.listen(PORT, () =>
-      console.log(`troll awake on :${PORT} | ${Object.keys(LANES).length} lanes @ ${PRICE} on ${NETWORK} -> ${PAY_TO}${IS_MAINNET ? " [MAINNET]" : " [testnet]"}`)
+      console.log(`troll awake on :${PORT} | TrollBridge: ${Object.keys(LANES).length} lanes @ ${PRICE} on ${NETWORK} -> ${PAY_TO}${IS_MAINNET ? " [MAINNET]" : " [testnet]"} | tools: ${loadTools().tools.filter((t) => t.status === "live").length} listed`)
     );
   });
