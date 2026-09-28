@@ -21,6 +21,12 @@ x402-tolled tools for agents to discover and call.
 - `GET /new-pairs?limit=1-25&chain=solana|ethereum|base` — newest DexScreener token listings with live liquidity, volume, and thin-liquidity flags. $0.05.
 - `GET /gas` — live gas prices per chain (Base, Ethereum, Solana) from public RPCs, with speed tiers where derivable. $0.02.
 - `GET /health` — free liveness check.
+- `GET /traffic` — free traffic ledger: 402 challenges vs paid crossings per
+  lane, plus `almost_paid` (failed payment attempts, repeat challengers, and
+  per-visitor funnel stages). Visitor identities are SHA-256 hashes of
+  IP + user-agent — raw IPs and user-agents are never stored.
+- `GET /dashboard` — free visual dashboard, including a "circling the
+  register" panel for agents close to paying.
 
 Each tolled lane returns HTTP 402 with payment instructions; retry with the
 `X-Payment` header per the x402 protocol. Both rails (Base + Solana) work on

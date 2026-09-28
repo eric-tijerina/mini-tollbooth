@@ -43,7 +43,9 @@ Pay-per-call intel for AI agents. Thirteen tolled lanes on Base or Solana
 ## Free endpoints (never tolled)
 
 - `GET /tools` — TrollBridge marketplace directory: third-party tools, listing terms
-- `GET /traffic` — bridge traffic: 402 challenges vs paid crossings per lane
+- `GET /traffic` — bridge traffic: 402 challenges vs paid crossings per lane,
+  plus an `almost_paid` section: failed payment attempts, repeat challengers,
+  and per-visitor funnel stages (discovery → challenged → tried & failed → paid)
 - `GET /health` — status, lane count, traffic totals
 - `GET /openapi.json` — OpenAPI 3.1 spec for all lanes
 - `GET /.well-known/x402` — machine-readable discovery manifest

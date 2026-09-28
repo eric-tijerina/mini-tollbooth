@@ -39,6 +39,7 @@ const { HTTPFacilitatorClient } = require("@x402/core/server");
 const { createFacilitatorConfig } = require("@coinbase/x402");
 const { declareDiscoveryExtension, bazaarResourceServerExtension } = require("@x402/extensions/bazaar");
 const { build } = require("./build-feed");
+const almostPaid = require("./almost-paid");
 const trader = require("./trader-data");
 const intel = require("./markets-data");
 const defi = require("./defi-data");
@@ -95,10 +96,14 @@ function loadUsage() {
 }
 function laneStats(u, route) {
   if (!u.lanes[route]) {
-    u.lanes[route] = { challenged: 0, paid: 0, visits: 0, payers: [], first_seen: null, last_seen: null };
+    u.lanes[route] = { challenged: 0, paid: 0, failed: 0, visits: 0, payers: [], first_seen: null, last_seen: null };
   }
+  if (u.lanes[route].failed === undefined) u.lanes[route].failed = 0;
   return u.lanes[route];
 }
+// "Almost paid" instrumentation (see almost-paid.js): hashed visitor keys
+// only — SHA-256 of IP + user-agent, truncated. Raw IPs/user-agents never
+// persisted. Tells curious crawlers apart from agents circling the register.
 let usage = loadUsage();
 let usageDirty = false;
 setInterval(() => {
@@ -145,29 +150,24 @@ function snapshotTraffic() {
   while (usage.history.length > HISTORY_MAX) usage.history.shift();
   usageDirty = true;
 }
-app.use((req, res, next) => {
-  if (!TRACKED_ROUTES[req.path]) return next();
-  res.on("finish", () => {
-    const st = laneStats(usage, req.path);
-    const now = new Date().toISOString();
-    if (!st.first_seen) st.first_seen = now;
-    st.last_seen = now;
-    if (res.statusCode === 402) {
-      st.challenged += 1;
-    } else if (res.statusCode >= 200 && res.statusCode < 300) {
-      if (LANES[req.path]) {
-        st.paid += 1; // past the toll collector on a tolled lane = paid crossing
-        const payer = payerFromHeader(req);
-        if (payer && !st.payers.includes(payer)) st.payers.push(payer);
-      } else {
-        st.visits += 1; // free routes: /tools directory browses
-      }
-    }
-    usageDirty = true;
-    snapshotTraffic();
-  });
-  next();
-});
+// Bridge traffic ledger: counts every agent that approaches the bridge,
+// mounted BEFORE the toll collector so it sees both outcomes via res
+// 'finish'. The "almost paid" layer (almost-paid.js) additionally tracks
+// hashed visitors, repeat challengers, and failed payment attempts.
+app.use(
+  almostPaid.createTracker({
+    usage,
+    isTracked: (route) => !!TRACKED_ROUTES[route],
+    isTolled: (route) => !!LANES[route],
+    isDiscovery: (route) => !!DISCOVERY_ROUTES[route],
+    laneStats: (route) => laneStats(usage, route),
+    payerFromHeader,
+    onEvent: () => {
+      usageDirty = true;
+      snapshotTraffic();
+    },
+  })
+);
 
 function loadFeed() {
   try {
@@ -400,6 +400,7 @@ function trafficSummary() {
     lanes[route] = {
       challenged: st.challenged,
       paid: st.paid,
+      failed: st.failed || 0,
       visits: st.visits || 0,
       unique_payers: st.payers.length,
       first_seen: st.first_seen,
@@ -445,6 +446,7 @@ app.get("/traffic", (req, res) => {
     Object.entries(usage.lanes).map(([route, st]) => [route, st.payers])
   );
   full.history = usage.history || [];
+  full.almost_paid = almostPaid.almostPaidSummary(usage);
   res.json(full);
 });
 
@@ -462,7 +464,13 @@ h1{font-size:1.6rem;margin:0.2em 0}
 .card{background:#161a23;border:1px solid #232a3a;border-radius:12px;padding:14px}
 .num{font-size:2rem;font-weight:700}
 .lbl{color:#8b93a7;font-size:0.85rem;margin-top:4px}
-.green{color:#3ddc84}.amber{color:#f5a623}.blue{color:#5aa9ff}.gray{color:#e8ecf4}
+.green{color:#3ddc84}.amber{color:#f5a623}.blue{color:#5aa9ff}.gray{color:#e8ecf4}.red{color:#ff6b6b}
+table{width:100%;border-collapse:collapse;font-size:0.85rem;margin-top:0.6em}
+th{color:#8b93a7;text-transform:uppercase;letter-spacing:0.06em;font-size:0.72rem;text-align:left;padding:8px;border-bottom:1px solid #232a3a}
+td{padding:8px;border-bottom:1px solid #1a1f2b;color:#e8ecf4}
+.mono{font-family:ui-monospace,monospace;font-size:0.8rem}
+.tag{display:inline-block;padding:2px 8px;border-radius:8px;font-size:0.75rem;background:#232a3a;color:#8b93a7}
+.tag.hot{background:#3a2323;color:#ff6b6b}
 h2{font-size:1.1rem;color:#8b93a7;text-transform:uppercase;letter-spacing:0.08em;margin:1.6em 0 0.6em}
 canvas{width:100%;background:#11141c;border:1px solid #232a3a;border-radius:12px}
 .legend{display:flex;gap:16px;flex-wrap:wrap;color:#8b93a7;font-size:0.85rem;margin:0.6em 0}
@@ -477,7 +485,13 @@ canvas{width:100%;background:#11141c;border:1px solid #232a3a;border-radius:12px
 <div class="card"><div class="num green" id="c-paid">–</div><div class="lbl">Paid crossings</div></div>
 <div class="card"><div class="num blue" id="c-discovery">–</div><div class="lbl">Discovery views</div></div>
 <div class="card"><div class="num amber" id="c-payers">–</div><div class="lbl">Unique payers</div></div>
+<div class="card"><div class="num red" id="c-failed">–</div><div class="lbl">Tried &amp; failed to pay</div></div>
 </div>
+<h2>Circling the register</h2>
+<p class="sub" id="funnel-line">Agents that knocked more than once, or sent a payment that got rejected — hashed IDs only, no IPs stored.</p>
+<div class="cards" id="funnel-cards"></div>
+<table id="repeaters" style="display:none"><thead><tr><th>Visitor</th><th>Knocks</th><th>Failed pays</th><th>Lanes</th><th>Stage</th><th>Last seen</th></tr></thead><tbody id="repeaters-body"></tbody></table>
+<div class="empty" id="repeaters-empty">No repeat visitors yet — every knock so far is a first-timer.</div>
 <h2>Per lane</h2>
 <div class="legend"><span><span class="dot" style="background:#f5a623"></span>knocks</span><span><span class="dot" style="background:#3ddc84"></span>paid</span><span><span class="dot" style="background:#5aa9ff"></span>views</span></div>
 <canvas id="lanes" height="300"></canvas>
@@ -530,6 +544,21 @@ function drawTrend(hist){
   x.fillText(new Date(hist[0].t).toLocaleString(),pad.l,H-12);
   x.textAlign="right";x.fillText(new Date(hist[hist.length-1].t).toLocaleString(),W-pad.r,H-12);
 }
+function drawAlmostPaid(ap){
+  document.getElementById("c-failed").textContent=ap.failed_payments;
+  var fl=ap.funnel,fc=document.getElementById("funnel-cards");
+  var stages=[["Just looking","discovery_only","blue"],["Knocked","challenged","gray"],["Tried & failed","tried_and_failed","red"],["Paid","paid","green"]];
+  fc.innerHTML=stages.map(function(s){
+    return '<div class="card"><div class="num '+s[2]+'">'+fl[s[1]]+'</div><div class="lbl">'+s[0]+'</div></div>';
+  }).join("");
+  var reps=ap.repeat_challengers,tb=document.getElementById("repeaters-body");
+  document.getElementById("repeaters").style.display=reps.length?"table":"none";
+  document.getElementById("repeaters-empty").style.display=reps.length?"none":"block";
+  tb.innerHTML=reps.map(function(r){
+    var hot=r.failed>0?' class="tag hot"':' class="tag"';
+    return "<tr><td class='mono'>"+r.visitor+"</td><td>"+r.challenges+"</td><td>"+r.failed+"</td><td class='mono'>"+r.lanes.map(short).join(", ")+"</td><td><span"+hot+">"+r.funnel.replace(/_/g," ")+"</span></td><td>"+new Date(r.last_seen).toLocaleString()+"</td></tr>";
+  }).join("");
+}
 function load(){
   fetch("/traffic").then(function(r){return r.json();}).then(function(d){
     document.getElementById("c-challenged").textContent=d.totals.challenged;
@@ -537,7 +566,7 @@ function load(){
     document.getElementById("c-discovery").textContent=d.totals.discovery_views+d.totals.directory_visits;
     document.getElementById("c-payers").textContent=d.totals.unique_payers;
     document.getElementById("since").textContent="Counting since "+new Date(d.since).toLocaleString()+".";
-    drawBars(d.lanes);drawTrend(d.history);
+    drawBars(d.lanes);drawTrend(d.history);drawAlmostPaid(d.almost_paid);
   });
 }
 load();setInterval(load,60000);window.addEventListener("resize",load);
