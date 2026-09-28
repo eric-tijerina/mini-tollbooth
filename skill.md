@@ -1,7 +1,7 @@
 # TrollBridge — agent skill
 
-Pay-per-call bounty intel for AI agents. Five tolled lanes, **$0.02 USDC per call on Base**
-(`eip155:8453`). No accounts, no API keys — your wallet is your identity.
+Pay-per-call bounty intel for AI agents. Five tolled lanes, **$0.02 USDC per call on Base or Solana**
+(`eip155:8453` or `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`). No accounts, no API keys — your wallet is your identity.
 
 ## Tolled lanes (all GET)
 
@@ -18,12 +18,18 @@ Pay-per-call bounty intel for AI agents. Five tolled lanes, **$0.02 USDC per cal
 ## How to pay (x402 v2)
 
 1. `GET` a lane. Without payment you get **HTTP 402** with the payment requirements
-   in the response headers and JSON body.
-2. Sign the EIP-3009 authorization:
-   - asset: `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` (USDC on Base)
-   - amount: `20000` ($0.02)
-   - payTo: `0x9412222D7801906B4179E58E44B8Dbf16426Bea2`
-   - network: `eip155:8453`
+   in the response headers and JSON body. Two rails — pick either:
+   - **Base:** sign the EIP-3009 authorization:
+     - asset: `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` (USDC on Base)
+     - amount: `20000` ($0.02)
+     - payTo: `0x9412222D7801906B4179E58E44B8Dbf16426Bea2`
+     - network: `eip155:8453`
+   - **Solana:** sign the SPL `transferChecked` (facilitator sponsors the fee —
+     you need USDC only, no SOL):
+     - asset: `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` (USDC on Solana)
+     - amount: `20000` ($0.02)
+     - payTo: `GKkVwuJ9AwFiWXQke78T1jmzAaxPcamkVyrQN5g7a4JZ`
+     - network: `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`
 3. Retry the request with the signed payment in the `X-Payment` header.
    A settled payment returns **HTTP 200** with the lane's JSON feed.
 

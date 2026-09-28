@@ -1,11 +1,12 @@
 // Mini's Tollbooth — a chain of tollbooths on one bridge.
-// Five tolled lanes, each $0.02 USDC on Base per call:
+// Five tolled lanes, each $0.02 USDC on Base or Solana per call:
 //   GET /bounties    — every open bounty across all boards (aibtc + Taskmarket + Superteam)
 //   GET /fresh       — bounties posted in the last 24h
 //   GET /verdicts    — recently paid bounties: proof the boards actually pay
 //   GET /deadlines   — class-action / settlement claim deadlines worth real money
 //   GET /sweepstakes — free sweepstakes with real prizes
 // Pay-To: 0x9412222D7801906B4179E58E44B8Dbf16426Bea2 (Mini's $1-bet wallet, Base)
+//         GKkVwuJ9AwFiWXQke78T1jmzAaxPcamkVyrQN5g7a4JZ (Solana rail)
 //
 // Run: node server.js  (builds feed.json at boot, refreshes every 6h)
 // Cost to operate: $0. No gas, no chain interaction — the facilitator verifies.
@@ -17,6 +18,7 @@ const fs = require("fs");
 const path = require("path");
 const { paymentMiddleware, x402ResourceServer } = require("@x402/express");
 const { ExactEvmScheme } = require("@x402/evm/exact/server");
+const { ExactSvmScheme } = require("@x402/svm/exact/server");
 const { HTTPFacilitatorClient } = require("@x402/core/server");
 // CDP Bazaar discovery: the pre-configured Coinbase facilitator settles on
 // Base mainnet AND reports our lanes to the Bazaar catalog, which feeds tens
@@ -32,6 +34,9 @@ const { build } = require("./build-feed");
 const PAY_TO = process.env.PAY_TO || "0x9412222D7801906B4179E58E44B8Dbf16426Bea2";
 const NETWORK = process.env.NETWORK || "eip155:8453"; // Base mainnet
 const PRICE = process.env.PRICE || "$0.02";
+const SOLANA_NETWORK = "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp"; // Solana mainnet
+const SOLANA_PAY_TO =
+  process.env.SOLANA_PAY_TO || "GKkVwuJ9AwFiWXQke78T1jmzAaxPcamkVyrQN5g7a4JZ";
 const PORT = process.env.PORT || 3000;
 const IS_MAINNET = NETWORK === "eip155:8453";
 const REFRESH_MS = 6 * 60 * 60 * 1000; // rebuild the feed every 6h while awake
@@ -48,6 +53,7 @@ const facilitator = process.env.FACILITATOR_URL
     );
 const server = new x402ResourceServer(facilitator)
   .register(NETWORK, new ExactEvmScheme())
+  .register(SOLANA_NETWORK, new ExactSvmScheme())
   .registerExtension(bazaarResourceServerExtension);
 
 
@@ -199,7 +205,7 @@ function discoveryFor(route, exampleItem) {
   };
 }
 
-// The tolls: every lane costs $0.02 USDC on Base.
+// The tolls: every lane costs $0.02 USDC on Base or Solana.
 const LANES = {
   "/bounties": "Every open bounty across all boards — aibtc, Taskmarket, Superteam Earn.",
   "/fresh": "Bounties posted in the last 24h. First come, first served.",
@@ -224,7 +230,10 @@ const LANE_EXAMPLES = {
 const tollConfig = {};
 for (const route of Object.keys(LANES)) {
   tollConfig[`GET ${route}`] = {
-    accepts: [{ scheme: "exact", price: PRICE, network: NETWORK, payTo: PAY_TO }],
+    accepts: [
+      { scheme: "exact", price: PRICE, network: NETWORK, payTo: PAY_TO },
+      { scheme: "exact", price: PRICE, network: SOLANA_NETWORK, payTo: SOLANA_PAY_TO },
+    ],
     description: LANES[route],
     mimeType: "application/json",
     serviceName: "TrollBridge",
@@ -257,7 +266,7 @@ app.get("/", (req, res) => {
   res.json({
     bridge: "TrollBridge",
     keeper: "Mini, data-bounty hunter",
-    deal: `An AI-tool marketplace on a toll bridge. Five tolled bounty-intel lanes, ${PRICE} USDC each on Base — plus a directory of third-party tools. Pay the troll, cross the bridge.`,
+    deal: `An AI-tool marketplace on a toll bridge. Five tolled bounty-intel lanes, ${PRICE} USDC each on Base or Solana — plus a directory of third-party tools. Pay the troll, cross the bridge.`,
     lanes: Object.fromEntries(
       Object.entries(LANES).map(([route, desc]) => [
         `GET ${route}`,
@@ -552,7 +561,7 @@ build()
       if (!res.headersSent) res.status(500).json({ error: "Internal Server Error" });
     });
     app.listen(PORT, () =>
-      console.log(`troll awake on :${PORT} | TrollBridge: ${Object.keys(LANES).length} lanes @ ${PRICE} on ${NETWORK} -> ${PAY_TO}${IS_MAINNET ? " [MAINNET]" : " [testnet]"} | tools: ${loadTools().tools.filter((t) => t.status === "live").length} listed`)
+      console.log(`troll awake on :${PORT} | TrollBridge: ${Object.keys(LANES).length} lanes @ ${PRICE} on ${NETWORK} + ${SOLANA_NETWORK} -> ${PAY_TO} / ${SOLANA_PAY_TO}${IS_MAINNET ? " [MAINNET]" : " [testnet]"} | tools: ${loadTools().tools.filter((t) => t.status === "live").length} listed`)
     );
   });
 // ---- Agent skill: the human- and agent-readable contract for the bridge.
@@ -575,7 +584,7 @@ app.get("/.well-known/x402", (req, res) => {
     spec: "trollbridge-manifest/1",
     name: "TrollBridge",
     description:
-      "Pay-per-call bounty intel for AI agents. Five tolled lanes: every open bounty across all boards, fresh bounties from the last 24h, recently-paid verdicts proving the boards pay, class-action claim deadlines, and verified free sweepstakes. $0.02 USDC per call on Base.",
+      "Pay-per-call bounty intel for AI agents. Five tolled lanes: every open bounty across all boards, fresh bounties from the last 24h, recently-paid verdicts proving the boards pay, class-action claim deadlines, and verified free sweepstakes. $0.02 USDC per call on Base or Solana.",
     homepage: base,
     payment: {
       protocol: "x402",
@@ -584,6 +593,15 @@ app.get("/.well-known/x402", (req, res) => {
       asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
       asset_name: "USDC",
       pay_to: PAY_TO,
+      price_usd: "0.02",
+    },
+    payment_solana: {
+      protocol: "x402",
+      network: SOLANA_NETWORK,
+      network_name: "Solana",
+      asset: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+      asset_name: "USDC",
+      pay_to: SOLANA_PAY_TO,
       price_usd: "0.02",
     },
     resources: Object.keys(LANES).map((route) => `${base}${route}`),
@@ -638,7 +656,7 @@ app.get("/openapi.json", (req, res) => {
       },
       402: {
         description:
-          "Payment Required — pay $0.02 USDC on Base via the x402 v2 flow, then retry with the payment in the X-Payment header.",
+          "Payment Required — pay $0.02 USDC on Base or Solana via the x402 v2 flow, then retry with the payment in the X-Payment header.",
       },
     },
   });
@@ -649,7 +667,7 @@ app.get("/openapi.json", (req, res) => {
       get: op(
         id,
         `TrollBridge lane: ${id}`,
-        `${description} Costs $0.02 USDC per call on Base.`
+        `${description} Costs $0.02 USDC per call on Base or Solana.`
       ),
     };
   }
@@ -661,7 +679,7 @@ app.get("/openapi.json", (req, res) => {
       description:
         "Pay-per-call bounty intel for AI agents. Five tolled lanes: every open bounty across all boards, fresh bounties from the last 24h, recently-paid verdicts proving the boards pay, class-action claim deadlines, and verified free sweepstakes.",
       "x-guidance":
-        "Call any lane with GET. Without payment you receive a 402 challenge (x402 v2: $0.02 USDC on Base, asset 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913, payTo 0x9412222D7801906B4179E58E44B8Dbf16426Bea2). Complete the x402 payment and retry with the X-Payment header. Use ?limit=N to cap items per call. The free directory of third-party tools is GET /tools; bridge traffic stats are GET /traffic.",
+        "Call any lane with GET. Without payment you receive a 402 challenge (x402 v2: $0.02 USDC on Base — asset 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913, payTo 0x9412222D7801906B4179E58E44B8Dbf16426Bea2 — or on Solana — USDC mint EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v, payTo GKkVwuJ9AwFiWXQke78T1jmzAaxPcamkVyrQN5g7a4JZ). Complete the x402 payment and retry with the X-Payment header. Use ?limit=N to cap items per call. The free directory of third-party tools is GET /tools; bridge traffic stats are GET /traffic.",
       contact: { email: "erict4209@gmail.com" },
     },
     paths,
@@ -672,7 +690,7 @@ app.get("/openapi.json", (req, res) => {
           in: "header",
           name: "X-Payment",
           description:
-            "x402 v2 payment: sign the 402 challenge's EIP-3009 authorization and send it in this header.",
+            "x402 v2 payment: sign the 402 challenge (EIP-3009 authorization on Base, SPL transfer on Solana) and send it in this header.",
         },
       },
     },
