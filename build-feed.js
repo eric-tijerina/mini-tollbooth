@@ -10,8 +10,20 @@ const fs = require("fs");
 const path = require("path");
 
 const OUT = path.join(__dirname, "feed.json");
+const PRICES_OUT = path.join(__dirname, "prices.json");
 const UA = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" };
 const DAY = 24 * 60 * 60 * 1000;
+// Stablecoin addresses for the /prices lane — copied verbatim from this
+// repo's toll config (server.js manifest), never from memory.
+const PRICE_TOKENS_DEX = [
+  { address: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", network: "base" },
+  { address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", network: "solana" },
+];
+const PRICE_IDS_COINGECKO = [
+  { id: "bitcoin", symbol: "BTC", name: "Bitcoin" },
+  { id: "ethereum", symbol: "ETH", name: "Ethereum" },
+  { id: "solana", symbol: "SOL", name: "Solana" },
+];
 
 async function getJSON(url, headers = {}) {
   const res = await fetch(url, { headers: { ...UA, ...headers } });
@@ -155,11 +167,77 @@ function loadCurated(name) {
   }
 }
 
+// --- /prices lane: agent-ready spot prices, free sources only ---
+// CoinGecko (no key) for the majors + DexScreener (no key) for the watched
+// DEX tokens. Runs with the feed build (every 6h). On ANY failure the old
+// prices.json is left untouched — stale prices beat fake prices.
+async function buildPrices() {
+  const prices = [];
+  const errors = [];
+  try {
+    const ids = PRICE_IDS_COINGECKO.map((c) => c.id).join(",");
+    const d = await getJSON(
+      `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`
+    );
+    for (const c of PRICE_IDS_COINGECKO) {
+      const row = d[c.id];
+      if (row && typeof row.usd === "number") {
+        prices.push({
+          symbol: c.symbol,
+          name: c.name,
+          price_usd: row.usd,
+          change_24h_pct: typeof row.usd_24h_change === "number" ? row.usd_24h_change : null,
+          source: "coingecko",
+        });
+      }
+    }
+  } catch (e) { errors.push(`coingecko: ${e.message || e}`); }
+  try {
+    const addrs = PRICE_TOKENS_DEX.map((t) => t.address).join(",");
+    const d = await getJSON(`https://api.dexscreener.com/latest/dex/tokens/${addrs}`);
+    const pairs = (d && d.pairs) || [];
+    for (const t of PRICE_TOKENS_DEX) {
+      const mine = pairs.filter(
+        (p) => p.baseToken && String(p.baseToken.address).toLowerCase() === t.address.toLowerCase()
+      );
+      if (!mine.length) continue;
+      mine.sort((a, b) => (Number(b.liquidity && b.liquidity.usd) || 0) - (Number(a.liquidity && a.liquidity.usd) || 0));
+      const p = mine[0];
+      prices.push({
+        symbol: p.baseToken.symbol,
+        name: p.baseToken.name,
+        network: t.network,
+        token_address: t.address,
+        price_usd: Number(p.priceUsd) || null,
+        change_24h_pct: p.priceChange && p.priceChange.h24 != null ? Number(p.priceChange.h24) : null,
+        liquidity_usd: Number(p.liquidity && p.liquidity.usd) || null,
+        volume_24h_usd: Number(p.volume && p.volume.h24) || null,
+        source: "dexscreener",
+      });
+    }
+  } catch (e) { errors.push(`dexscreener: ${e.message || e}`); }
+  if (!prices.length) {
+    console.error(`prices build failed (${errors.join("; ")}) — keeping previous prices.json`);
+    return null;
+  }
+  const doc = {
+    generated_at: new Date().toISOString(),
+    refresh: "every 6h",
+    sources: "coingecko + dexscreener (free tiers, no keys)",
+    prices,
+    errors,
+  };
+  fs.writeFileSync(PRICES_OUT, JSON.stringify(doc, null, 2));
+  console.log(`wrote ${PRICES_OUT}: ${prices.length} prices` + (errors.length ? ` | errors: ${errors.join("; ")}` : ""));
+  return doc;
+}
+
 async function build() {
   const [a, t, s] = await Promise.all([aibtc(), taskmarket(), superteam()]);
   const bounties = [...a, ...t, ...s].filter((b) => !b.error);
   const errors = [...a, ...t, ...s].filter((b) => b.error);
   const { verdicts: paid, errors: verdictErrors } = await verdicts();
+  await buildPrices().catch((e) => console.error("prices build failed:", e.message));
 
   const cutoff = Date.now() - DAY;
   const fresh = bounties.filter((b) => {
@@ -207,4 +285,4 @@ async function build() {
 if (require.main === module) {
   build().catch((e) => { console.error("feed build failed:", e.message); process.exit(1); });
 }
-module.exports = { build };
+module.exports = { build, buildPrices };

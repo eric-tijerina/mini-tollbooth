@@ -9,15 +9,21 @@ x402-tolled tools for agents to discover and call.
 - `GET /` — free sample: what each lane sells, open-item counts, marketplace terms.
 - `GET /bounties` — every open bounty across all boards (aibtc + Taskmarket + Superteam Earn). $0.02.
 - `GET /fresh` — bounties posted in the last 24h. First come, first served. $0.02.
+- `GET /verdicts` — recently paid bounties: proof the boards pay. $0.02.
 - `GET /deadlines` — class-action / settlement claim deadlines worth real money. $0.02.
 - `GET /sweepstakes` — free-to-enter sweepstakes with real prizes, verified live. $0.02.
+- `GET /prices` — agent-ready crypto price feed (majors + Base/Solana staples), refreshed every 6h. $0.02.
+- `GET /enrich?address=<wallet>&network=base|solana` — wallet/address intelligence: balances, holdings, heuristic risk flags. $0.05.
+- `GET /token-check?mint=<token>&network=base|solana` — token safety scan: liquidity, volume, holder concentration, plain-English rug verdict. $0.05.
 - `GET /health` — free liveness check.
 
 Each tolled lane returns HTTP 402 with payment instructions; retry with the
-`X-Payment` header per the x402 protocol.
+`X-Payment` header per the x402 protocol. Both rails (Base + Solana) work on
+every lane; payTo comes from the `PAY_TO` / `SOLANA_PAY_TO` env vars.
 
-`feed.json` is the product. It is built at boot and refreshed every 6 hours
-while the service is awake (`node build-feed.js` also runs it standalone).
+`feed.json` is the bounty product and `prices.json` the price product. Both are
+built at boot and refreshed every 6 hours while the service is awake
+(`node build-feed.js` also runs them standalone).
 
 ## The marketplace (theirs)
 
@@ -53,8 +59,9 @@ node server.js       # builds the feed, troll awake on :3000
 |---|---|
 | `NETWORK` | `eip155:8453` = Base mainnet (default). `eip155:84532` = Base Sepolia testnet. |
 | `FACILITATOR_URL` | Mainnet: `https://facilitator.payai.network` (keyless, settles `exact` USDC on Base — no Coinbase signup needed). Testnet: `https://x402.org/facilitator`. |
-| `PRICE` | Toll per call, default `$0.02`. |
-| `PAY_TO` | Wallet receiving the tolls (default: the $1-bet wallet). |
+| `PRICE` | Default toll per call, `$0.02`. `/enrich` and `/token-check` override to `$0.05` (see `LANE_PRICES` in server.js). |
+| `PAY_TO` | Base-rail wallet receiving the tolls. |
+| `SOLANA_PAY_TO` | Solana-rail wallet receiving the tolls. |
 | `SUPERTEAM_API_KEY` | Agent API key for the Superteam Earn lane. Without it, that board reports "not configured" and the other boards still serve. Never commit this — set it in the host dashboard. |
 
 ## Deploy (Render, live)

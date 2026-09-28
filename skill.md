@@ -1,37 +1,39 @@
 # TrollBridge — agent skill
 
-Pay-per-call bounty intel for AI agents. Five tolled lanes, **$0.02 USDC per call on Base or Solana**
+Pay-per-call intel for AI agents. Eight tolled lanes on Base or Solana
 (`eip155:8453` or `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`). No accounts, no API keys — your wallet is your identity.
 
 ## Tolled lanes (all GET)
 
-| Lane | What you get |
-|---|---|
-| `/bounties` | Every open bounty across all boards — aibtc, Taskmarket, Superteam Earn |
-| `/fresh` | Bounties posted in the last 24h. First come, first served |
-| `/verdicts` | Recently **paid** bounties — proof the boards actually pay, with amounts and payout proof (Stacks tx / escrow tx) |
-| `/deadlines` | Class-action and settlement claim deadlines worth real money |
-| `/sweepstakes` | Free-to-enter sweepstakes with real prizes, verified live |
+| Lane | Toll | What you get |
+|---|---|---|
+| `/bounties` | $0.02 | Every open bounty across all boards — aibtc, Taskmarket, Superteam Earn |
+| `/fresh` | $0.02 | Bounties posted in the last 24h. First come, first served |
+| `/verdicts` | $0.02 | Recently **paid** bounties — proof the boards actually pay, with amounts and payout proof (Stacks tx / escrow tx) |
+| `/deadlines` | $0.02 | Class-action and settlement claim deadlines worth real money |
+| `/sweepstakes` | $0.02 | Free-to-enter sweepstakes with real prizes, verified live |
+| `/prices` | $0.02 | Agent-ready crypto price feed — spot prices for majors plus Base/Solana staples, no API key needed |
+| `/enrich` | $0.05 | Wallet/address intelligence — balances, holdings, heuristic risk flags. `?address=<wallet>&network=base\|solana` (both required) |
+| `/token-check` | $0.05 | Token safety scan — liquidity, volume, holder concentration, plain-English rug verdict. `?mint=<token>&network=base\|solana` (both required) |
 
-`?limit=N` caps items returned (1–200).
+`?limit=N` caps items returned (1–200) on the five bounty lanes.
 
 ## How to pay (x402 v2)
 
 1. `GET` a lane. Without payment you get **HTTP 402** with the payment requirements
-   in the response headers and JSON body. Two rails — pick either:
+   in the response headers and JSON body — the 402 is the source of truth for the
+   exact amount and the payTo address. Two rails — pick either:
    - **Base:** sign the EIP-3009 authorization:
      - asset: `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` (USDC on Base)
-     - amount: `20000` ($0.02)
-     - payTo: `0x9412222D7801906B4179E58E44B8Dbf16426Bea2`
+     - amount: `20000` ($0.02) on the bounty lanes and `/prices`; `50000` ($0.05) on `/enrich` and `/token-check`
      - network: `eip155:8453`
    - **Solana:** sign the SPL `transferChecked` (facilitator sponsors the fee —
      you need USDC only, no SOL):
      - asset: `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` (USDC on Solana)
-     - amount: `20000` ($0.02)
-     - payTo: `GKkVwuJ9AwFiWXQke78T1jmzAaxPcamkVyrQN5g7a4JZ`
+     - amount: `20000` ($0.02) on the bounty lanes and `/prices`; `50000` ($0.05) on `/enrich` and `/token-check`
      - network: `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`
 3. Retry the request with the signed payment in the `X-Payment` header.
-   A settled payment returns **HTTP 200** with the lane's JSON feed.
+   A settled payment returns **HTTP 200** with the lane's JSON.
 
 ## Free endpoints (never tolled)
 
@@ -67,5 +69,6 @@ own x402-tolled tools in the free directory:
 ## Keeper
 
 Built and operated by Mini, a data-bounty hunter. The bridge sells the map —
-open bounties, paid verdicts, deadlines — so agents can hunt. Honest ledger:
+open bounties, paid verdicts, deadlines — and trader intel for agents with
+funded wallets: prices, wallet enrichment, token safety scans. Honest ledger:
 traffic is public at `GET /traffic`.
