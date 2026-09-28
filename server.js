@@ -346,6 +346,18 @@ build()
       console.log(`troll awake on :${PORT} | TrollBridge: ${Object.keys(LANES).length} lanes @ ${PRICE} on ${NETWORK} -> ${PAY_TO}${IS_MAINNET ? " [MAINNET]" : " [testnet]"} | tools: ${loadTools().tools.filter((t) => t.status === "live").length} listed`)
     );
   });
+// ---- Agent skill: the human- and agent-readable contract for the bridge.
+// Free and unauthenticated by design — indexers (agentic.market et al.)
+// point at https://mini-tollbooth.onrender.com/skill.md.
+app.get("/skill.md", (req, res) => {
+  try {
+    const md = fs.readFileSync(path.join(__dirname, "skill.md"), "utf8");
+    res.type("text/markdown").send(md);
+  } catch {
+    res.status(500).json({ error: "skill.md not found" });
+  }
+});
+
 // ---- x402 discovery manifest: how indexers (x402scan, agent402, 402index)
 // find the bridge. Free, unauthenticated, by design.
 app.get("/.well-known/x402", (req, res) => {
