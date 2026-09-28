@@ -19,6 +19,7 @@ const { ExactEvmScheme } = require("@x402/evm/exact/server");
 const { HTTPFacilitatorClient } = require("@x402/core/server");
 const { build } = require("./build-feed");
 
+
 const PAY_TO = process.env.PAY_TO || "0x9412222D7801906B4179E58E44B8Dbf16426Bea2";
 const NETWORK = process.env.NETWORK || "eip155:8453"; // Base mainnet
 const FACILITATOR_URL = process.env.FACILITATOR_URL || "https://facilitator.payai.network";
@@ -27,14 +28,17 @@ const PORT = process.env.PORT || 3000;
 const IS_MAINNET = NETWORK === "eip155:8453";
 const REFRESH_MS = 6 * 60 * 60 * 1000; // rebuild the feed every 6h while awake
 
+
 const facilitator = new HTTPFacilitatorClient({ url: FACILITATOR_URL });
 const server = new x402ResourceServer(facilitator).register(NETWORK, new ExactEvmScheme());
+
 
 const app = express();
 // Required behind Render/Railway/Fly proxies: without this the middleware
 // reports http:// URLs and facilitators reject the route metadata.
 app.set("trust proxy", 1);
 app.use(express.json({ limit: "64kb" }));
+
 
 // ---- Bridge traffic ledger ----
 // Counts every agent that approaches the bridge: 402 challenges (lookers)
@@ -309,12 +313,18 @@ app.post("/tools/apply", (req, res) => {
 function lane(route, key) {
   app.get(route, (req, res) => {
     const feed = loadFeed();
+    let items = feed[key] || [];
+    // Honest input schema for indexers: ?limit=N caps the items returned.
+    const limit = parseInt(req.query.limit, 10);
+    if (Number.isFinite(limit)) {
+      items = items.slice(0, Math.max(1, Math.min(200, limit)));
+    }
     res.json({
       generated_at: feed.generated_at,
       lane: route,
       description: LANES[route],
-      count: (feed.count && feed.count[key]) || 0,
-      items: feed[key] || [],
+      count: items.length,
+      items,
       board_errors: feed.board_errors || [],
     });
   });
@@ -360,5 +370,87 @@ app.get("/.well-known/x402", (req, res) => {
     })),
     directory: `${base}/tools`,
     traffic: `${base}/traffic`,
+  });
+});
+
+// ---- x402scan discovery: OpenAPI is their canonical discovery format.
+// GET /openapi.json stays free and unauthenticated by design (it is not
+// in the toll config, so the paywall never touches it).
+app.get("/openapi.json", (req, res) => {
+  const laneParam = {
+    name: "limit",
+    in: "query",
+    required: false,
+    description: "Max items to return. Omit for the full feed.",
+    schema: { type: "integer", minimum: 1, maximum: 200 },
+  };
+  const laneSchema = {
+    type: "object",
+    properties: {
+      generated_at: { type: "string", format: "date-time" },
+      lane: { type: "string" },
+      description: { type: "string" },
+      count: { type: "integer" },
+      items: { type: "array", items: { type: "object" } },
+      board_errors: { type: "array", items: { type: "string" } },
+    },
+    required: ["generated_at", "lane", "items"],
+  };
+  const op = (operationId, summary, description) => ({
+    operationId,
+    summary,
+    description,
+    tags: ["toll-lanes"],
+    parameters: [laneParam],
+    "x-payment-info": {
+      price: { mode: "fixed", currency: "USD", amount: "0.020000" },
+      protocols: [{ x402: {} }],
+    },
+    responses: {
+      200: {
+        description: "Paid crossing — the lane's feed.",
+        content: { "application/json": { schema: laneSchema } },
+      },
+      402: {
+        description:
+          "Payment Required — pay $0.02 USDC on Base via the x402 v2 flow, then retry with the payment in the X-Payment header.",
+      },
+    },
+  });
+  const paths = {};
+  for (const [route, description] of Object.entries(LANES)) {
+    const id = route.slice(1);
+    paths[route] = {
+      get: op(
+        id,
+        `TrollBridge lane: ${id}`,
+        `${description} Costs $0.02 USDC per call on Base.`
+      ),
+    };
+  }
+  res.json({
+    openapi: "3.1.0",
+    info: {
+      title: "TrollBridge",
+      version: "1.0.0",
+      description:
+        "Pay-per-call bounty intel for AI agents. Four tolled lanes: every open bounty across all boards, fresh bounties from the last 24h, class-action claim deadlines, and verified free sweepstakes.",
+      "x-guidance":
+        "Call any lane with GET. Without payment you receive a 402 challenge (x402 v2: $0.02 USDC on Base, asset 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913, payTo 0x9412222D7801906B4179E58E44B8Dbf16426Bea2). Complete the x402 payment and retry with the X-Payment header. Use ?limit=N to cap items per call. The free directory of third-party tools is GET /tools; bridge traffic stats are GET /traffic.",
+      contact: { email: "erict4209@gmail.com" },
+    },
+    paths,
+    components: {
+      securitySchemes: {
+        x402: {
+          type: "apiKey",
+          in: "header",
+          name: "X-Payment",
+          description:
+            "x402 v2 payment: sign the 402 challenge's EIP-3009 authorization and send it in this header.",
+        },
+      },
+    },
+    security: [{ x402: [] }],
   });
 });
