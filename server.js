@@ -1,5 +1,5 @@
 // Mini's Tollbooth — a chain of tollbooths on one bridge.
-// Eight tolled lanes on Base or Solana per call:
+// Ten tolled lanes on Base or Solana per call:
 //   Bounty intel ($0.02 USDC each):
 //   GET /bounties    — every open bounty across all boards (aibtc + Taskmarket + Superteam)
 //   GET /fresh       — bounties posted in the last 24h
@@ -35,6 +35,7 @@ const { createFacilitatorConfig } = require("@coinbase/x402");
 const { declareDiscoveryExtension, bazaarResourceServerExtension } = require("@x402/extensions/bazaar");
 const { build } = require("./build-feed");
 const trader = require("./trader-data");
+const intel = require("./markets-data");
 
 
 const PAY_TO = process.env.PAY_TO || "0x9412222D7801906B4179E58E44B8Dbf16426Bea2";
@@ -236,7 +237,16 @@ const MINT_SCHEMA = {
   mint: { type: "string", description: "Token mint / contract address to scan (0x… on Base, base58 on Solana). Alias: address." },
   network: { type: "string", enum: ["base", "solana"], description: "Which chain the token lives on." },
 };
+const MARKETS_SCHEMA = {
+  q: { type: "string", description: "Search terms for prediction markets (e.g. bitcoin, election, fed)." },
+  limit: { type: "integer", minimum: 1, maximum: 25, description: "Max events to return (default 10)." },
+};
+const SEARCH_SCHEMA = {
+  q: { type: "string", description: "Web search query." },
+};
 function discoveryExtensionFor(route) {
+  if (route === "/markets") return discoveryForParams(route, MARKETS_SCHEMA, ["q"], { q: "bitcoin", limit: 5 }, LANE_EXAMPLES[route]);
+  if (route === "/search") return discoveryForParams(route, SEARCH_SCHEMA, ["q"], { q: "solana price" }, LANE_EXAMPLES[route]);
   if (route === "/enrich") return discoveryForParams(route, ADDRESS_SCHEMA, ["address", "network"], { address: "0x8BE8D056d5F0bEF850eC9ed5C4a8d647cBE896C0", network: "base" }, LANE_EXAMPLES[route]);
   if (route === "/token-check") return discoveryForParams(route, MINT_SCHEMA, ["mint", "network"], { mint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", network: "solana" }, LANE_EXAMPLES[route]);
   if (route === "/prices") return discoveryForParams(route, {}, [], {}, LANE_EXAMPLES[route]);
@@ -254,11 +264,15 @@ const LANES = {
   "/prices": "Agent-ready crypto price feed — spot prices for majors plus Base/Solana staples, no API key needed.",
   "/enrich": "Wallet and address intelligence — balances, holdings, heuristic risk flags on Base or Solana.",
   "/token-check": "Token safety scan — liquidity, volume, holder concentration, and a plain-English rug verdict.",
+  "/markets": "Prediction-market intel — live Polymarket odds, prices, and volume, agent-ready JSON.",
+  "/search": "Web search for agents — titles, URLs, and snippets as clean JSON, no API key needed.",
 };
 // Per-lane tolls. Anything not listed here costs PRICE (default $0.02).
 const LANE_PRICES = {
   "/enrich": "$0.05",
   "/token-check": "$0.05",
+  "/markets": "$0.05",
+  "/search": "$0.05",
 };
 const lanePrice = (route) => LANE_PRICES[route] || PRICE;
 const LANE_TAGS = {
@@ -270,6 +284,8 @@ const LANE_TAGS = {
   "/prices": ["trader-intel", "prices", "crypto", "defi"],
   "/enrich": ["trader-intel", "wallet-intel", "risk", "crypto"],
   "/token-check": ["trader-intel", "token-safety", "rug-check", "defi"],
+  "/markets": ["market-intel", "prediction-markets", "polymarket", "odds"],
+  "/search": ["web-intel", "search", "research"],
 };
 const LANE_EXAMPLES = {
   "/bounties": { id: "aibtc-example", title: "Example bounty", reward: "10000 sats", board: "aibtc" },
@@ -280,6 +296,8 @@ const LANE_EXAMPLES = {
   "/prices": { symbol: "BTC", name: "Bitcoin", price_usd: 123456.78, change_24h_pct: 1.23, source: "coingecko" },
   "/enrich": { network: "base", address: "0x...", address_type: "externally-owned-account", native_balance_eth: 1.5, risk_flags: [] },
   "/token-check": { network: "solana", mint: "...", verdict: "caution", risk_score: 55, reasons: ["thin liquidity"] },
+  "/markets": { query: "bitcoin", count: 3, events: [{ title: "Example market", outcomes: [{ question: "Will…?", prices: [{ outcome: "Yes", price: 0.65 }] }] }] },
+  "/search": { query: "example query", count: 10, results: [{ title: "Example result", url: "https://example.com", snippet: "…" }] },
 };
 const tollConfig = {};
 for (const route of Object.keys(LANES)) {
@@ -322,14 +340,14 @@ app.get("/", (req, res) => {
   const laneBlurb = (route, desc) => {
     const toll = lanePrice(route);
     if (route === "/prices") return `${desc} (${pricesDoc.prices.length} assets, refreshed ${pricesDoc.generated_at || "soon"}) — ${toll} USDC`;
-    if (route === "/enrich" || route === "/token-check") return `${desc} On-demand lookup — ${toll} USDC`;
+    if (route === "/enrich" || route === "/token-check" || route === "/markets" || route === "/search") return `${desc} On-demand lookup — ${toll} USDC`;
     const n = (feed.count && feed.count[route.slice(1)]) || 0;
     return `${desc} (open items: ${n}) — ${toll} USDC`;
   };
   res.json({
     bridge: "TrollBridge",
     keeper: "Mini, data-bounty hunter",
-    deal: `An AI-tool marketplace on a toll bridge. Eight tolled lanes on Base or Solana — five bounty-intel lanes at ${PRICE} USDC each, plus trader intel: /prices at ${PRICE}, /enrich and /token-check at $0.05 — plus a directory of third-party tools. Pay the troll, cross the bridge.`,
+    deal: `An AI-tool marketplace on a toll bridge. Ten tolled lanes on Base or Solana — five bounty-intel lanes at ${PRICE} USDC each, trader intel (/prices at ${PRICE}; /enrich and /token-check at $0.05), plus market intel (/markets and /search at $0.05) — plus a directory of third-party tools. Pay the troll, cross the bridge.`,
     lanes: Object.fromEntries(
       Object.entries(LANES).map(([route, desc]) => [`GET ${route}`, laneBlurb(route, desc)])
     ),
@@ -653,6 +671,34 @@ app.get("/token-check", async (req, res) => {
   }
 });
 
+// ---- Market-intel lanes (for agents with funded wallets) ----
+// Same pay-or-nothing deal: the toll middleware challenges first; these
+// handlers only run on a paid crossing.
+
+// GET /markets?q=bitcoin&limit=10 — prediction-market odds from Polymarket's free API.
+app.get("/markets", async (req, res) => {
+  try {
+    const out = await intel.searchMarkets(req.query.q, req.query.limit);
+    res.json({ lane: "/markets", description: LANES["/markets"], ...out });
+  } catch (e) {
+    if (e.statusCode === 400) return res.status(400).json({ error: e.message, usage: "GET /markets?q=<search terms>&limit=1-25" });
+    console.error("route error GET /markets:", e.message);
+    res.status(502).json({ error: "upstream data source unreachable — try again shortly" });
+  }
+});
+
+// GET /search?q=… — web search for agents (Brave API when BRAVE_API_KEY is set, else DuckDuckGo).
+app.get("/search", async (req, res) => {
+  try {
+    const out = await intel.webSearch(req.query.q);
+    res.json({ lane: "/search", description: LANES["/search"], ...out });
+  } catch (e) {
+    if (e.statusCode === 400) return res.status(400).json({ error: e.message, usage: "GET /search?q=<query>" });
+    console.error("route error GET /search:", e.message);
+    res.status(502).json({ error: "upstream data source unreachable — try again shortly" });
+  }
+});
+
 // Build at boot, then keep the feed fresh while awake.
 build()
   .catch((e) => console.error("boot feed build failed:", e.message))
@@ -688,7 +734,7 @@ app.get("/.well-known/x402", (req, res) => {
     spec: "trollbridge-manifest/1",
     name: "TrollBridge",
     description:
-      "Pay-per-call intel for AI agents. Eight tolled lanes: bounty intel (every open bounty across all boards, fresh bounties from the last 24h, recently-paid verdicts proving the boards pay, class-action claim deadlines, verified free sweepstakes) plus trader intel (agent-ready price feed, wallet/address intelligence, token safety scans). Bounty lanes $0.02 USDC per call; trader lanes $0.02–$0.05. Base or Solana.",
+      "Pay-per-call intel for AI agents. Ten tolled lanes: bounty intel (every open bounty across all boards, fresh bounties from the last 24h, recently-paid verdicts proving the boards pay, class-action claim deadlines, verified free sweepstakes) plus trader intel (agent-ready price feed, wallet/address intelligence, token safety scans) plus market intel (live Polymarket prediction-market odds, agent-ready web search). Bounty lanes $0.02 USDC per call; trader and market-intel lanes $0.02–$0.05. Base or Solana.",
     homepage: base,
     payment: {
       protocol: "x402",
@@ -784,10 +830,19 @@ app.get("/openapi.json", (req, res) => {
     description: "Which chain: base or solana.",
     schema: { type: "string", enum: ["base", "solana"] },
   };
+  const qParam = (required, description) => ({
+    name: "q",
+    in: "query",
+    required,
+    description,
+    schema: { type: "string" },
+  });
   const routeParams = (route) => {
     if (route === "/enrich") return [addressParam, networkParam];
     if (route === "/token-check") return [mintParam, networkParam];
     if (route === "/prices") return [];
+    if (route === "/markets") return [qParam(true, "Search terms for prediction markets (e.g. bitcoin, election, fed)."), { name: "limit", in: "query", required: false, description: "Max events to return (1–25, default 10).", schema: { type: "integer", minimum: 1, maximum: 25 } }];
+    if (route === "/search") return [qParam(true, "Web search query.")];
     return [laneParam];
   };
   const paths = {};
@@ -810,9 +865,9 @@ app.get("/openapi.json", (req, res) => {
       title: "TrollBridge",
       version: "1.1.0",
       description:
-        "Pay-per-call intel for AI agents. Eight tolled lanes: bounty intel (bounties, fresh, verdicts, deadlines, sweepstakes) at $0.02 USDC per call, plus trader intel — /prices at $0.02, /enrich and /token-check at $0.05.",
+        "Pay-per-call intel for AI agents. Ten tolled lanes: bounty intel (bounties, fresh, verdicts, deadlines, sweepstakes) at $0.02 USDC per call, trader intel (/prices at $0.02; /enrich and /token-check at $0.05), market intel (/markets and /search at $0.05).",
       "x-guidance":
-        "Call any lane with GET. Without payment you receive a 402 challenge (x402 v2) with the exact payment requirements in the response headers and body — the 402 is the source of truth for amounts and payTo addresses. Tolls: $0.02 USDC on the bounty lanes and /prices; $0.05 USDC on /enrich and /token-check. Both rails accepted on every lane: Base (USDC 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913) and Solana (USDC EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v). Complete the x402 payment and retry with the X-Payment header. Bounty lanes take ?limit=N (1–200). /enrich needs ?address=…&network=base|solana. /token-check needs ?mint=…&network=base|solana. The free directory of third-party tools is GET /tools; bridge traffic stats are GET /traffic.",
+        "Call any lane with GET. Without payment you receive a 402 challenge (x402 v2) with the exact payment requirements in the response headers and body — the 402 is the source of truth for amounts and payTo addresses. Tolls: $0.02 USDC on the bounty lanes and /prices; $0.05 USDC on /enrich, /token-check, /markets, and /search. Both rails accepted on every lane: Base (USDC 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913) and Solana (USDC EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v). Complete the x402 payment and retry with the X-Payment header. Bounty lanes take ?limit=N (1–200). /enrich needs ?address=…&network=base|solana. /token-check needs ?mint=…&network=base|solana. /markets takes ?q=… (required) and ?limit=1–25. /search needs ?q=…. The free directory of third-party tools is GET /tools; bridge traffic stats are GET /traffic.",
       contact: { email: "erict4209@gmail.com" },
     },
     paths,
