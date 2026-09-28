@@ -60,7 +60,9 @@ app.use(express.json({ limit: "64kb" }));
 
 // ---- Bridge traffic ledger ----
 // Counts every agent that approaches the bridge: 402 challenges (lookers)
-// vs paid crossings (agents through), plus unique payer wallets per lane.
+// vs paid crossings (agents through) on the tolled lanes, free visits to
+// the directory and discovery surfaces (/tools, /, /skill.md, /.well-known/x402,
+// /openapi.json), plus unique payer wallets per lane.
 // Runs BEFORE the toll collector so it sees both outcomes via res 'finish'.
 // Persisted to data/usage.json (ephemeral on free-tier redeploys; the
 // counters are a dashboard, not money — the chain is the money record).
@@ -92,7 +94,8 @@ process.on("SIGTERM", () => {
 });
 function payerFromHeader(req) {
   try {
-    const h = req.headers["x-payment"];
+    // x402 v2 sends PAYMENT-SIGNATURE; v1 sends X-Payment. Read both.
+    const h = req.headers["payment-signature"] || req.headers["x-payment"];
     if (!h) return null;
     const json = JSON.parse(Buffer.from(h, "base64").toString("utf8"));
     return json?.payload?.authorization?.from || null;
@@ -207,8 +210,20 @@ for (const route of Object.keys(LANES)) {
 }
 app.use(paymentMiddleware(tollConfig, server));
 
-// Routes the traffic ledger watches: the tolled lanes plus the free directory.
-const TRACKED_ROUTES = { ...LANES, "/tools": "Free directory of third-party tools on the bridge." };
+// Routes the traffic ledger watches: the tolled lanes, the free directory,
+// and the free discovery surfaces (landing page, skill card, x402 manifest,
+// OpenAPI) — so the troll sees every looker, not just toll payers.
+const DISCOVERY_ROUTES = {
+  "/": "Bridge landing page.",
+  "/skill.md": "Agent skill card.",
+  "/.well-known/x402": "x402 payment manifest.",
+  "/openapi.json": "OpenAPI description.",
+};
+const TRACKED_ROUTES = {
+  ...LANES,
+  "/tools": "Free directory of third-party tools on the bridge.",
+  ...DISCOVERY_ROUTES,
+};
 
 // Free sample: the troll lets you peek at the bridge before paying.
 app.get("/", (req, res) => {
@@ -240,7 +255,7 @@ app.get("/", (req, res) => {
 
 function trafficSummary() {
   const lanes = {};
-  let totalChallenged = 0, totalPaid = 0, totalVisits = 0;
+  let totalChallenged = 0, totalPaid = 0, totalDirVisits = 0, totalDiscovery = 0;
   const allPayers = new Set();
   for (const [route, st] of Object.entries(usage.lanes)) {
     lanes[route] = {
@@ -253,7 +268,8 @@ function trafficSummary() {
     };
     totalChallenged += st.challenged;
     totalPaid += st.paid;
-    totalVisits += st.visits || 0;
+    if (route === "/tools") totalDirVisits += st.visits || 0;
+    else if (DISCOVERY_ROUTES[route]) totalDiscovery += st.visits || 0;
     st.payers.forEach((p) => allPayers.add(p));
   }
   return {
@@ -261,7 +277,8 @@ function trafficSummary() {
     totals: {
       challenged: totalChallenged,
       paid_crossings: totalPaid,
-      directory_visits: totalVisits,
+      directory_visits: totalDirVisits,
+      discovery_views: totalDiscovery,
       unique_payers: allPayers.size,
     },
     lanes,
