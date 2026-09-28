@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: mini-tollbooth
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NETWORK
+        value: eip155:8453
+      - key: FACILITATOR_URL
+        value: https://facilitator.payai.network
+      - key: PRICE
+        value: $0.02
+      - key: PAY_TO
+        value: 0x9412222D7801906B4179E58E44B8Dbf16426Bea2
