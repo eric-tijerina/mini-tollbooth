@@ -3,54 +3,54 @@
   "started_at": "2026-09-28T18:06:25.643Z",
   "lanes": {
     "/bounties": {
-      "challenged": 25,
+      "challenged": 28,
       "paid": 1,
       "visits": 0,
       "payers": [
         "0x248620c2BE60865884597A83f40589d7Bf300BB8"
       ],
       "first_seen": "2026-09-28T18:08:08.872Z",
-      "last_seen": "2026-09-28T21:52:41.966Z"
+      "last_seen": "2026-09-28T22:15:59.316Z"
     },
     "/fresh": {
-      "challenged": 8,
+      "challenged": 9,
       "paid": 0,
       "visits": 0,
       "payers": [],
       "first_seen": "2026-09-28T18:11:36.266Z",
-      "last_seen": "2026-09-28T21:46:15.887Z"
+      "last_seen": "2026-09-28T22:15:20.926Z"
     },
     "/verdicts": {
-      "challenged": 7,
+      "challenged": 8,
       "paid": 0,
       "visits": 0,
       "payers": [],
       "first_seen": "2026-09-28T18:11:36.332Z",
-      "last_seen": "2026-09-28T21:46:15.931Z"
+      "last_seen": "2026-09-28T22:15:20.971Z"
     },
     "/deadlines": {
-      "challenged": 8,
+      "challenged": 9,
       "paid": 0,
       "visits": 0,
       "payers": [],
       "first_seen": "2026-09-28T18:11:36.381Z",
-      "last_seen": "2026-09-28T21:46:15.974Z"
+      "last_seen": "2026-09-28T22:15:21.015Z"
     },
     "/sweepstakes": {
-      "challenged": 8,
+      "challenged": 9,
       "paid": 0,
       "visits": 0,
       "payers": [],
       "first_seen": "2026-09-28T18:11:36.427Z",
-      "last_seen": "2026-09-28T21:46:16.014Z"
+      "last_seen": "2026-09-28T22:15:21.061Z"
     },
     "/": {
       "challenged": 0,
       "paid": 0,
-      "visits": 15,
+      "visits": 19,
       "payers": [],
       "first_seen": "2026-09-28T18:26:50.392Z",
-      "last_seen": "2026-09-28T21:49:46.525Z"
+      "last_seen": "2026-09-28T22:11:40.377Z"
     },
     "/skill.md": {
       "challenged": 0,
@@ -63,18 +63,18 @@
     "/openapi.json": {
       "challenged": 0,
       "paid": 0,
-      "visits": 29,
+      "visits": 35,
       "payers": [],
       "first_seen": "2026-09-28T18:26:50.409Z",
-      "last_seen": "2026-09-28T21:49:46.283Z"
+      "last_seen": "2026-09-28T22:15:20.673Z"
     },
     "/.well-known/x402": {
       "challenged": 0,
       "paid": 0,
-      "visits": 17,
+      "visits": 21,
       "payers": [],
       "first_seen": "2026-09-28T18:26:50.417Z",
-      "last_seen": "2026-09-28T21:47:19.970Z"
+      "last_seen": "2026-09-28T22:15:20.578Z"
     },
     "/tools": {
       "challenged": 0,
@@ -83,6 +83,30 @@
       "payers": [],
       "first_seen": "2026-09-28T18:26:50.427Z",
       "last_seen": "2026-09-28T21:09:26.479Z"
+    },
+    "/prices": {
+      "challenged": 2,
+      "paid": 0,
+      "visits": 0,
+      "payers": [],
+      "first_seen": "2026-09-28T22:08:23.187Z",
+      "last_seen": "2026-09-28T22:15:20.777Z"
+    },
+    "/enrich": {
+      "challenged": 2,
+      "paid": 0,
+      "visits": 0,
+      "payers": [],
+      "first_seen": "2026-09-28T22:08:23.893Z",
+      "last_seen": "2026-09-28T22:15:20.824Z"
+    },
+    "/token-check": {
+      "challenged": 2,
+      "paid": 0,
+      "visits": 0,
+      "payers": [],
+      "first_seen": "2026-09-28T22:08:30.641Z",
+      "last_seen": "2026-09-28T22:15:20.869Z"
     }
   },
   "history": [
@@ -139,6 +163,14 @@
       "challenged": 51,
       "paid": 1,
       "discovery": 58,
+      "directory": 2,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-28T22:06:16.022Z",
+      "challenged": 56,
+      "paid": 1,
+      "discovery": 65,
       "directory": 2,
       "payers": 1
     }
