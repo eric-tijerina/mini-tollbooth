@@ -333,3 +333,32 @@ build()
       console.log(`troll awake on :${PORT} | TrollBridge: ${Object.keys(LANES).length} lanes @ ${PRICE} on ${NETWORK} -> ${PAY_TO}${IS_MAINNET ? " [MAINNET]" : " [testnet]"} | tools: ${loadTools().tools.filter((t) => t.status === "live").length} listed`)
     );
   });
+// ---- x402 discovery manifest: how indexers (x402scan, agent402, 402index)
+// find the bridge. Free, unauthenticated, by design.
+app.get("/.well-known/x402", (req, res) => {
+  const base = "https://mini-tollbooth.onrender.com";
+  res.json({
+    spec: "trollbridge-manifest/1",
+    name: "TrollBridge",
+    description:
+      "Pay-per-call bounty intel for AI agents. Four tolled lanes: every open bounty across all boards, fresh bounties from the last 24h, class-action claim deadlines, and verified free sweepstakes. $0.02 USDC per call on Base.",
+    homepage: base,
+    payment: {
+      protocol: "x402",
+      network: "eip155:8453",
+      network_name: "Base",
+      asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      asset_name: "USDC",
+      pay_to: PAY_TO,
+      price_usd: "0.02",
+    },
+    resources: Object.keys(LANES).map((route) => `${base}${route}`),
+    lanes: Object.entries(LANES).map(([route, description]) => ({
+      url: `${base}${route}`,
+      description,
+      price_usd: "0.02",
+    })),
+    directory: `${base}/tools`,
+    traffic: `${base}/traffic`,
+  });
+});
