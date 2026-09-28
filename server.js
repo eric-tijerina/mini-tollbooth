@@ -8,6 +8,9 @@
 //
 // Run: node server.js  (builds feed.json at boot, refreshes every 6h)
 // Cost to operate: $0. No gas, no chain interaction — the facilitator verifies.
+// Traffic: the troll keeps a ledger — GET /traffic (free) shows challenged
+// vs paid crossings per lane plus unique payer wallets. Counters live in
+// data/usage.json (ephemeral across redeploys on free-tier hosting).
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
@@ -32,6 +35,71 @@ const app = express();
 // reports http:// URLs and facilitators reject the route metadata.
 app.set("trust proxy", 1);
 app.use(express.json({ limit: "64kb" }));
+
+// ---- Bridge traffic ledger ----
+// Counts every agent that approaches the bridge: 402 challenges (lookers)
+// vs paid crossings (agents through), plus unique payer wallets per lane.
+// Runs BEFORE the toll collector so it sees both outcomes via res 'finish'.
+// Persisted to data/usage.json (ephemeral on free-tier redeploys; the
+// counters are a dashboard, not money — the chain is the money record).
+const USAGE_PATH = path.join(__dirname, "data", "usage.json");
+function loadUsage() {
+  try {
+    return JSON.parse(fs.readFileSync(USAGE_PATH, "utf8"));
+  } catch {
+    return { bridge: "TrollBridge", started_at: new Date().toISOString(), lanes: {} };
+  }
+}
+function laneStats(u, route) {
+  if (!u.lanes[route]) {
+    u.lanes[route] = { challenged: 0, paid: 0, visits: 0, payers: [], first_seen: null, last_seen: null };
+  }
+  return u.lanes[route];
+}
+let usage = loadUsage();
+let usageDirty = false;
+setInterval(() => {
+  if (!usageDirty) return;
+  try {
+    fs.writeFileSync(USAGE_PATH, JSON.stringify(usage, null, 2));
+    usageDirty = false;
+  } catch { /* best-effort */ }
+}, 30000);
+process.on("SIGTERM", () => {
+  try { fs.writeFileSync(USAGE_PATH, JSON.stringify(usage, null, 2)); } catch { /* best-effort */ }
+});
+function payerFromHeader(req) {
+  try {
+    const h = req.headers["x-payment"];
+    if (!h) return null;
+    const json = JSON.parse(Buffer.from(h, "base64").toString("utf8"));
+    return json?.payload?.authorization?.from || null;
+  } catch {
+    return null;
+  }
+}
+app.use((req, res, next) => {
+  if (!TRACKED_ROUTES[req.path]) return next();
+  res.on("finish", () => {
+    const st = laneStats(usage, req.path);
+    const now = new Date().toISOString();
+    if (!st.first_seen) st.first_seen = now;
+    st.last_seen = now;
+    if (res.statusCode === 402) {
+      st.challenged += 1;
+    } else if (res.statusCode >= 200 && res.statusCode < 300) {
+      if (LANES[req.path]) {
+        st.paid += 1; // past the toll collector on a tolled lane = paid crossing
+        const payer = payerFromHeader(req);
+        if (payer && !st.payers.includes(payer)) st.payers.push(payer);
+      } else {
+        st.visits += 1; // free routes: /tools directory browses
+      }
+    }
+    usageDirty = true;
+  });
+  next();
+});
 
 function loadFeed() {
   try {
@@ -68,6 +136,9 @@ for (const route of Object.keys(LANES)) {
 }
 app.use(paymentMiddleware(tollConfig, server));
 
+// Routes the traffic ledger watches: the tolled lanes plus the free directory.
+const TRACKED_ROUTES = { ...LANES, "/tools": "Free directory of third-party tools on the bridge." };
+
 // Free sample: the troll lets you peek at the bridge before paying.
 app.get("/", (req, res) => {
   const feed = loadFeed();
@@ -96,6 +167,36 @@ app.get("/", (req, res) => {
   });
 });
 
+function trafficSummary() {
+  const lanes = {};
+  let totalChallenged = 0, totalPaid = 0, totalVisits = 0;
+  const allPayers = new Set();
+  for (const [route, st] of Object.entries(usage.lanes)) {
+    lanes[route] = {
+      challenged: st.challenged,
+      paid: st.paid,
+      visits: st.visits || 0,
+      unique_payers: st.payers.length,
+      first_seen: st.first_seen,
+      last_seen: st.last_seen,
+    };
+    totalChallenged += st.challenged;
+    totalPaid += st.paid;
+    totalVisits += st.visits || 0;
+    st.payers.forEach((p) => allPayers.add(p));
+  }
+  return {
+    since: usage.started_at,
+    totals: {
+      challenged: totalChallenged,
+      paid_crossings: totalPaid,
+      directory_visits: totalVisits,
+      unique_payers: allPayers.size,
+    },
+    lanes,
+  };
+}
+
 app.get("/health", (req, res) => {
   const registry = loadTools();
   res.json({
@@ -104,7 +205,19 @@ app.get("/health", (req, res) => {
     lanes: Object.keys(LANES).length,
     marketplace: "TrollBridge",
     tools_listed: registry.tools.filter((t) => t.status === "live").length,
+    traffic: trafficSummary().totals,
   });
+});
+
+// The troll's own dashboard: who came to the bridge, who paid to cross.
+// Free to read — counters only, no secrets. Payer addresses are public
+// on-chain data; the chain itself is the money record.
+app.get("/traffic", (req, res) => {
+  const full = trafficSummary();
+  full.payers = Object.fromEntries(
+    Object.entries(usage.lanes).map(([route, st]) => [route, st.payers])
+  );
+  res.json(full);
 });
 
 // ---- TrollBridge marketplace: free directory, paid listings ----
