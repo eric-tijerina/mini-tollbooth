@@ -18,20 +18,37 @@ const path = require("path");
 const { paymentMiddleware, x402ResourceServer } = require("@x402/express");
 const { ExactEvmScheme } = require("@x402/evm/exact/server");
 const { HTTPFacilitatorClient } = require("@x402/core/server");
+// CDP Bazaar discovery: the pre-configured Coinbase facilitator settles on
+// Base mainnet AND reports our lanes to the Bazaar catalog, which feeds tens
+// of thousands of agents via CDP APIs, the Bazaar MCP server, and Amazon
+// Bedrock AgentCore. Needs CDP_API_KEY_ID/_SECRET env (CDP account, free tier
+// 1,000 tx/mo); without keys it falls back to the keyless config, which
+// currently 401s on CDP endpoints — so CDP keys are required for the CDP path.
+const { createFacilitatorConfig } = require("@coinbase/x402");
+const { declareDiscoveryExtension, bazaarResourceServerExtension } = require("@x402/extensions/bazaar");
 const { build } = require("./build-feed");
 
 
 const PAY_TO = process.env.PAY_TO || "0x9412222D7801906B4179E58E44B8Dbf16426Bea2";
 const NETWORK = process.env.NETWORK || "eip155:8453"; // Base mainnet
-const FACILITATOR_URL = process.env.FACILITATOR_URL || "https://facilitator.payai.network";
 const PRICE = process.env.PRICE || "$0.02";
 const PORT = process.env.PORT || 3000;
 const IS_MAINNET = NETWORK === "eip155:8453";
 const REFRESH_MS = 6 * 60 * 60 * 1000; // rebuild the feed every 6h while awake
 
 
-const facilitator = new HTTPFacilitatorClient({ url: FACILITATOR_URL });
-const server = new x402ResourceServer(facilitator).register(NETWORK, new ExactEvmScheme());
+// Facilitator: CDP when CDP_API_KEY_ID/_SECRET are set (required for Bazaar
+// indexing — settlements must flow through CDP). FACILITATOR_URL env overrides
+// with a plain URL facilitator (e.g. PayAI, keyless) when set — the current
+// live default until CDP keys exist.
+const facilitator = process.env.FACILITATOR_URL
+  ? new HTTPFacilitatorClient({ url: process.env.FACILITATOR_URL })
+  : new HTTPFacilitatorClient(
+      createFacilitatorConfig(process.env.CDP_API_KEY_ID, process.env.CDP_API_KEY_SECRET)
+    );
+const server = new x402ResourceServer(facilitator)
+  .register(NETWORK, new ExactEvmScheme())
+  .registerExtension(bazaarResourceServerExtension);
 
 
 const app = express();
@@ -124,6 +141,37 @@ function loadTools() {
   }
 }
 
+// Bazaar discovery metadata for the CDP catalog: every lane declares its
+// input schema (?limit=N) and an output example so agents can construct a
+// valid call before paying. Served inside the 402's extensions.bazaar block.
+function discoveryFor(route, exampleItem) {
+  return {
+    ...declareDiscoveryExtension({
+      input: { limit: 20 },
+      inputSchema: {
+        properties: {
+          limit: {
+            type: "integer",
+            minimum: 1,
+            maximum: 200,
+            description: "Max items to return. Omit for the full feed.",
+          },
+        },
+        required: [],
+      },
+      output: {
+        example: {
+          generated_at: "2026-09-28T16:00:00.000Z",
+          lane: route,
+          description: LANES[route],
+          count: 1,
+          items: [exampleItem],
+        },
+      },
+    }),
+  };
+}
+
 // The tolls: every lane costs $0.02 USDC on Base.
 const LANES = {
   "/bounties": "Every open bounty across all boards — aibtc, Taskmarket, Superteam Earn.",
@@ -132,12 +180,29 @@ const LANES = {
   "/deadlines": "Class-action and settlement claim deadlines worth real money.",
   "/sweepstakes": "Free-to-enter sweepstakes with real prizes, verified live.",
 };
+const LANE_TAGS = {
+  "/bounties": ["bounty-intel", "ai-agents", "crypto"],
+  "/fresh": ["bounty-intel", "ai-agents", "crypto"],
+  "/verdicts": ["bounty-intel", "ai-agents", "payout-proof"],
+  "/deadlines": ["bounty-intel", "class-actions", "settlements"],
+  "/sweepstakes": ["bounty-intel", "sweepstakes", "free-to-enter"],
+};
+const LANE_EXAMPLES = {
+  "/bounties": { id: "aibtc-example", title: "Example bounty", reward: "10000 sats", board: "aibtc" },
+  "/fresh": { id: "taskmarket-example", title: "Example fresh bounty", reward_usdc: 2, board: "taskmarket" },
+  "/verdicts": { id: "aibtc-example", title: "Example paid bounty", paid_amount: "10000 sats", payout_proof: "txid:..." },
+  "/deadlines": { title: "Example settlement deadline", claim_deadline: "2027-02-10", est_payout: "$25-$50" },
+  "/sweepstakes": { title: "Example sweepstakes", prize: "$25,000", entries: "daily" },
+};
 const tollConfig = {};
 for (const route of Object.keys(LANES)) {
   tollConfig[`GET ${route}`] = {
     accepts: [{ scheme: "exact", price: PRICE, network: NETWORK, payTo: PAY_TO }],
     description: LANES[route],
     mimeType: "application/json",
+    serviceName: "TrollBridge",
+    tags: LANE_TAGS[route],
+    extensions: discoveryFor(route, LANE_EXAMPLES[route]),
   };
 }
 app.use(paymentMiddleware(tollConfig, server));
@@ -342,6 +407,12 @@ build()
   .catch((e) => console.error("boot feed build failed:", e.message))
   .finally(() => {
     setInterval(() => build().catch((e) => console.error("refresh failed:", e.message)), REFRESH_MS);
+    // Last resort: log what the default handler swallows.
+    // eslint-disable-next-line no-unused-vars
+    app.use((err, req, res, next) => {
+      console.error(`route error ${req.method} ${req.path}:`, err && err.message);
+      if (!res.headersSent) res.status(500).json({ error: "Internal Server Error" });
+    });
     app.listen(PORT, () =>
       console.log(`troll awake on :${PORT} | TrollBridge: ${Object.keys(LANES).length} lanes @ ${PRICE} on ${NETWORK} -> ${PAY_TO}${IS_MAINNET ? " [MAINNET]" : " [testnet]"} | tools: ${loadTools().tools.filter((t) => t.status === "live").length} listed`)
     );
