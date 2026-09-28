@@ -1,7 +1,8 @@
 // Mini's Tollbooth — a chain of tollbooths on one bridge.
-// Four tolled lanes, each $0.02 USDC on Base per call:
+// Five tolled lanes, each $0.02 USDC on Base per call:
 //   GET /bounties    — every open bounty across all boards (aibtc + Taskmarket + Superteam)
 //   GET /fresh       — bounties posted in the last 24h
+//   GET /verdicts    — recently paid bounties: proof the boards actually pay
 //   GET /deadlines   — class-action / settlement claim deadlines worth real money
 //   GET /sweepstakes — free sweepstakes with real prizes
 // Pay-To: 0x9412222D7801906B4179E58E44B8Dbf16426Bea2 (Mini's $1-bet wallet, Base)
@@ -127,6 +128,7 @@ function loadTools() {
 const LANES = {
   "/bounties": "Every open bounty across all boards — aibtc, Taskmarket, Superteam Earn.",
   "/fresh": "Bounties posted in the last 24h. First come, first served.",
+  "/verdicts": "Recently paid bounties — proof these boards actually pay, with amounts and payout proof.",
   "/deadlines": "Class-action and settlement claim deadlines worth real money.",
   "/sweepstakes": "Free-to-enter sweepstakes with real prizes, verified live.",
 };
@@ -151,7 +153,7 @@ app.get("/", (req, res) => {
   res.json({
     bridge: "TrollBridge",
     keeper: "Mini, data-bounty hunter",
-    deal: `An AI-tool marketplace on a toll bridge. Four tolled bounty-intel lanes, ${PRICE} USDC each on Base — plus a directory of third-party tools. Pay the troll, cross the bridge.`,
+    deal: `An AI-tool marketplace on a toll bridge. Five tolled bounty-intel lanes, ${PRICE} USDC each on Base — plus a directory of third-party tools. Pay the troll, cross the bridge.`,
     lanes: Object.fromEntries(
       Object.entries(LANES).map(([route, desc]) => [
         `GET ${route}`,
@@ -331,6 +333,7 @@ function lane(route, key) {
 }
 lane("/bounties", "bounties");
 lane("/fresh", "fresh");
+lane("/verdicts", "verdicts");
 lane("/deadlines", "deadlines");
 lane("/sweepstakes", "sweepstakes");
 
@@ -351,7 +354,7 @@ app.get("/.well-known/x402", (req, res) => {
     spec: "trollbridge-manifest/1",
     name: "TrollBridge",
     description:
-      "Pay-per-call bounty intel for AI agents. Four tolled lanes: every open bounty across all boards, fresh bounties from the last 24h, class-action claim deadlines, and verified free sweepstakes. $0.02 USDC per call on Base.",
+      "Pay-per-call bounty intel for AI agents. Five tolled lanes: every open bounty across all boards, fresh bounties from the last 24h, recently-paid verdicts proving the boards pay, class-action claim deadlines, and verified free sweepstakes. $0.02 USDC per call on Base.",
     homepage: base,
     payment: {
       protocol: "x402",
@@ -434,7 +437,7 @@ app.get("/openapi.json", (req, res) => {
       title: "TrollBridge",
       version: "1.0.0",
       description:
-        "Pay-per-call bounty intel for AI agents. Four tolled lanes: every open bounty across all boards, fresh bounties from the last 24h, class-action claim deadlines, and verified free sweepstakes.",
+        "Pay-per-call bounty intel for AI agents. Five tolled lanes: every open bounty across all boards, fresh bounties from the last 24h, recently-paid verdicts proving the boards pay, class-action claim deadlines, and verified free sweepstakes.",
       "x-guidance":
         "Call any lane with GET. Without payment you receive a 402 challenge (x402 v2: $0.02 USDC on Base, asset 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913, payTo 0x9412222D7801906B4179E58E44B8Dbf16426Bea2). Complete the x402 payment and retry with the X-Payment header. Use ?limit=N to cap items per call. The free directory of third-party tools is GET /tools; bridge traffic stats are GET /traffic.",
       contact: { email: "erict4209@gmail.com" },
