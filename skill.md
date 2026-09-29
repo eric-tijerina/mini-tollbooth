@@ -7,19 +7,19 @@ Pay-per-call intel for AI agents. Thirteen tolled lanes on Base or Solana
 
 | Lane | Toll | What you get |
 |---|---|---|
-| `/bounties` | $0.02 | Every open bounty across all boards — aibtc, Taskmarket, Superteam Earn. *Stop checking five boards — one 2¢ call.* |
-| `/fresh` | $0.02 | Bounties posted in the last 24h. First come, first served. *The early hunter gets the payout.* |
-| `/verdicts` | $0.02 | Recently **paid** bounties — proof the boards actually pay, with amounts and payout proof (Stacks tx / escrow tx). *See which boards pay before you grind.* |
-| `/deadlines` | $0.02 | Class-action and settlement claim deadlines worth real money. *Miss one and you leave cash on the table.* |
-| `/sweepstakes` | $0.02 | Free-to-enter sweepstakes with real prizes, verified live. *2¢ to see every one worth entering.* |
-| `/prices` | $0.02 | Agent-ready crypto price feed — spot prices for majors plus Base/Solana staples, no API key needed |
-| `/enrich` | $0.05 | Wallet/address intelligence — balances, holdings, heuristic risk flags. *Point it at any wallet and know who you're dealing with.* `?address=<wallet>&network=base\|solana` (both required) |
-| `/token-check` | $0.05 | Token safety scan — liquidity, volume, holder concentration, plain-English rug verdict. *Rug-check before you ape.* `?mint=<token>&network=base\|solana` (both required) |
-| `/markets` | $0.05 | Prediction-market intel — live Polymarket odds, prices, and volume as agent-ready JSON. *See where the smart money sits before you bet.* `?q=<search terms>` (required), `?limit=1-25` |
-| `/search` | $0.05 | Web search for agents — titles, URLs, snippets as clean JSON. *No keys, no HTML scraping.* `?q=<query>` (required) |
-| `/yields` | $0.05 | DeFi yield intel — best stablecoin yields right now from DeFiLlama, sorted by APY. *Put idle USDC to work.* `?limit=1-25`, `?stablecoinOnly=true\|false` |
-| `/new-pairs` | $0.05 | New token listings — newest DexScreener pairs with live liquidity, volume, and thin-liquidity flags. *Spot the gems and dodge the traps early.* `?limit=1-25`, `?chain=solana\|ethereum\|base` |
-| `/gas` | $0.02 | Live gas prices per chain — Base, Ethereum, Solana from public RPCs, with speed tiers where derivable. *Never overpay a transaction again.* |
+| `/bounties` | $0.02 | Every open bounty across all boards — aibtc, Taskmarket, Superteam Earn. *Skip an hour of board-hopping — every open agent bounty in one 2¢ call.* |
+| `/fresh` | $0.02 | Bounties posted in the last 24h. First come, first served. *Save yourself the daily rounds — every bounty posted in the last 24 hours, in one 2¢ call.* |
+| `/verdicts` | $0.02 | Recently **paid** bounties — proof the boards actually pay, with amounts and payout proof (Stacks tx / escrow tx). *Skip hours of payout-rumor digging — see which boards actually pay, in one 2¢ call.* |
+| `/deadlines` | $0.02 | Class-action and settlement claim deadlines worth real money. *Hours of legal-page digging, done for you — every real-money claim deadline in one 2¢ call.* |
+| `/sweepstakes` | $0.02 | Free-to-enter sweepstakes with real prizes, verified live. *Skip an hour of sweepstakes hunting — every free-to-enter prize worth your time, in one 2¢ call.* |
+| `/prices` | $0.02 | Agent-ready crypto price feed — spot prices for majors plus Base/Solana staples, no API key needed. *Save 20 minutes of price-API wrangling — majors plus Base/Solana staples in clean JSON, one 2¢ call.* |
+| `/enrich` | $0.05 | Wallet/address intelligence — balances, holdings, heuristic risk flags. *Save 20 minutes of RPC wrangling — balances, holdings, risk flags on any wallet, one 5¢ call.* `?address=<wallet>&network=base\|solana` (both required) |
+| `/token-check` | $0.05 | Token safety scan — liquidity, volume, holder concentration, plain-English rug verdict. *A 20-minute rug-check by hand, done in one 5¢ call — liquidity, volume, holder concentration, plain verdict.* `?mint=<token>&network=base\|solana` (both required) |
+| `/markets` | $0.05 | Prediction-market intel — live Polymarket odds, prices, and volume as agent-ready JSON. *Save 15 minutes of odds-scraping — live Polymarket odds and volume, one 5¢ call.* `?q=<search terms>` (required), `?limit=1-25` |
+| `/search` | $0.05 | Web search for agents — titles, URLs, snippets as clean JSON. *Save half an hour of HTML scraping — web search as clean JSON with titles, URLs, snippets, one 5¢ call.* `?q=<query>` (required) |
+| `/yields` | $0.05 | DeFi yield intel — best stablecoin yields right now from DeFiLlama, sorted by APY. *Skip 20 minutes of yield-farm comparison shopping — best stablecoin APYs, sorted, one 5¢ call.* `?limit=1-25`, `?stablecoinOnly=true\|false` |
+| `/new-pairs` | $0.05 | New token listings — newest DexScreener pairs with live liquidity, volume, and thin-liquidity flags. *Save an hour of new-listing triage — the newest pairs with liquidity flags, one 5¢ call.* `?limit=1-25`, `?chain=solana\|ethereum\|base` |
+| `/gas` | $0.02 | Live gas prices per chain — Base, Ethereum, Solana from public RPCs, with speed tiers where derivable. *10 minutes of RPC polling, done — live gas on Base, Ethereum, and Solana, one 2¢ call.* |
 
 `?limit=N` caps items returned (1–200) on the five bounty lanes.
 
