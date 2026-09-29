@@ -424,6 +424,40 @@ function laneStatsFor(route) {
       return { note: LANE_PITCH[route] || "tolled lane" };
   }
 }
+// ---- 402 body/header parity ----
+// The toll middleware expands our shorthand terms (price/network/payTo) into
+// full v2 payment requirements, adding per-rail `extra` that goes out in the
+// `payment-required` header: EIP-3009 token info on Base, the facilitator's
+// feePayer on Solana. The 402 JSON body used to omit `extra`, so agents that
+// read payment terms from the body (it's the human/agent-readable surface)
+// built payments the facilitator rejects — every lane, every time. Fix: at
+// boot we read our own live 402 header and reuse its exact per-network
+// `extra` in the body, so the two can never drift apart (fallbacks are the
+// values observed live, used only if the self-check fails).
+let liveExtra = null; // { [network]: extra } — captured from our own 402 header at boot
+const FALLBACK_EXTRA = {
+  [NETWORK]: { name: "USD Coin", version: "2" },
+  [SOLANA_NETWORK]: { feePayer: "GVJJ7rdGiXr5xaYbRwRbjfaJL7fmwRygFi1H6aGqDveb" },
+};
+function extraFor(network) {
+  return (liveExtra && liveExtra[network]) || FALLBACK_EXTRA[network];
+}
+async function captureLiveExtra() {
+  try {
+    const res = await fetch(`http://127.0.0.1:${PORT}/bounties`);
+    const b64 = res.headers.get("payment-required");
+    if (!b64) return;
+    const payload = JSON.parse(Buffer.from(b64, "base64").toString("utf8"));
+    const found = {};
+    for (const a of payload.accepts || []) if (a && a.network && a.extra) found[a.network] = a.extra;
+    if (Object.keys(found).length) {
+      liveExtra = found;
+      console.log("402 body/header parity: live extra captured for", Object.keys(found).join(", "));
+    }
+  } catch (e) {
+    console.log("402 body/header parity: self-check failed, using fallback extra:", e && e.message);
+  }
+}
 function unpaidBodyFor(route, price) {
   // USDC has 6 decimals: $0.02 -> 20000, $0.05 -> 50000 atomic units.
   const amount = String(Math.round(parseFloat(String(price).replace("$", "")) * 1e6));
@@ -432,8 +466,10 @@ function unpaidBodyFor(route, price) {
     error: "Payment required",
     resource: {
       url: `${BRIDGE_BASE_URL}${route}`,
-      description: LANES[route],
+      description: `${LANES[route]} Toll: ${price} USDC on Base or Solana.`,
       mimeType: "application/json",
+      serviceName: "TrollBridge",
+      tags: LANE_TAGS[route],
     },
     accepts: [
       {
@@ -443,6 +479,7 @@ function unpaidBodyFor(route, price) {
         asset: USDC_BASE_ASSET,
         payTo: PAY_TO,
         maxTimeoutSeconds: 300,
+        extra: extraFor(NETWORK),
       },
       {
         scheme: "exact",
@@ -451,12 +488,13 @@ function unpaidBodyFor(route, price) {
         asset: USDC_SOLANA_ASSET,
         payTo: SOLANA_PAY_TO,
         maxTimeoutSeconds: 300,
+        extra: extraFor(SOLANA_NETWORK),
       },
     ],
     extensions: discoveryExtensionFor(route),
     // Sales fields: what the agent is buying, with live counts where they
-    // exist. Every payment field above is untouched — same amounts, rails,
-    // payTos, and payment-required header as before.
+    // exist. Every payment field above mirrors the payment-required header —
+    // same amounts, rails, payTos, and now the same per-rail `extra`.
     pitch: LANE_PITCH[route],
     stats: laneStatsFor(route),
   };
@@ -958,9 +996,12 @@ build()
       console.error(`route error ${req.method} ${req.path}:`, err && err.message);
       if (!res.headersSent) res.status(500).json({ error: "Internal Server Error" });
     });
-    app.listen(PORT, () =>
-      console.log(`troll awake on :${PORT} | TrollBridge: ${Object.keys(LANES).length} lanes @ $0.02–$0.05 on ${NETWORK} + ${SOLANA_NETWORK} -> ${PAY_TO} / ${SOLANA_PAY_TO}${IS_MAINNET ? " [MAINNET]" : " [testnet]"} | tools: ${loadTools().tools.filter((t) => t.status === "live").length} listed`)
-    );
+    app.listen(PORT, () => {
+      console.log(`troll awake on :${PORT} | TrollBridge: ${Object.keys(LANES).length} lanes @ $0.02–$0.05 on ${NETWORK} + ${SOLANA_NETWORK} -> ${PAY_TO} / ${SOLANA_PAY_TO}${IS_MAINNET ? " [MAINNET]" : " [testnet]"} | tools: ${loadTools().tools.filter((t) => t.status === "live").length} listed`);
+      // Capture the middleware's live per-rail `extra` so the 402 JSON body
+      // can never drift from the payment-required header again.
+      captureLiveExtra();
+    });
   });
 // ---- Agent skill: the human- and agent-readable contract for the bridge.
 // Free and unauthenticated by design — indexers (agentic.market et al.)
