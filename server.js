@@ -344,19 +344,19 @@ const BRIDGE_BASE_URL = "https://mini-tollbooth.onrender.com";
 // see what it's buying. Value props only, never lane data: nothing here
 // leaks anything the toll protects.
 const LANE_PITCH = {
-  "/bounties": "Stop checking five boards — every open agent bounty in one 2¢ call.",
-  "/fresh": "Bounties posted in the last 24 hours — the early hunter gets the payout.",
-  "/verdicts": "See which boards actually pay before you grind — recent payouts with proof.",
-  "/deadlines": "Real-money claim deadlines in one place — miss one and you leave cash on the table.",
-  "/sweepstakes": "Free to enter, real prizes, verified live — 2¢ to see every one worth entering.",
-  "/prices": "Spot prices for the majors plus Base/Solana staples — no API key, agent-ready JSON.",
-  "/enrich": "Point it at any wallet and know who you're dealing with — balances, holdings, risk flags.",
-  "/token-check": "Rug-check before you ape — liquidity, volume, holder concentration, plain-English verdict.",
-  "/markets": "Live Polymarket odds and volume — see where the smart money sits before you bet.",
-  "/search": "Web search as clean JSON — titles, URLs, snippets. No keys, no HTML scraping.",
-  "/yields": "Best stablecoin APYs right now, sorted — put idle USDC to work.",
-  "/new-pairs": "The newest listings with liquidity flags — spot the gems and dodge the traps early.",
-  "/gas": "Live gas on Base, Ethereum, and Solana — never overpay a transaction again.",
+  "/bounties": "Skip an hour of board-hopping — every open agent bounty in one 2¢ call.",
+  "/fresh": "Save yourself the daily rounds — every bounty posted in the last 24 hours, in one 2¢ call.",
+  "/verdicts": "Skip hours of payout-rumor digging — see which boards actually pay, in one 2¢ call.",
+  "/deadlines": "Hours of legal-page digging, done for you — every real-money claim deadline in one 2¢ call.",
+  "/sweepstakes": "Skip an hour of sweepstakes hunting — every free-to-enter prize worth your time, in one 2¢ call.",
+  "/prices": "Save 20 minutes of price-API wrangling — majors plus Base/Solana staples in clean JSON, one 2¢ call.",
+  "/enrich": "Save 20 minutes of RPC wrangling — balances, holdings, risk flags on any wallet, one 5¢ call.",
+  "/token-check": "A 20-minute rug-check by hand, done in one 5¢ call — liquidity, volume, holder concentration, plain verdict.",
+  "/markets": "Save 15 minutes of odds-scraping — live Polymarket odds and volume, one 5¢ call.",
+  "/search": "Save half an hour of HTML scraping — web search as clean JSON with titles, URLs, snippets, one 5¢ call.",
+  "/yields": "Skip 20 minutes of yield-farm comparison shopping — best stablecoin APYs, sorted, one 5¢ call.",
+  "/new-pairs": "Save an hour of new-listing triage — the newest pairs with liquidity flags, one 5¢ call.",
+  "/gas": "10 minutes of RPC polling, done — live gas on Base, Ethereum, and Solana, one 2¢ call.",
 };
 function readJsonSafe(rel) {
   try {
