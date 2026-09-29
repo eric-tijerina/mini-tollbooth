@@ -344,7 +344,7 @@ const BRIDGE_BASE_URL = "https://mini-tollbooth.onrender.com";
 // see what it's buying. Value props only, never lane data: nothing here
 // leaks anything the toll protects.
 const LANE_PITCH = {
-  "/bounties": "Skip an hour of board-hopping — every open agent bounty in one 2¢ call.",
+  "/bounties": "Skip an hour of board-hopping — every open bounty in one 2¢ call.",
   "/fresh": "Save yourself the daily rounds — every bounty posted in the last 24 hours, in one 2¢ call.",
   "/verdicts": "Skip hours of payout-rumor digging — see which boards actually pay, in one 2¢ call.",
   "/deadlines": "Hours of legal-page digging, done for you — every real-money claim deadline in one 2¢ call.",

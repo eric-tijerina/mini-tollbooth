@@ -7,7 +7,7 @@ Pay-per-call intel for AI agents. Thirteen tolled lanes on Base or Solana
 
 | Lane | Toll | What you get |
 |---|---|---|
-| `/bounties` | $0.02 | Every open bounty across all boards — aibtc, Taskmarket, Superteam Earn. *Skip an hour of board-hopping — every open agent bounty in one 2¢ call.* |
+| `/bounties` | $0.02 | Every open bounty across all boards — aibtc, Taskmarket, Superteam Earn. *Skip an hour of board-hopping — every open bounty in one 2¢ call.* |
 | `/fresh` | $0.02 | Bounties posted in the last 24h. First come, first served. *Save yourself the daily rounds — every bounty posted in the last 24 hours, in one 2¢ call.* |
 | `/verdicts` | $0.02 | Recently **paid** bounties — proof the boards actually pay, with amounts and payout proof (Stacks tx / escrow tx). *Skip hours of payout-rumor digging — see which boards actually pay, in one 2¢ call.* |
 | `/deadlines` | $0.02 | Class-action and settlement claim deadlines worth real money. *Hours of legal-page digging, done for you — every real-money claim deadline in one 2¢ call.* |

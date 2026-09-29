@@ -4,8 +4,9 @@
 // proof the boards pay, and merges the curated deadline +
 // sweepstakes lanes. Run at boot and on a timer by server.js; also
 // runnable standalone: node build-feed.js
-// $0 cost: read-only public APIs, no keys needed (Superteam lane uses the
-// agent API key from env when present, and degrades gracefully without it).
+// $0 cost: read-only public APIs, no keys needed (the Superteam agent-only
+// lane uses the agent API key from env when present and degrades gracefully
+// without it; the general Superteam Earn lane uses the public listings API).
 const fs = require("fs");
 const path = require("path");
 
@@ -78,7 +79,7 @@ async function taskmarket() {
   }
 }
 
-// --- Board 3: Superteam Earn (agent-only listings, needs agent key) ---
+// --- Board 3: Superteam (agent-only listings, needs agent key) ---
 async function superteam() {
   const key = process.env.SUPERTEAM_API_KEY;
   if (!key) return [{ board: "superteam", error: "no SUPERTEAM_API_KEY configured" }];
@@ -102,7 +103,51 @@ async function superteam() {
   }
 }
 
-// --- Board 4: verdicts — recently PAID bounties (proof the boards pay) ---
+// --- Board 4: Superteam Earn (ALL open listings, public, no key) ---
+// https://superteam.fun/api/listings returns every OPEN Earn listing
+// (bounties + projects) as JSON with no auth — this is the general feed,
+// not just the agent-only one. Filter to genuinely live listings:
+// status OPEN, winners not announced, deadline not passed.
+async function superteamEarn() {
+  try {
+    const d = await getJSON("https://superteam.fun/api/listings");
+    const list = Array.isArray(d) ? d : [];
+    const now = Date.now();
+    return list
+      .filter((l) => {
+        if (!l || typeof l !== "object") return false;
+        if (String(l.status || "").toUpperCase() !== "OPEN") return false;
+        if (l.isWinnersAnnounced || l.winnersAnnouncedAt) return false;
+        if (l.deadline && Date.parse(l.deadline) < now) return false;
+        return true;
+      })
+      .map((l) => {
+        const tags = [String(l.type || "bounty").toLowerCase()];
+        if (l.agentAccess) tags.push(String(l.agentAccess).toLowerCase().replace(/_/g, "-"));
+        let reward = "see listing";
+        if (typeof l.rewardAmount === "number" && l.token) {
+          reward = `${l.rewardAmount.toLocaleString()} ${l.token}`;
+        } else if (l.minRewardAsk != null || l.maxRewardAsk != null) {
+          reward = `${l.minRewardAsk ?? "?"}-${l.maxRewardAsk ?? "?"} ${l.token || "USD"} (ask)`;
+        }
+        return {
+          board: "superteam-earn",
+          id: String(l.id || l.slug || "unknown"),
+          slug: l.slug || null,
+          title: l.title || "untitled listing",
+          reward,
+          url: l.slug ? `https://superteam.fun/earn/listing/${l.slug}/` : "https://superteam.fun",
+          posted_at: l.publishedAt || l.createdAt || null,
+          expires: l.deadline || null,
+          tags,
+        };
+      });
+  } catch (e) {
+    return [{ board: "superteam-earn", error: String(e.message || e) }];
+  }
+}
+
+// --- Board 5: verdicts — recently PAID bounties (proof the boards pay) ---
 // aibtc status=paid, Taskmarket status=completed, BountyBook status=verified.
 async function verdicts() {
   const out = [];
@@ -233,9 +278,23 @@ async function buildPrices() {
 }
 
 async function build() {
-  const [a, t, s] = await Promise.all([aibtc(), taskmarket(), superteam()]);
-  const bounties = [...a, ...t, ...s].filter((b) => !b.error);
-  const errors = [...a, ...t, ...s].filter((b) => b.error);
+  const [a, t, s, se] = await Promise.all([aibtc(), taskmarket(), superteam(), superteamEarn()]);
+  const errors = [...a, ...t, ...s, ...se].filter((b) => b.error);
+  // Dedupe: same listing can appear on both Superteam boards (agent-only
+  // feed vs general Earn feed). First occurrence wins, so the agent board's
+  // record is kept and the Earn duplicate is dropped.
+  const seen = new Set();
+  const bounties = [...a, ...t, ...s, ...se].filter((b) => {
+    if (b.error) return false;
+    const url = String(b.url || "").toLowerCase().replace(/[#?].*$/, "").replace(/\/+$/, "");
+    const key =
+      url && url !== "https://superteam.fun"
+        ? "u:" + url
+        : (b.slug ? "s:" + String(b.slug).toLowerCase() : `b:${b.board}:${b.id}`);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
   const { verdicts: paid, errors: verdictErrors } = await verdicts();
   await buildPrices().catch((e) => console.error("prices build failed:", e.message));
 
