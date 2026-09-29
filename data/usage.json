@@ -1,1 +1,680 @@
-{"since":"2026-09-28T18:06:25.643Z","totals":{"challenged":926,"paid_crossings":1,"unpaid_2xx":6,"directory_visits":5,"discovery_views":471,"unique_payers":1},"lanes":{"/bounties":{"challenged":380,"paid":1,"failed":9,"unpaid_2xx":6,"visits":0,"unique_payers":1,"first_seen":"2026-09-28T18:08:08.872Z","last_seen":"2026-09-29T14:16:19.459Z"},"/fresh":{"challenged":57,"paid":0,"failed":0,"unpaid_2xx":0,"visits":0,"unique_payers":0,"first_seen":"2026-09-28T18:11:36.266Z","last_seen":"2026-09-29T14:09:29.062Z"},"/verdicts":{"challenged":46,"paid":0,"failed":0,"unpaid_2xx":0,"visits":0,"unique_payers":0,"first_seen":"2026-09-28T18:11:36.332Z","last_seen":"2026-09-29T14:09:29.161Z"},"/deadlines":{"challenged":61,"paid":0,"failed":0,"unpaid_2xx":0,"visits":0,"unique_payers":0,"first_seen":"2026-09-28T18:11:36.381Z","last_seen":"2026-09-29T14:09:29.202Z"},"/sweepstakes":{"challenged":56,"paid":0,"failed":0,"unpaid_2xx":0,"visits":0,"unique_payers":0,"first_seen":"2026-09-28T18:11:36.427Z","last_seen":"2026-09-29T14:09:29.244Z"},"/":{"challenged":0,"paid":0,"failed":0,"unpaid_2xx":0,"visits":104,"unique_payers":0,"first_seen":"2026-09-28T18:26:50.392Z","last_seen":"2026-09-29T13:49:14.206Z"},"/skill.md":{"challenged":0,"paid":0,"failed":0,"unpaid_2xx":0,"visits":7,"unique_payers":0,"first_seen":"2026-09-28T18:26:50.401Z","last_seen":"2026-09-29T13:55:37.921Z"},"/openapi.json":{"challenged":0,"paid":0,"failed":0,"unpaid_2xx":0,"visits":242,"unique_payers":0,"first_seen":"2026-09-28T18:26:50.409Z","last_seen":"2026-09-29T14:09:28.987Z"},"/.well-known/x402":{"challenged":0,"paid":0,"failed":0,"unpaid_2xx":0,"visits":118,"unique_payers":0,"first_seen":"2026-09-28T18:26:50.417Z","last_seen":"2026-09-29T14:15:55.717Z"},"/tools":{"challenged":0,"paid":0,"failed":0,"unpaid_2xx":0,"visits":5,"unique_payers":0,"first_seen":"2026-09-28T18:26:50.427Z","last_seen":"2026-09-29T13:50:14.344Z"},"/prices":{"challenged":41,"paid":0,"failed":0,"unpaid_2xx":0,"visits":0,"unique_payers":0,"first_seen":"2026-09-28T22:08:23.187Z","last_seen":"2026-09-29T14:09:29.290Z"},"/enrich":{"challenged":41,"paid":0,"failed":0,"unpaid_2xx":0,"visits":0,"unique_payers":0,"first_seen":"2026-09-28T22:08:23.893Z","last_seen":"2026-09-29T14:09:29.335Z"},"/token-check":{"challenged":44,"paid":0,"failed":0,"unpaid_2xx":0,"visits":0,"unique_payers":0,"first_seen":"2026-09-28T22:08:30.641Z","last_seen":"2026-09-29T14:09:29.379Z"},"/markets":{"challenged":40,"paid":0,"failed":0,"unpaid_2xx":0,"visits":0,"unique_payers":0,"first_seen":"2026-09-28T22:22:04.914Z","last_seen":"2026-09-29T14:09:29.423Z"},"/search":{"challenged":43,"paid":0,"failed":0,"unpaid_2xx":0,"visits":0,"unique_payers":0,"first_seen":"2026-09-28T22:22:05.529Z","last_seen":"2026-09-29T14:09:29.474Z"},"/yields":{"challenged":40,"paid":0,"failed":0,"unpaid_2xx":0,"visits":0,"unique_payers":0,"first_seen":"2026-09-28T22:58:47.855Z","last_seen":"2026-09-29T14:09:29.515Z"},"/new-pairs":{"challenged":38,"paid":0,"failed":0,"unpaid_2xx":0,"visits":0,"unique_payers":0,"first_seen":"2026-09-28T22:58:48.822Z","last_seen":"2026-09-29T14:09:29.578Z"},"/gas":{"challenged":39,"paid":0,"failed":0,"unpaid_2xx":0,"visits":0,"unique_payers":0,"first_seen":"2026-09-28T22:58:49.500Z","last_seen":"2026-09-29T14:09:29.625Z"}},"failed_by_class":{},"payers":{"/bounties":["0x248620c2BE60865884597A83f40589d7Bf300BB8"],"/fresh":[],"/verdicts":[],"/deadlines":[],"/sweepstakes":[],"/":[],"/skill.md":[],"/openapi.json":[],"/.well-known/x402":[],"/tools":[],"/prices":[],"/enrich":[],"/token-check":[],"/markets":[],"/search":[],"/yields":[],"/new-pairs":[],"/gas":[]},"history":[{"t":"2026-09-28T19:44:36.987Z","challenged":11,"paid":1,"discovery":5,"directory":1,"payers":1},{"t":"2026-09-28T20:02:58.265Z","challenged":15,"paid":1,"discovery":9,"directory":1,"payers":1},{"t":"2026-09-28T20:30:02.637Z","challenged":22,"paid":1,"discovery":25,"directory":1,"payers":1},{"t":"2026-09-28T20:45:28.614Z","challenged":29,"paid":1,"discovery":33,"directory":1,"payers":1},{"t":"2026-09-28T21:06:01.056Z","challenged":30,"paid":1,"discovery":37,"directory":1,"payers":1},{"t":"2026-09-28T21:28:59.062Z","challenged":41,"paid":1,"discovery":50,"directory":2,"payers":1},{"t":"2026-09-28T21:45:05.822Z","challenged":51,"paid":1,"discovery":58,"directory":2,"payers":1},{"t":"2026-09-28T22:06:16.022Z","challenged":56,"paid":1,"discovery":65,"directory":2,"payers":1},{"t":"2026-09-28T22:22:04.914Z","challenged":70,"paid":1,"discovery":80,"directory":2,"payers":1},{"t":"2026-09-28T22:37:11.236Z","challenged":76,"paid":1,"discovery":84,"directory":2,"payers":1},{"t":"2026-09-28T22:56:18.203Z","challenged":90,"paid":1,"discovery":89,"directory":2,"payers":1},{"t":"2026-09-28T23:11:29.970Z","challenged":98,"paid":1,"discovery":97,"directory":2,"payers":1},{"t":"2026-09-28T23:28:21.429Z","challenged":114,"paid":1,"discovery":106,"directory":2,"payers":1},{"t":"2026-09-28T23:46:30.994Z","challenged":116,"paid":1,"discovery":110,"directory":2,"payers":1},{"t":"2026-09-29T00:03:37.213Z","challenged":130,"paid":1,"discovery":121,"directory":2,"payers":1},{"t":"2026-09-29T02:13:14.182Z","challenged":277,"paid":1,"discovery":190,"directory":4,"payers":1},{"t":"2026-09-29T02:28:24.481Z","challenged":293,"paid":1,"discovery":198,"directory":4,"payers":1},{"t":"2026-09-29T02:44:12.317Z","challenged":302,"paid":1,"discovery":203,"directory":4,"payers":1},{"t":"2026-09-29T02:59:53.868Z","challenged":318,"paid":1,"discovery":211,"directory":4,"payers":1},{"t":"2026-09-29T03:15:03.156Z","challenged":329,"paid":2,"discovery":224,"directory":4,"payers":1},{"t":"2026-09-29T03:30:08.776Z","challenged":347,"paid":3,"discovery":229,"directory":4,"payers":1},{"t":"2026-09-29T03:45:39.372Z","challenged":363,"paid":3,"discovery":232,"directory":4,"payers":1},{"t":"2026-09-29T04:01:16.144Z","challenged":382,"paid":3,"discovery":237,"directory":4,"payers":1},{"t":"2026-09-29T04:16:32.284Z","challenged":389,"paid":3,"discovery":247,"directory":4,"payers":1},{"t":"2026-09-29T04:31:55.597Z","challenged":405,"paid":3,"discovery":256,"directory":4,"payers":1},{"t":"2026-09-29T04:47:48.111Z","challenged":419,"paid":3,"discovery":265,"directory":4,"payers":1},{"t":"2026-09-29T05:03:01.350Z","challenged":437,"paid":3,"discovery":270,"directory":4,"payers":1},{"t":"2026-09-29T05:18:42.981Z","challenged":443,"paid":3,"discovery":278,"directory":4,"payers":1},{"t":"2026-09-29T05:34:22.742Z","challenged":461,"paid":3,"discovery":281,"directory":4,"payers":1},{"t":"2026-09-29T05:50:03.678Z","challenged":468,"paid":3,"discovery":284,"directory":4,"payers":1},{"t":"2026-09-29T06:05:22.106Z","challenged":490,"paid":4,"discovery":289,"directory":4,"payers":1},{"t":"2026-09-29T06:20:34.887Z","challenged":496,"paid":4,"discovery":294,"directory":4,"payers":1},{"t":"2026-09-29T06:35:39.861Z","challenged":515,"paid":4,"discovery":297,"directory":4,"payers":1},{"t":"2026-09-29T06:51:32.398Z","challenged":523,"paid":4,"discovery":302,"directory":4,"payers":1},{"t":"2026-09-29T07:07:02.872Z","challenged":541,"paid":4,"discovery":309,"directory":4,"payers":1},{"t":"2026-09-29T07:22:34.313Z","challenged":547,"paid":4,"discovery":312,"directory":4,"payers":1},{"t":"2026-09-29T07:38:01.388Z","challenged":566,"paid":4,"discovery":321,"directory":4,"payers":1},{"t":"2026-09-29T07:53:35.549Z","challenged":571,"paid":4,"discovery":326,"directory":4,"payers":1},{"t":"2026-09-29T08:08:42.171Z","challenged":594,"paid":4,"discovery":333,"directory":4,"payers":1},{"t":"2026-09-29T08:24:20.392Z","challenged":601,"paid":4,"discovery":336,"directory":4,"payers":1},{"t":"2026-09-29T08:39:49.562Z","challenged":618,"paid":4,"discovery":344,"directory":4,"payers":1},{"t":"2026-09-29T08:55:31.087Z","challenged":633,"paid":4,"discovery":350,"directory":4,"payers":1},{"t":"2026-09-29T09:10:42.599Z","challenged":640,"paid":4,"discovery":356,"directory":4,"payers":1},{"t":"2026-09-29T09:26:10.686Z","challenged":657,"paid":6,"discovery":360,"directory":4,"payers":1},{"t":"2026-09-29T09:41:57.624Z","challenged":677,"paid":6,"discovery":368,"directory":4,"payers":1},{"t":"2026-09-29T09:57:30.804Z","challenged":694,"paid":6,"discovery":374,"directory":4,"payers":1},{"t":"2026-09-29T10:12:58.613Z","challenged":699,"paid":6,"discovery":382,"directory":4,"payers":1},{"t":"2026-09-29T10:28:14.329Z","challenged":718,"paid":6,"discovery":384,"directory":4,"payers":1},{"t":"2026-09-29T10:43:45.016Z","challenged":725,"paid":6,"discovery":391,"directory":4,"payers":1},{"t":"2026-09-29T10:59:15.094Z","challenged":741,"paid":6,"discovery":396,"directory":4,"payers":1},{"t":"2026-09-29T11:36:02.562Z","challenged":751,"paid":1,"discovery":403,"directory":4,"payers":1},{"t":"2026-09-29T11:54:21.261Z","challenged":759,"paid":1,"discovery":416,"directory":4,"payers":1},{"t":"2026-09-29T12:10:46.070Z","challenged":779,"paid":1,"discovery":423,"directory":4,"payers":1},{"t":"2026-09-29T12:27:14.488Z","challenged":799,"paid":1,"discovery":427,"directory":4,"payers":1},{"t":"2026-09-29T12:42:34.058Z","challenged":819,"paid":1,"discovery":435,"directory":4,"payers":1},{"t":"2026-09-29T12:58:27.822Z","challenged":830,"paid":1,"discovery":439,"directory":4,"payers":1},{"t":"2026-09-29T13:14:08.679Z","challenged":853,"paid":1,"discovery":449,"directory":4,"payers":1},{"t":"2026-09-29T13:29:24.189Z","challenged":862,"paid":1,"discovery":455,"directory":4,"payers":1},{"t":"2026-09-29T13:44:50.571Z","challenged":883,"paid":1,"discovery":460,"directory":4,"payers":1},{"t":"2026-09-29T14:00:36.850Z","challenged":905,"paid":1,"discovery":466,"directory":5,"payers":1},{"t":"2026-09-29T14:15:55.717Z","challenged":924,"paid":1,"discovery":471,"directory":5,"payers":1}],"almost_paid":{"failed_payments":0,"repeat_challengers":[{"visitor":"1caccd4c9e0dea64","challenges":33,"failed":0,"lanes":["/deadlines","/sweepstakes","/prices","/enrich","/markets","/yields","/new-pairs","/gas","/search","/fresh","/verdicts","/token-check"],"last_seen":"2026-09-29T14:09:29.474Z","funnel":"challenged"},{"visitor":"b1fb51a13271e782","challenges":21,"failed":0,"lanes":["/verdicts","/deadlines","/prices","/markets","/search","/new-pairs","/fresh","/sweepstakes","/enrich","/token-check","/yields","/gas"],"last_seen":"2026-09-29T14:09:29.625Z","funnel":"challenged"},{"visitor":"c196cb6428a49abe","challenges":18,"failed":0,"lanes":["/fresh","/sweepstakes","/enrich","/token-check","/yields","/gas","/verdicts","/search","/prices","/markets","/new-pairs"],"last_seen":"2026-09-29T14:09:29.578Z","funnel":"challenged"},{"visitor":"3425c84071162030","challenges":14,"failed":0,"lanes":["/bounties"],"last_seen":"2026-09-29T13:55:16.665Z","funnel":"challenged"},{"visitor":"2d7cf7175a1552f5","challenges":10,"failed":0,"lanes":["/bounties"],"last_seen":"2026-09-29T14:16:19.459Z","funnel":"challenged"},{"visitor":"84fdb7fbfb32d487","challenges":10,"failed":0,"lanes":["/bounties"],"last_seen":"2026-09-29T13:55:58.385Z","funnel":"challenged"},{"visitor":"e38debafbf71538c","challenges":10,"failed":0,"lanes":["/fresh","/deadlines","/sweepstakes","/prices","/gas","/enrich","/token-check","/yields","/new-pairs","/verdicts"],"last_seen":"2026-09-29T13:55:09.419Z","funnel":"challenged"},{"visitor":"1e6ad0c8ccce28ae","challenges":8,"failed":0,"lanes":["/bounties"],"last_seen":"2026-09-29T13:49:22.679Z","funnel":"challenged"},{"visitor":"4249d8814d2104d1","challenges":7,"failed":0,"lanes":["/bounties"],"last_seen":"2026-09-29T14:05:43.337Z","funnel":"challenged"},{"visitor":"a36205f8b470a519","challenges":7,"failed":0,"lanes":["/bounties"],"last_seen":"2026-09-29T14:16:06.033Z","funnel":"challenged"},{"visitor":"c3679aad4c3b1d5c","challenges":3,"failed":0,"lanes":["/enrich","/token-check","/markets"],"last_seen":"2026-09-29T13:46:54.091Z","funnel":"challenged"},{"visitor":"422ca3321c1d5c50","challenges":2,"failed":0,"lanes":["/bounties"],"last_seen":"2026-09-29T13:08:41.542Z","funnel":"challenged"},{"visitor":"d7c3c368e3bd42ec","challenges":2,"failed":0,"lanes":["/bounties"],"last_seen":"2026-09-29T14:08:41.636Z","funnel":"challenged"},{"visitor":"cb49662aa497eb66","challenges":2,"failed":0,"lanes":["/bounties"],"last_seen":"2026-09-29T13:30:43.283Z","funnel":"challenged"},{"visitor":"f24c90fb18e5cb0a","challenges":2,"failed":0,"lanes":["/bounties"],"last_seen":"2026-09-29T13:30:52.818Z","funnel":"challenged"},{"visitor":"d6d2de4628343f0a","challenges":2,"failed":0,"lanes":["/bounties"],"last_seen":"2026-09-29T13:38:41.528Z","funnel":"challenged"},{"visitor":"7d3391bc2ad57ba1","challenges":2,"failed":0,"lanes":["/bounties","/sweepstakes"],"last_seen":"2026-09-29T12:48:46.681Z","funnel":"challenged"},{"visitor":"d2f2de92296494fb","challenges":2,"failed":0,"lanes":["/bounties"],"last_seen":"2026-09-29T13:24:20.380Z","funnel":"challenged"},{"visitor":"7a19168fc67b8c31","challenges":2,"failed":0,"lanes":["/bounties","/search"],"last_seen":"2026-09-29T13:54:47.362Z","funnel":"challenged"}],"funnel":{"discovery_only":12,"challenged":38,"tried_and_failed":0,"paid":0}}}
+{
+  "bridge": "TrollBridge",
+  "started_at": "2026-09-28T18:06:25.643Z",
+  "lanes": {
+    "/bounties": {
+      "challenged": 380,
+      "paid": 1,
+      "failed": 9,
+      "visits": 0,
+      "unpaid_2xx": 6,
+      "payers": [
+        "0x248620c2BE60865884597A83f40589d7Bf300BB8"
+      ],
+      "first_seen": "2026-09-28T18:08:08.872Z",
+      "last_seen": "2026-09-29T14:16:19.459Z"
+    },
+    "/fresh": {
+      "challenged": 57,
+      "paid": 0,
+      "failed": 0,
+      "visits": 0,
+      "unpaid_2xx": 0,
+      "payers": [],
+      "first_seen": "2026-09-28T18:11:36.266Z",
+      "last_seen": "2026-09-29T14:09:29.062Z"
+    },
+    "/verdicts": {
+      "challenged": 46,
+      "paid": 0,
+      "failed": 0,
+      "visits": 0,
+      "unpaid_2xx": 0,
+      "payers": [],
+      "first_seen": "2026-09-28T18:11:36.332Z",
+      "last_seen": "2026-09-29T14:09:29.161Z"
+    },
+    "/deadlines": {
+      "challenged": 61,
+      "paid": 0,
+      "failed": 0,
+      "visits": 0,
+      "unpaid_2xx": 0,
+      "payers": [],
+      "first_seen": "2026-09-28T18:11:36.381Z",
+      "last_seen": "2026-09-29T14:09:29.202Z"
+    },
+    "/sweepstakes": {
+      "challenged": 56,
+      "paid": 0,
+      "failed": 0,
+      "visits": 0,
+      "unpaid_2xx": 0,
+      "payers": [],
+      "first_seen": "2026-09-28T18:11:36.427Z",
+      "last_seen": "2026-09-29T14:09:29.244Z"
+    },
+    "/": {
+      "challenged": 0,
+      "paid": 0,
+      "failed": 0,
+      "visits": 104,
+      "unpaid_2xx": 0,
+      "payers": [],
+      "first_seen": "2026-09-28T18:26:50.392Z",
+      "last_seen": "2026-09-29T13:49:14.206Z"
+    },
+    "/skill.md": {
+      "challenged": 0,
+      "paid": 0,
+      "failed": 0,
+      "visits": 7,
+      "unpaid_2xx": 0,
+      "payers": [],
+      "first_seen": "2026-09-28T18:26:50.401Z",
+      "last_seen": "2026-09-29T13:55:37.921Z"
+    },
+    "/openapi.json": {
+      "challenged": 0,
+      "paid": 0,
+      "failed": 0,
+      "visits": 242,
+      "unpaid_2xx": 0,
+      "payers": [],
+      "first_seen": "2026-09-28T18:26:50.409Z",
+      "last_seen": "2026-09-29T14:09:28.987Z"
+    },
+    "/.well-known/x402": {
+      "challenged": 0,
+      "paid": 0,
+      "failed": 0,
+      "visits": 118,
+      "unpaid_2xx": 0,
+      "payers": [],
+      "first_seen": "2026-09-28T18:26:50.417Z",
+      "last_seen": "2026-09-29T14:15:55.717Z"
+    },
+    "/tools": {
+      "challenged": 0,
+      "paid": 0,
+      "failed": 0,
+      "visits": 5,
+      "unpaid_2xx": 0,
+      "payers": [],
+      "first_seen": "2026-09-28T18:26:50.427Z",
+      "last_seen": "2026-09-29T13:50:14.344Z"
+    },
+    "/prices": {
+      "challenged": 41,
+      "paid": 0,
+      "failed": 0,
+      "visits": 0,
+      "unpaid_2xx": 0,
+      "payers": [],
+      "first_seen": "2026-09-28T22:08:23.187Z",
+      "last_seen": "2026-09-29T14:09:29.290Z"
+    },
+    "/enrich": {
+      "challenged": 41,
+      "paid": 0,
+      "failed": 0,
+      "visits": 0,
+      "unpaid_2xx": 0,
+      "payers": [],
+      "first_seen": "2026-09-28T22:08:23.893Z",
+      "last_seen": "2026-09-29T14:09:29.335Z"
+    },
+    "/token-check": {
+      "challenged": 44,
+      "paid": 0,
+      "failed": 0,
+      "visits": 0,
+      "unpaid_2xx": 0,
+      "payers": [],
+      "first_seen": "2026-09-28T22:08:30.641Z",
+      "last_seen": "2026-09-29T14:09:29.379Z"
+    },
+    "/markets": {
+      "challenged": 40,
+      "paid": 0,
+      "failed": 0,
+      "visits": 0,
+      "unpaid_2xx": 0,
+      "payers": [],
+      "first_seen": "2026-09-28T22:22:04.914Z",
+      "last_seen": "2026-09-29T14:09:29.423Z"
+    },
+    "/search": {
+      "challenged": 43,
+      "paid": 0,
+      "failed": 0,
+      "visits": 0,
+      "unpaid_2xx": 0,
+      "payers": [],
+      "first_seen": "2026-09-28T22:22:05.529Z",
+      "last_seen": "2026-09-29T14:09:29.474Z"
+    },
+    "/yields": {
+      "challenged": 40,
+      "paid": 0,
+      "failed": 0,
+      "visits": 0,
+      "unpaid_2xx": 0,
+      "payers": [],
+      "first_seen": "2026-09-28T22:58:47.855Z",
+      "last_seen": "2026-09-29T14:09:29.515Z"
+    },
+    "/new-pairs": {
+      "challenged": 38,
+      "paid": 0,
+      "failed": 0,
+      "visits": 0,
+      "unpaid_2xx": 0,
+      "payers": [],
+      "first_seen": "2026-09-28T22:58:48.822Z",
+      "last_seen": "2026-09-29T14:09:29.578Z"
+    },
+    "/gas": {
+      "challenged": 39,
+      "paid": 0,
+      "failed": 0,
+      "visits": 0,
+      "unpaid_2xx": 0,
+      "payers": [],
+      "first_seen": "2026-09-28T22:58:49.500Z",
+      "last_seen": "2026-09-29T14:09:29.625Z"
+    }
+  },
+  "visitors": {},
+  "failed_log": [],
+  "history": [
+    {
+      "t": "2026-09-28T19:44:36.987Z",
+      "challenged": 11,
+      "paid": 1,
+      "discovery": 5,
+      "directory": 1,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-28T20:02:58.265Z",
+      "challenged": 15,
+      "paid": 1,
+      "discovery": 9,
+      "directory": 1,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-28T20:30:02.637Z",
+      "challenged": 22,
+      "paid": 1,
+      "discovery": 25,
+      "directory": 1,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-28T20:45:28.614Z",
+      "challenged": 29,
+      "paid": 1,
+      "discovery": 33,
+      "directory": 1,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-28T21:06:01.056Z",
+      "challenged": 30,
+      "paid": 1,
+      "discovery": 37,
+      "directory": 1,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-28T21:28:59.062Z",
+      "challenged": 41,
+      "paid": 1,
+      "discovery": 50,
+      "directory": 2,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-28T21:45:05.822Z",
+      "challenged": 51,
+      "paid": 1,
+      "discovery": 58,
+      "directory": 2,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-28T22:06:16.022Z",
+      "challenged": 56,
+      "paid": 1,
+      "discovery": 65,
+      "directory": 2,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-28T22:22:04.914Z",
+      "challenged": 70,
+      "paid": 1,
+      "discovery": 80,
+      "directory": 2,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-28T22:37:11.236Z",
+      "challenged": 76,
+      "paid": 1,
+      "discovery": 84,
+      "directory": 2,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-28T22:56:18.203Z",
+      "challenged": 90,
+      "paid": 1,
+      "discovery": 89,
+      "directory": 2,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-28T23:11:29.970Z",
+      "challenged": 98,
+      "paid": 1,
+      "discovery": 97,
+      "directory": 2,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-28T23:28:21.429Z",
+      "challenged": 114,
+      "paid": 1,
+      "discovery": 106,
+      "directory": 2,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-28T23:46:30.994Z",
+      "challenged": 116,
+      "paid": 1,
+      "discovery": 110,
+      "directory": 2,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T00:03:37.213Z",
+      "challenged": 130,
+      "paid": 1,
+      "discovery": 121,
+      "directory": 2,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T02:13:14.182Z",
+      "challenged": 277,
+      "paid": 1,
+      "discovery": 190,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T02:28:24.481Z",
+      "challenged": 293,
+      "paid": 1,
+      "discovery": 198,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T02:44:12.317Z",
+      "challenged": 302,
+      "paid": 1,
+      "discovery": 203,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T02:59:53.868Z",
+      "challenged": 318,
+      "paid": 1,
+      "discovery": 211,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T03:15:03.156Z",
+      "challenged": 329,
+      "paid": 2,
+      "discovery": 224,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T03:30:08.776Z",
+      "challenged": 347,
+      "paid": 3,
+      "discovery": 229,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T03:45:39.372Z",
+      "challenged": 363,
+      "paid": 3,
+      "discovery": 232,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T04:01:16.144Z",
+      "challenged": 382,
+      "paid": 3,
+      "discovery": 237,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T04:16:32.284Z",
+      "challenged": 389,
+      "paid": 3,
+      "discovery": 247,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T04:31:55.597Z",
+      "challenged": 405,
+      "paid": 3,
+      "discovery": 256,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T04:47:48.111Z",
+      "challenged": 419,
+      "paid": 3,
+      "discovery": 265,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T05:03:01.350Z",
+      "challenged": 437,
+      "paid": 3,
+      "discovery": 270,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T05:18:42.981Z",
+      "challenged": 443,
+      "paid": 3,
+      "discovery": 278,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T05:34:22.742Z",
+      "challenged": 461,
+      "paid": 3,
+      "discovery": 281,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T05:50:03.678Z",
+      "challenged": 468,
+      "paid": 3,
+      "discovery": 284,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T06:05:22.106Z",
+      "challenged": 490,
+      "paid": 4,
+      "discovery": 289,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T06:20:34.887Z",
+      "challenged": 496,
+      "paid": 4,
+      "discovery": 294,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T06:35:39.861Z",
+      "challenged": 515,
+      "paid": 4,
+      "discovery": 297,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T06:51:32.398Z",
+      "challenged": 523,
+      "paid": 4,
+      "discovery": 302,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T07:07:02.872Z",
+      "challenged": 541,
+      "paid": 4,
+      "discovery": 309,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T07:22:34.313Z",
+      "challenged": 547,
+      "paid": 4,
+      "discovery": 312,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T07:38:01.388Z",
+      "challenged": 566,
+      "paid": 4,
+      "discovery": 321,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T07:53:35.549Z",
+      "challenged": 571,
+      "paid": 4,
+      "discovery": 326,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T08:08:42.171Z",
+      "challenged": 594,
+      "paid": 4,
+      "discovery": 333,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T08:24:20.392Z",
+      "challenged": 601,
+      "paid": 4,
+      "discovery": 336,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T08:39:49.562Z",
+      "challenged": 618,
+      "paid": 4,
+      "discovery": 344,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T08:55:31.087Z",
+      "challenged": 633,
+      "paid": 4,
+      "discovery": 350,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T09:10:42.599Z",
+      "challenged": 640,
+      "paid": 4,
+      "discovery": 356,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T09:26:10.686Z",
+      "challenged": 657,
+      "paid": 6,
+      "discovery": 360,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T09:41:57.624Z",
+      "challenged": 677,
+      "paid": 6,
+      "discovery": 368,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T09:57:30.804Z",
+      "challenged": 694,
+      "paid": 6,
+      "discovery": 374,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T10:12:58.613Z",
+      "challenged": 699,
+      "paid": 6,
+      "discovery": 382,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T10:28:14.329Z",
+      "challenged": 718,
+      "paid": 6,
+      "discovery": 384,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T10:43:45.016Z",
+      "challenged": 725,
+      "paid": 6,
+      "discovery": 391,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T10:59:15.094Z",
+      "challenged": 741,
+      "paid": 6,
+      "discovery": 396,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T11:36:02.562Z",
+      "challenged": 751,
+      "paid": 1,
+      "discovery": 403,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T11:54:21.261Z",
+      "challenged": 759,
+      "paid": 1,
+      "discovery": 416,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T12:10:46.070Z",
+      "challenged": 779,
+      "paid": 1,
+      "discovery": 423,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T12:27:14.488Z",
+      "challenged": 799,
+      "paid": 1,
+      "discovery": 427,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T12:42:34.058Z",
+      "challenged": 819,
+      "paid": 1,
+      "discovery": 435,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T12:58:27.822Z",
+      "challenged": 830,
+      "paid": 1,
+      "discovery": 439,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T13:14:08.679Z",
+      "challenged": 853,
+      "paid": 1,
+      "discovery": 449,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T13:29:24.189Z",
+      "challenged": 862,
+      "paid": 1,
+      "discovery": 455,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T13:44:50.571Z",
+      "challenged": 883,
+      "paid": 1,
+      "discovery": 460,
+      "directory": 4,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T14:00:36.850Z",
+      "challenged": 905,
+      "paid": 1,
+      "discovery": 466,
+      "directory": 5,
+      "payers": 1
+    },
+    {
+      "t": "2026-09-29T14:15:55.717Z",
+      "challenged": 924,
+      "paid": 1,
+      "discovery": 471,
+      "directory": 5,
+      "payers": 1
+    }
+  ]
+}
