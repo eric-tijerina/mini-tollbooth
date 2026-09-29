@@ -134,10 +134,18 @@ function createTracker({ usage, isTracked, isTolled, isDiscovery, laneStats, pay
           if (!v.first_seen) v.first_seen = now;
           v.last_seen = now;
           if (tolled) {
-            st.paid += 1; // past the toll collector on a tolled lane = paid crossing
-            v.paid = true;
-            const payer = payerFromHeader(req);
-            if (payer && !st.payers.includes(payer)) st.payers.push(payer);
+            if (hadPayment) {
+              st.paid += 1; // verified payment header present = real paid crossing
+              v.paid = true;
+              const payer = payerFromHeader(req);
+              if (payer && !st.payers.includes(payer)) st.payers.push(payer);
+            } else {
+              // 2xx on a tolled lane with NO payment header (e.g. HEAD
+              // requests: Express serves them via the GET handler, but the
+              // toll collector only challenged GET). No money moved — track
+              // separately so the paid count stays honest.
+              st.unpaid_2xx = (st.unpaid_2xx || 0) + 1;
+            }
           } else {
             st.visits += 1;
             if (isDiscovery(req.path)) v.discovery += 1;
