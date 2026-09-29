@@ -3,7 +3,7 @@
   "started_at": "2026-09-28T18:06:25.643Z",
   "lanes": {
     "/bounties": {
-      "challenged": 54,
+      "challenged": 60,
       "paid": 1,
       "failed": 0,
       "visits": 0,
@@ -11,7 +11,7 @@
         "0x248620c2BE60865884597A83f40589d7Bf300BB8"
       ],
       "first_seen": "2026-09-28T18:08:08.872Z",
-      "last_seen": "2026-09-29T01:13:03.077Z"
+      "last_seen": "2026-09-29T01:22:24.807Z"
     },
     "/fresh": {
       "challenged": 20,
@@ -32,13 +32,13 @@
       "last_seen": "2026-09-29T00:56:44.790Z"
     },
     "/deadlines": {
-      "challenged": 22,
+      "challenged": 23,
       "paid": 0,
       "failed": 0,
       "visits": 0,
       "payers": [],
       "first_seen": "2026-09-28T18:11:36.381Z",
-      "last_seen": "2026-09-29T00:56:44.833Z"
+      "last_seen": "2026-09-29T01:20:29.017Z"
     },
     "/sweepstakes": {
       "challenged": 20,
@@ -56,7 +56,7 @@
       "visits": 41,
       "payers": [],
       "first_seen": "2026-09-28T18:26:50.392Z",
-      "last_seen": "2026-09-29T01:10:34.034Z"
+      "last_seen": "2026-09-29T01:17:13.557Z"
     },
     "/skill.md": {
       "challenged": 0,
@@ -65,7 +65,7 @@
       "visits": 5,
       "payers": [],
       "first_seen": "2026-09-28T18:26:50.401Z",
-      "last_seen": "2026-09-28T20:31:25.540Z"
+      "last_seen": "2026-09-29T01:18:14.168Z"
     },
     "/openapi.json": {
       "challenged": 0,
@@ -74,7 +74,7 @@
       "visits": 79,
       "payers": [],
       "first_seen": "2026-09-28T18:26:50.409Z",
-      "last_seen": "2026-09-29T01:10:33.660Z"
+      "last_seen": "2026-09-29T01:17:50.865Z"
     },
     "/.well-known/x402": {
       "challenged": 0,
@@ -290,5 +290,12 @@
       "directory": 2,
       "payers": 1
     }
-  ]
+  ],
+  "totals": {
+    "challenged": 239,
+    "paid_crossings": 1,
+    "discovery_views": 170,
+    "directory_visits": 4,
+    "unique_payers": 1
+  }
 }
