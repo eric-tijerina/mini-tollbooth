@@ -99,6 +99,7 @@ function laneStats(u, route) {
     u.lanes[route] = { challenged: 0, paid: 0, failed: 0, visits: 0, payers: [], first_seen: null, last_seen: null };
   }
   if (u.lanes[route].failed === undefined) u.lanes[route].failed = 0;
+  if (u.lanes[route].unpaid_2xx === undefined) u.lanes[route].unpaid_2xx = 0;
   return u.lanes[route];
 }
 // "Almost paid" instrumentation (see almost-paid.js): hashed visitor keys
@@ -462,7 +463,10 @@ function unpaidBodyFor(route, price) {
 }
 for (const route of Object.keys(LANES)) {
   const price = lanePrice(route);
-  tollConfig[`GET ${route}`] = {
+  // Toll every method Express might serve the lane on. GET is the lane;
+  // HEAD is auto-served by Express via the GET handler, so without an
+  // explicit HEAD entry it slipped past the collector (200, no payment).
+  const cfg = {
     accepts: [
       { scheme: "exact", price, network: NETWORK, payTo: PAY_TO },
       { scheme: "exact", price, network: SOLANA_NETWORK, payTo: SOLANA_PAY_TO },
@@ -474,6 +478,8 @@ for (const route of Object.keys(LANES)) {
     extensions: discoveryExtensionFor(route),
     unpaidResponseBody: () => ({ contentType: "application/json", body: unpaidBodyFor(route, price) }),
   };
+  tollConfig[`GET ${route}`] = cfg;
+  tollConfig[`HEAD ${route}`] = { ...cfg };
 }
 app.use(paymentMiddleware(tollConfig, server));
 
@@ -527,13 +533,14 @@ app.get("/", (req, res) => {
 
 function trafficSummary() {
   const lanes = {};
-  let totalChallenged = 0, totalPaid = 0, totalDirVisits = 0, totalDiscovery = 0;
+  let totalChallenged = 0, totalPaid = 0, totalUnpaid2xx = 0, totalDirVisits = 0, totalDiscovery = 0;
   const allPayers = new Set();
   for (const [route, st] of Object.entries(usage.lanes)) {
     lanes[route] = {
       challenged: st.challenged,
       paid: st.paid,
       failed: st.failed || 0,
+      unpaid_2xx: st.unpaid_2xx || 0,
       visits: st.visits || 0,
       unique_payers: st.payers.length,
       first_seen: st.first_seen,
@@ -541,20 +548,32 @@ function trafficSummary() {
     };
     totalChallenged += st.challenged;
     totalPaid += st.paid;
+    totalUnpaid2xx += st.unpaid_2xx || 0;
     if (route === "/tools") totalDirVisits += st.visits || 0;
     else if (DISCOVERY_ROUTES[route]) totalDiscovery += st.visits || 0;
     st.payers.forEach((p) => allPayers.add(p));
+  }
+  // Failure telemetry: counts per lane per failure class (no visitor IDs,
+  // no raw payloads) so we can see WHY agents fail to pay.
+  const failed_by_class = {};
+  for (const e of usage.failed_log || []) {
+    const lane = e.lane || "?";
+    failed_by_class[lane] = failed_by_class[lane] || {};
+    failed_by_class[lane][e.class || "unknown"] =
+      (failed_by_class[lane][e.class || "unknown"] || 0) + 1;
   }
   return {
     since: usage.started_at,
     totals: {
       challenged: totalChallenged,
       paid_crossings: totalPaid,
+      unpaid_2xx: totalUnpaid2xx,
       directory_visits: totalDirVisits,
       discovery_views: totalDiscovery,
       unique_payers: allPayers.size,
     },
     lanes,
+    failed_by_class,
   };
 }
 
