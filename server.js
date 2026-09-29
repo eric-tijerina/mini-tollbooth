@@ -1,5 +1,5 @@
 // Mini's Tollbooth — a chain of tollbooths on one bridge.
-// Thirteen tolled lanes on Base or Solana per call:
+// Fourteen tolled lanes on Base or Solana per call:
 //   Bounty intel ($0.02 USDC each):
 //   GET /bounties    — every open bounty across all boards (aibtc + Taskmarket + Superteam)
 //   GET /fresh       — bounties posted in the last 24h
@@ -287,6 +287,7 @@ const LANES = {
   "/yields": "DeFi yield intel — best stablecoin yields right now from DeFiLlama, sorted by APY, agent-ready JSON.",
   "/new-pairs": "New token listings — the newest DexScreener pairs with live liquidity, volume, and thin-liquidity flags.",
   "/gas": "Live gas prices per chain — Base, Ethereum, and Solana from public RPCs, with speed tiers where derivable.",
+  "/models": "x402-payable AI model catalog — every model agents can call over x402 with per-million-token pricing, free models flagged. Catalog data: BlockRun.AI, bridged by TrollBridge.",
 };
 // Per-lane tolls. Anything not listed here costs PRICE (default $0.02).
 const LANE_PRICES = {
@@ -312,6 +313,7 @@ const LANE_TAGS = {
   "/yields": ["defi-intel", "yields", "stablecoin", "apy", "defi"],
   "/new-pairs": ["defi-intel", "new-listings", "dex", "tokens"],
   "/gas": ["defi-intel", "gas", "fees", "chains"],
+  "/models": ["ai-intel", "models", "llm", "pricing", "x402"],
 };
 const LANE_EXAMPLES = {
   "/bounties": { id: "aibtc-example", title: "Example bounty", reward: "10000 sats", board: "aibtc" },
@@ -327,6 +329,7 @@ const LANE_EXAMPLES = {
   "/yields": { count: 10, stablecoin_only: true, pools: [{ chain: "Ethereum", project: "curve-dex", symbol: "USDC", apy_pct: 8.42, tvl_usd: 5000000 }] },
   "/new-pairs": { count: 10, pairs: [{ chain: "solana", dex: "raydium", base_token: { symbol: "EXAMPLE", name: "Example" }, price_usd: 0.001, liquidity_usd: 25000, flags: [] }] },
   "/gas": { chains: { base: { status: "live", gas_price_gwei: 0.006 }, ethereum: { status: "live", gas_price_gwei: 9.6 }, solana: { status: "live", median_prioritization_fee_microlamports_per_cu: 0 } } },
+  "/models": { count: 110, free_models: ["nvidia/llama-3.2-11b-vision"], models: [{ id: "openai/gpt-6-luna", name: "GPT-6 Luna", provider: "openai", billing_mode: "paid", price_per_1m_input_usd: 0.1 }] },
 };
 const tollConfig = {};
 // x402 v2 carries the payment terms in the `payment-required` header and
@@ -358,6 +361,7 @@ const LANE_PITCH = {
   "/yields": "Skip 20 minutes of yield-farm comparison shopping — best stablecoin APYs, sorted, one 5¢ call.",
   "/new-pairs": "Save an hour of new-listing triage — the newest pairs with liquidity flags, one 5¢ call.",
   "/gas": "10 minutes of RPC polling, done — live gas on Base, Ethereum, and Solana, one 2¢ call.",
+  "/models": "Stop guessing what models cost — every x402-payable AI model with per-million-token pricing and the free ones flagged, one 2¢ call.",
 };
 function readJsonSafe(rel) {
   try {
@@ -552,7 +556,7 @@ app.get("/", (req, res) => {
   res.json({
     bridge: "TrollBridge",
     keeper: "Mini, data-bounty hunter",
-    deal: `An AI-tool marketplace on a toll bridge. Thirteen tolled lanes on Base or Solana — five bounty-intel lanes at ${PRICE} USDC each, trader intel (/prices at ${PRICE}; /enrich and /token-check at $0.05), market intel (/markets and /search at $0.05), and DeFi intel (/yields and /new-pairs at $0.05; /gas at ${PRICE}) — plus a directory of third-party tools. Pay the troll, cross the bridge.`,
+    deal: `An AI-tool marketplace on a toll bridge. Fourteen tolled lanes on Base or Solana — five bounty-intel lanes at ${PRICE} USDC each, trader intel (/prices at ${PRICE}; /enrich and /token-check at $0.05), market intel (/markets and /search at $0.05), DeFi intel (/yields and /new-pairs at $0.05; /gas at ${PRICE}), and AI intel (/models at ${PRICE}) — plus a directory of third-party tools. Pay the troll, cross the bridge.`,
     lanes: Object.fromEntries(
       Object.entries(LANES).map(([route, desc]) => [`GET ${route}`, laneBlurb(route, desc)])
     ),
@@ -984,6 +988,15 @@ app.get("/gas", async (req, res) => {
     res.status(502).json({ error: "upstream data source unreachable — try again shortly" });
   }
 });
+app.get("/models", async (req, res) => {
+  try {
+    const out = await defi.modelCatalog();
+    res.json({ lane: "/models", description: LANES["/models"], ...out });
+  } catch (e) {
+    console.error("route error GET /models:", e.message);
+    res.status(502).json({ error: "upstream data source unreachable — try again shortly" });
+  }
+});
 
 // Build at boot, then keep the feed fresh while awake.
 build()
@@ -1025,7 +1038,7 @@ app.get("/.well-known/x402", (req, res) => {
     // Domain-ownership verification for agent-tools.cloud (claim pending).
     agentToolsVerify: "atc_aAIHBleoK4GPm8pbuJMh1oJ4G1VXjE4X",
     description:
-      "Pay-per-call intel for AI agents. Thirteen tolled lanes: bounty intel (every open bounty across all boards, fresh bounties from the last 24h, recently-paid verdicts proving the boards pay, class-action claim deadlines, verified free sweepstakes) plus trader intel (agent-ready price feed, wallet/address intelligence, token safety scans) plus market intel (live Polymarket prediction-market odds, agent-ready web search) plus DeFi intel (best stablecoin yields, newest token listings with liquidity flags, live gas prices). Bounty lanes and /gas $0.02 USDC per call; /enrich, /token-check, /markets, /search, /yields, and /new-pairs $0.05. Base or Solana.",
+      "Pay-per-call intel for AI agents. Fourteen tolled lanes: bounty intel (every open bounty across all boards, fresh bounties from the last 24h, recently-paid verdicts proving the boards pay, class-action claim deadlines, verified free sweepstakes) plus trader intel (agent-ready price feed, wallet/address intelligence, token safety scans) plus market intel (live Polymarket prediction-market odds, agent-ready web search) plus DeFi intel (best stablecoin yields, newest token listings with liquidity flags, live gas prices) plus AI intel (x402-payable AI model catalog with per-token pricing, catalog data: BlockRun.AI). Bounty lanes, /gas, and /models $0.02 USDC per call; /enrich, /token-check, /markets, /search, /yields, and /new-pairs $0.05. Base or Solana.",
     homepage: base,
     payment: {
       protocol: "x402",
@@ -1165,7 +1178,7 @@ app.get("/openapi.json", (req, res) => {
       title: "TrollBridge",
       version: "1.1.0",
       description:
-        "Pay-per-call intel for AI agents. Thirteen tolled lanes: bounty intel (bounties, fresh, verdicts, deadlines, sweepstakes) at $0.02 USDC per call, trader intel (/prices at $0.02; /enrich and /token-check at $0.05), market intel (/markets and /search at $0.05), DeFi intel (/yields and /new-pairs at $0.05; /gas at $0.02).",
+        "Pay-per-call intel for AI agents. Fourteen tolled lanes: bounty intel (bounties, fresh, verdicts, deadlines, sweepstakes) at $0.02 USDC per call, trader intel (/prices at $0.02; /enrich and /token-check at $0.05), market intel (/markets and /search at $0.05), DeFi intel (/yields and /new-pairs at $0.05; /gas at $0.02), AI intel (/models at $0.02).",
       "x-guidance":
         "Call any lane with GET. Without payment you receive a 402 challenge (x402 v2) with the exact payment requirements in the response headers and body — the 402 is the source of truth for amounts and payTo addresses. Tolls: $0.02 USDC on the bounty lanes, /prices, and /gas; $0.05 USDC on /enrich, /token-check, /markets, /search, /yields, and /new-pairs. Both rails accepted on every lane: Base (USDC 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913) and Solana (USDC EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v). Complete the x402 payment and retry with the X-Payment header. Bounty lanes take ?limit=N (1–200). /enrich needs ?address=…&network=base|solana. /token-check needs ?mint=…&network=base|solana. /markets takes ?q=… (required) and ?limit=1–25. /search needs ?q=…. /yields takes ?limit=1–25 and ?stablecoinOnly=true|false. /new-pairs takes ?limit=1–25 and ?chain=solana|ethereum|base. /gas takes no params. The free directory of third-party tools is GET /tools; bridge traffic stats are GET /traffic.",
       contact: { name: "TrollBridge", url: "https://github.com/eric-tijerina/mini-tollbooth/issues" },

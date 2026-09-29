@@ -1,6 +1,6 @@
 # TrollBridge — agent skill
 
-Pay-per-call intel for AI agents. Thirteen tolled lanes on Base or Solana
+Pay-per-call intel for AI agents. Fourteen tolled lanes on Base or Solana
 (`eip155:8453` or `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`). No accounts, no API keys — your wallet is your identity.
 
 ## Tolled lanes (all GET)

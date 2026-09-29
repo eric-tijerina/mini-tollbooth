@@ -9,6 +9,10 @@
 //   eth_feeHistory, Solana via getRecentPrioritizationFees. 5-min cache.
 //   Degrades per-chain: an unreachable RPC marks that chain "unavailable"
 //   with the last cached value and its age — never a made-up number.
+// /models: BlockRun.AI's public model catalog (no key, no signup) — every
+//   x402-payable AI model with per-million-token pricing, agent-ready.
+//   BlockRun's ToS permits resale with attribution, so the response and the
+//   lane description credit them. 30-min cache.
 const UA = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" };
 const LLAMA_YIELDS = "https://yields.llama.fi/pools";
 const DEX_PROFILES = "https://api.dexscreener.com/token-profiles/latest/v1";
@@ -76,6 +80,8 @@ function makeCache(ttlMs, max = 500) {
 const yieldsCache = makeCache(60 * 60 * 1000);
 const pairsCache = makeCache(15 * 60 * 1000);
 const gasCache = makeCache(5 * 60 * 1000);
+const modelsCache = makeCache(30 * 60 * 1000);
+const BLOCKRUN_MODELS = "https://blockrun.ai/api/v1/models";
 
 function badRequest(msg) {
   const e = new Error(msg);
@@ -284,4 +290,49 @@ async function gasPrices() {
   return out;
 }
 
-module.exports = { topYields, newPairs, gasPrices };
+module.exports = { topYields, newPairs, gasPrices, modelCatalog };
+
+// ---- /models: x402-payable AI model catalog, bridged from BlockRun.AI ----
+async function modelCatalog() {
+  const key = "all";
+  const hit = modelsCache.get(key);
+  if (hit && hit.fresh) return { ...hit.fresh, cached: true };
+
+  const doc = await getJSON(BLOCKRUN_MODELS);
+  const models = ((doc && doc.data) || [])
+    .filter((m) => m.available !== false)
+    .map((m) => {
+      const p = m.pricing || {};
+      return {
+        id: m.id,
+        name: m.name,
+        provider: m.owned_by,
+        description: m.description,
+        context_window: m.context_window,
+        max_output: m.max_output,
+        categories: m.categories || [],
+        billing_mode: m.billing_mode,
+        price_per_1m_input_usd: p.input ?? null,
+        price_per_1m_output_usd: p.output ?? null,
+        cache_read_per_1m_usd: p.cache_read ?? null,
+        cache_write_per_1m_usd: p.cache_write ?? null,
+      };
+    });
+  const out = {
+    generated_at: new Date().toISOString(),
+    count: models.length,
+    free_models: models.filter((m) => m.billing_mode === "free").map((m) => m.id),
+    payment: {
+      rail: "x402",
+      network: "base",
+      asset: "USDC",
+      flat_fee_usd_per_call: 0.001,
+      note: "Models are called directly against BlockRun.AI's x402 endpoints; this lane is the catalog that tells you what exists and what it costs.",
+    },
+    source: "BlockRun.AI public model catalog (no key) — bridged by TrollBridge with attribution",
+    models,
+    cached: false,
+  };
+  modelsCache.set(key, out);
+  return out;
+}
