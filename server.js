@@ -339,6 +339,90 @@ const tollConfig = {};
 const USDC_BASE_ASSET = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 const USDC_SOLANA_ASSET = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 const BRIDGE_BASE_URL = "https://mini-tollbooth.onrender.com";
+// Sales copy: one honest sentence per lane. Shown in the 402 body (pitch),
+// the OpenAPI menu, and skill.md — so an agent deciding whether to pay can
+// see what it's buying. Value props only, never lane data: nothing here
+// leaks anything the toll protects.
+const LANE_PITCH = {
+  "/bounties": "Stop checking five boards — every open agent bounty in one 2¢ call.",
+  "/fresh": "Bounties posted in the last 24 hours — the early hunter gets the payout.",
+  "/verdicts": "See which boards actually pay before you grind — recent payouts with proof.",
+  "/deadlines": "Real-money claim deadlines in one place — miss one and you leave cash on the table.",
+  "/sweepstakes": "Free to enter, real prizes, verified live — 2¢ to see every one worth entering.",
+  "/prices": "Spot prices for the majors plus Base/Solana staples — no API key, agent-ready JSON.",
+  "/enrich": "Point it at any wallet and know who you're dealing with — balances, holdings, risk flags.",
+  "/token-check": "Rug-check before you ape — liquidity, volume, holder concentration, plain-English verdict.",
+  "/markets": "Live Polymarket odds and volume — see where the smart money sits before you bet.",
+  "/search": "Web search as clean JSON — titles, URLs, snippets. No keys, no HTML scraping.",
+  "/yields": "Best stablecoin APYs right now, sorted — put idle USDC to work.",
+  "/new-pairs": "The newest listings with liquidity flags — spot the gems and dodge the traps early.",
+  "/gas": "Live gas on Base, Ethereum, and Solana — never overpay a transaction again.",
+};
+function readJsonSafe(rel) {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(__dirname, rel), "utf8"));
+  } catch {
+    return null;
+  }
+}
+function agoString(iso) {
+  const t = Date.parse(iso);
+  if (!t) return "unknown";
+  const s = Math.max(0, Math.floor((Date.now() - t) / 1000));
+  if (s < 90) return "just now";
+  const m = Math.floor(s / 60);
+  if (m < 90) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 48) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
+// Live lane stats for the 402 body and the free menu. Counts are computed
+// from the lane's own cache files at request time (memoized 60s); lanes
+// with no countable cache get a truthful static line instead. Numbers are
+// never invented — if a file can't be read, the static line is used.
+let pitchStatsCache = { at: 0, feed: null, prices: null };
+function laneStatsFor(route) {
+  const now = Date.now();
+  if (now - pitchStatsCache.at > 60000) {
+    pitchStatsCache = { at: now, feed: readJsonSafe("feed.json"), prices: readJsonSafe("prices.json") };
+  }
+  const { feed, prices } = pitchStatsCache;
+  const feedAge = feed && feed.generated_at ? agoString(feed.generated_at) : "unknown";
+  const n = (arr) => (Array.isArray(arr) ? arr.length : 0);
+  switch (route) {
+    case "/bounties":
+      return feed ? { live_bounties: n(feed.bounties), feed_refreshed: feedAge } : { note: "open bounties across aibtc, Taskmarket, Superteam Earn" };
+    case "/fresh":
+      return feed ? { bounties_last_24h: n(feed.fresh), feed_refreshed: feedAge } : { note: "bounties posted in the last 24 hours" };
+    case "/verdicts":
+      return feed ? { paid_bounties_tracked: n(feed.verdicts), feed_refreshed: feedAge } : { note: "recently paid bounties with payout proof" };
+    case "/deadlines":
+      return feed ? { deadlines_tracked: n(feed.deadlines), feed_refreshed: feedAge } : { note: "class-action and settlement claim deadlines" };
+    case "/sweepstakes":
+      return feed ? { sweepstakes_tracked: n(feed.sweepstakes), feed_refreshed: feedAge } : { note: "free-to-enter sweepstakes with real prizes" };
+    case "/prices": {
+      if (!prices || !Array.isArray(prices.prices)) return { note: "spot prices for majors plus Base/Solana staples" };
+      const symbols = [...new Set(prices.prices.map((p) => p.symbol))];
+      return { assets: symbols.length, symbols, feed_refreshed: agoString(prices.generated_at) };
+    }
+    case "/markets":
+      return { source: "Polymarket", cache: "15-minute", note: "live odds, prices, volume" };
+    case "/search":
+      return { note: "web results as JSON — titles, URLs, snippets" };
+    case "/enrich":
+      return { networks: ["base", "solana"], note: "balances, holdings, heuristic risk flags" };
+    case "/token-check":
+      return { note: "liquidity + volume + holder concentration → 0-100 risk score" };
+    case "/yields":
+      return { source: "DeFiLlama", note: "stablecoin pools sorted by APY" };
+    case "/new-pairs":
+      return { source: "DexScreener", note: "newest listings with thin-liquidity flags" };
+    case "/gas":
+      return { chains: ["base", "ethereum", "solana"], note: "live gas from public RPCs" };
+    default:
+      return { note: LANE_PITCH[route] || "tolled lane" };
+  }
+}
 function unpaidBodyFor(route, price) {
   // USDC has 6 decimals: $0.02 -> 20000, $0.05 -> 50000 atomic units.
   const amount = String(Math.round(parseFloat(String(price).replace("$", "")) * 1e6));
@@ -369,6 +453,11 @@ function unpaidBodyFor(route, price) {
       },
     ],
     extensions: discoveryExtensionFor(route),
+    // Sales fields: what the agent is buying, with live counts where they
+    // exist. Every payment field above is untouched — same amounts, rails,
+    // payTos, and payment-required header as before.
+    pitch: LANE_PITCH[route],
+    stats: laneStatsFor(route),
   };
 }
 for (const route of Object.keys(LANES)) {
@@ -1002,7 +1091,7 @@ app.get("/openapi.json", (req, res) => {
       get: op(
         id,
         `TrollBridge lane: ${id}`,
-        `${description} Costs $${priceUsd} USDC per call on Base or Solana.`,
+        `${description} ${LANE_PITCH[route]} Costs $${priceUsd} USDC per call on Base or Solana. Live stats: ${JSON.stringify(laneStatsFor(route))}.`,
         priceUsd,
         routeParams(route)
       ),

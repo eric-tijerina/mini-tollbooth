@@ -7,19 +7,19 @@ Pay-per-call intel for AI agents. Thirteen tolled lanes on Base or Solana
 
 | Lane | Toll | What you get |
 |---|---|---|
-| `/bounties` | $0.02 | Every open bounty across all boards — aibtc, Taskmarket, Superteam Earn |
-| `/fresh` | $0.02 | Bounties posted in the last 24h. First come, first served |
-| `/verdicts` | $0.02 | Recently **paid** bounties — proof the boards actually pay, with amounts and payout proof (Stacks tx / escrow tx) |
-| `/deadlines` | $0.02 | Class-action and settlement claim deadlines worth real money |
-| `/sweepstakes` | $0.02 | Free-to-enter sweepstakes with real prizes, verified live |
+| `/bounties` | $0.02 | Every open bounty across all boards — aibtc, Taskmarket, Superteam Earn. *Stop checking five boards — one 2¢ call.* |
+| `/fresh` | $0.02 | Bounties posted in the last 24h. First come, first served. *The early hunter gets the payout.* |
+| `/verdicts` | $0.02 | Recently **paid** bounties — proof the boards actually pay, with amounts and payout proof (Stacks tx / escrow tx). *See which boards pay before you grind.* |
+| `/deadlines` | $0.02 | Class-action and settlement claim deadlines worth real money. *Miss one and you leave cash on the table.* |
+| `/sweepstakes` | $0.02 | Free-to-enter sweepstakes with real prizes, verified live. *2¢ to see every one worth entering.* |
 | `/prices` | $0.02 | Agent-ready crypto price feed — spot prices for majors plus Base/Solana staples, no API key needed |
-| `/enrich` | $0.05 | Wallet/address intelligence — balances, holdings, heuristic risk flags. `?address=<wallet>&network=base\|solana` (both required) |
-| `/token-check` | $0.05 | Token safety scan — liquidity, volume, holder concentration, plain-English rug verdict. `?mint=<token>&network=base\|solana` (both required) |
-| `/markets` | $0.05 | Prediction-market intel — live Polymarket odds, prices, and volume as agent-ready JSON. `?q=<search terms>` (required), `?limit=1-25` |
-| `/search` | $0.05 | Web search for agents — titles, URLs, snippets as clean JSON. `?q=<query>` (required) |
-| `/yields` | $0.05 | DeFi yield intel — best stablecoin yields right now from DeFiLlama, sorted by APY. `?limit=1-25`, `?stablecoinOnly=true\|false` |
-| `/new-pairs` | $0.05 | New token listings — newest DexScreener pairs with live liquidity, volume, and thin-liquidity flags. `?limit=1-25`, `?chain=solana\|ethereum\|base` |
-| `/gas` | $0.02 | Live gas prices per chain — Base, Ethereum, Solana from public RPCs, with speed tiers where derivable |
+| `/enrich` | $0.05 | Wallet/address intelligence — balances, holdings, heuristic risk flags. *Point it at any wallet and know who you're dealing with.* `?address=<wallet>&network=base\|solana` (both required) |
+| `/token-check` | $0.05 | Token safety scan — liquidity, volume, holder concentration, plain-English rug verdict. *Rug-check before you ape.* `?mint=<token>&network=base\|solana` (both required) |
+| `/markets` | $0.05 | Prediction-market intel — live Polymarket odds, prices, and volume as agent-ready JSON. *See where the smart money sits before you bet.* `?q=<search terms>` (required), `?limit=1-25` |
+| `/search` | $0.05 | Web search for agents — titles, URLs, snippets as clean JSON. *No keys, no HTML scraping.* `?q=<query>` (required) |
+| `/yields` | $0.05 | DeFi yield intel — best stablecoin yields right now from DeFiLlama, sorted by APY. *Put idle USDC to work.* `?limit=1-25`, `?stablecoinOnly=true\|false` |
+| `/new-pairs` | $0.05 | New token listings — newest DexScreener pairs with live liquidity, volume, and thin-liquidity flags. *Spot the gems and dodge the traps early.* `?limit=1-25`, `?chain=solana\|ethereum\|base` |
+| `/gas` | $0.02 | Live gas prices per chain — Base, Ethereum, Solana from public RPCs, with speed tiers where derivable. *Never overpay a transaction again.* |
 
 `?limit=N` caps items returned (1–200) on the five bounty lanes.
 
