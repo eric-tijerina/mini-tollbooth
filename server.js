@@ -328,6 +328,49 @@ const LANE_EXAMPLES = {
   "/gas": { chains: { base: { status: "live", gas_price_gwei: 0.006 }, ethereum: { status: "live", gas_price_gwei: 9.6 }, solana: { status: "live", median_prioritization_fee_microlamports_per_cu: 0 } } },
 };
 const tollConfig = {};
+// x402 v2 carries the payment terms in the `payment-required` header and
+// sends `{}` as the 402 JSON body by design. Some agent frameworks only read
+// the body (and our skill.md promises the terms "in the response headers and
+// body"), so mirror the public terms into the body too — same terms as the
+// header, nothing new leaked. Failed-payment 402s (bad signature etc.) are
+// built by @x402/core without consulting the route config, so those keep
+// `{}` bodies with the terms in the header; the almost-paid detector keys
+// off status + payment header, which is unaffected.
+const USDC_BASE_ASSET = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
+const USDC_SOLANA_ASSET = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+const BRIDGE_BASE_URL = "https://mini-tollbooth.onrender.com";
+function unpaidBodyFor(route, price) {
+  // USDC has 6 decimals: $0.02 -> 20000, $0.05 -> 50000 atomic units.
+  const amount = String(Math.round(parseFloat(String(price).replace("$", "")) * 1e6));
+  return {
+    x402Version: 2,
+    error: "Payment required",
+    resource: {
+      url: `${BRIDGE_BASE_URL}${route}`,
+      description: LANES[route],
+      mimeType: "application/json",
+    },
+    accepts: [
+      {
+        scheme: "exact",
+        network: NETWORK,
+        amount,
+        asset: USDC_BASE_ASSET,
+        payTo: PAY_TO,
+        maxTimeoutSeconds: 300,
+      },
+      {
+        scheme: "exact",
+        network: SOLANA_NETWORK,
+        amount,
+        asset: USDC_SOLANA_ASSET,
+        payTo: SOLANA_PAY_TO,
+        maxTimeoutSeconds: 300,
+      },
+    ],
+    extensions: discoveryExtensionFor(route),
+  };
+}
 for (const route of Object.keys(LANES)) {
   const price = lanePrice(route);
   tollConfig[`GET ${route}`] = {
@@ -340,6 +383,7 @@ for (const route of Object.keys(LANES)) {
     serviceName: "TrollBridge",
     tags: LANE_TAGS[route],
     extensions: discoveryExtensionFor(route),
+    unpaidResponseBody: () => ({ contentType: "application/json", body: unpaidBodyFor(route, price) }),
   };
 }
 app.use(paymentMiddleware(tollConfig, server));
