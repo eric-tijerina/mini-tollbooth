@@ -1022,6 +1022,8 @@ app.get("/.well-known/x402", (req, res) => {
   res.json({
     spec: "trollbridge-manifest/1",
     name: "TrollBridge",
+    // Domain-ownership verification for agent-tools.cloud (claim pending).
+    agentToolsVerify: "atc_aAIHBleoK4GPm8pbuJMh1oJ4G1VXjE4X",
     description:
       "Pay-per-call intel for AI agents. Thirteen tolled lanes: bounty intel (every open bounty across all boards, fresh bounties from the last 24h, recently-paid verdicts proving the boards pay, class-action claim deadlines, verified free sweepstakes) plus trader intel (agent-ready price feed, wallet/address intelligence, token safety scans) plus market intel (live Polymarket prediction-market odds, agent-ready web search) plus DeFi intel (best stablecoin yields, newest token listings with liquidity flags, live gas prices). Bounty lanes and /gas $0.02 USDC per call; /enrich, /token-check, /markets, /search, /yields, and /new-pairs $0.05. Base or Solana.",
     homepage: base,
