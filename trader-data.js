@@ -155,9 +155,77 @@ async function enrichAddress(address, network) {
   if (hit) return { ...hit, cached: true };
   const out = net === "base" ? await enrichBase(address) : await enrichSolana(address);
   out.risk_note = "risk_flags are simple heuristics (balance / address-type), not a security audit";
+  out.verdict = walletVerdict(out);
   out.cached = false;
   enrichCache.set(key, out);
   return out;
+}
+
+// ---- /enrich verdict: one-line wallet label from the snapshot ----
+function walletVerdict(o) {
+  const flags = o.risk_flags || [];
+  const isContract = /contract|program/i.test(o.address_type || "");
+  const eth = o.native_balance_eth;
+  const sol = o.native_balance_sol;
+  const native = eth != null ? eth : sol;
+  const nativeSym = eth != null ? "ETH" : "SOL";
+  const wb = (o.watchlist_balances && o.watchlist_balances[0]) || {};
+  const usdc = wb.balance;
+  const usdcKnown = usdc != null;
+  const usdcVal = usdcKnown ? usdc : 0;
+  let label, summary;
+  if (isContract) {
+    label = o.network === "solana" ? "program" : "contract";
+    summary = `This is an on-chain ${label}, not a personal wallet — treat its behavior as code, not intent.`;
+  } else if (native === 0 && usdcVal === 0 && usdcKnown) {
+    label = "empty";
+    summary = "No balance on the checked assets — dormant, fresh, or swept wallet.";
+  } else if ((native != null && native >= 10) || usdcVal >= 100000) {
+    label = "whale";
+    const parts = [];
+    if (native != null && native > 0) parts.push(`${native} ${nativeSym}`);
+    if (usdcVal > 0) parts.push(`$${Math.round(usdcVal).toLocaleString()} USDC`);
+    summary = `Well-funded wallet${parts.length ? `: ${parts.join(" + ")}` : ""} on the checked assets.`;
+  } else {
+    label = "funded";
+    summary = "Ordinary funded wallet — modest balance on the checked assets.";
+  }
+  const reasons = [];
+  if (flags.length) reasons.push(...flags);
+  if (!usdcKnown) reasons.push("USDC watchlist balance unknown — RPC hiccup, not necessarily zero");
+  if (!reasons.length) reasons.push("no risk flags in the checked heuristics");
+  return {
+    label,
+    summary,
+    reasons,
+    disclaimer: "Heuristic label from a balance snapshot — not financial advice.",
+  };
+}
+
+// ---- /prices verdict: momentum read from the cached feed ----
+function pricesVerdict(doc) {
+  const rows = (doc.prices || []).map((p) => {
+    const chg = Number(p.change_24h_pct);
+    const momentum = !Number.isFinite(chg) ? "unknown" : chg >= 5 ? "hot" : chg <= -5 ? "cooling" : "flat";
+    return { symbol: p.symbol, price_usd: p.price_usd, change_24h_pct: Number.isFinite(chg) ? +chg.toFixed(2) : null, momentum };
+  });
+  const hot = rows.filter((r) => r.momentum === "hot");
+  const cooling = rows.filter((r) => r.momentum === "cooling");
+  const fmt = (r) => `${r.symbol} ${r.change_24h_pct >= 0 ? "+" : ""}${r.change_24h_pct}%`;
+  let summary;
+  if (!rows.length) summary = "Price feed is empty right now — try again shortly.";
+  else if (!hot.length && !cooling.length) summary = "All tracked assets flat (±5%) over 24h — no momentum either way.";
+  else {
+    const bits = [];
+    if (hot.length) bits.push("Hot: " + hot.map(fmt).join(", "));
+    if (cooling.length) bits.push("Cooling: " + cooling.map(fmt).join(", "));
+    summary = bits.join("; ") + ".";
+  }
+  return {
+    summary,
+    movers: rows,
+    disclaimer: "Heuristic momentum read — not financial advice.",
+  };
 }
 
 // ---- /token-check: token safety scan ----
@@ -280,4 +348,4 @@ async function checkToken(mint, network) {
   return out;
 }
 
-module.exports = { loadPrices, enrichAddress, checkToken };
+module.exports = { loadPrices, pricesVerdict, enrichAddress, checkToken };
