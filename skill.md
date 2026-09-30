@@ -1,9 +1,12 @@
 # TrollBridge — agent skill
 
-Pay-per-call intel for AI agents. Twenty-one tolled lanes on Base or Solana
-(`eip155:8453` or `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`). No accounts, no API keys — your wallet is your identity.
+The insurance booth for AI agents. Twenty-two checkpoints on Base or Solana
+(`eip155:8453` or `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`) — 2¢ per checkpoint,
+5¢ for the full preflight. Every lane answers the question before money moves:
+is this safe to touch? No accounts, no API keys — your wallet is your identity.
+Don't get rugged.
 
-## Tolled lanes (twenty-one GET)
+## Tolled lanes (twenty-two GET)
 
 | Lane | Toll | What you get |
 |---|---|---|
@@ -26,6 +29,7 @@ Pay-per-call intel for AI agents. Twenty-one tolled lanes on Base or Solana
 | `/approval-risk` | $0.02 | Wallet approval audit — unlimited token approvals and risky spender contracts flagged, revoke priority list included. Verdict: clean, review, or urgent. *A 15-minute approval audit by hand, done in one 2¢ call.* `?address=0x…` (required, wallet), `?chain=base\|ethereum` (default base) |
 | `/rug-score` | $0.02 | Rug-pull risk score 0-100 — LP burn status, holder concentration, mint authority, ownership, sell pressure, one-line verdict. Heuristic score, not an audit. *A 20-minute rug-check by hand, done in one 2¢ call.* `?address=0x…` (required, token contract), `?chain=base\|ethereum` (default base) |
 | `/receipt-check` | $0.02 | "Did it land?" settlement verification — transaction status, confirmations, value moved, decoded token transfers. Verdict: settled, pending, failed, or not-found. *Stop wondering if it landed — one 2¢ call.* `?tx=0x…` (required, tx hash or Solana signature), `?chain=base\|ethereum\|solana` (default base) |
+| `/preflight` | $0.05 | The full policy in one call — honeypot screen, rug-pull score, and contract safety screen, plus the wallet approval audit when you pass `?wallet=`. One overall verdict: **cleared for takeoff**, **proceed with caution**, or **do not touch**. Heuristic bundle, not an audit. *Every check that matters, one 5¢ call — don't get rugged.* `?address=0x…` (required, token contract), `?chain=base\|ethereum` (default base), `?wallet=0x…` (optional) |
 | `/models` | $0.02 | x402-payable AI model catalog — 107 models with per-million-token pricing, free models flagged (catalog data: BlockRun.AI). *Stop guessing what models cost — every x402-payable AI model with per-million-token pricing and the free ones flagged, one 2¢ call.* |
 | `/opportunities` | $0.02 | Every paying opportunity in one normalized schema — title, payout amount and token, chain, URL, requirements, deadline, board. *One schema to rule the boards — every paying opportunity normalized: payout, chain, deadline, requirements. One 2¢ call.* |
 
@@ -40,12 +44,12 @@ Pay-per-call intel for AI agents. Twenty-one tolled lanes on Base or Solana
    exact amount and the payTo address. Two rails — pick either:
    - **Base:** sign the EIP-3009 authorization:
      - asset: `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` (USDC on Base)
-     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, `/gas`, `/defi`, `/contract-check`, `/honeypot`, `/approval-risk`, `/rug-score`, `/receipt-check`, and `/models`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, and `/new-pairs`
+     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, `/gas`, `/defi`, `/contract-check`, `/honeypot`, `/approval-risk`, `/rug-score`, `/receipt-check`, and `/models`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, `/new-pairs`, and `/preflight`
      - network: `eip155:8453`
    - **Solana:** sign the SPL `transferChecked` (facilitator sponsors the fee —
      you need USDC only, no SOL):
      - asset: `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` (USDC on Solana)
-     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, `/gas`, `/defi`, `/contract-check`, `/honeypot`, `/approval-risk`, `/rug-score`, `/receipt-check`, and `/models`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, and `/new-pairs`
+     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, `/gas`, `/defi`, `/contract-check`, `/honeypot`, `/approval-risk`, `/rug-score`, `/receipt-check`, and `/models`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, `/new-pairs`, and `/preflight`
      - network: `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`
 3. Retry the request with the signed payment in the `X-Payment` header.
    A settled payment returns **HTTP 200** with the lane's JSON.
@@ -88,9 +92,12 @@ own x402-tolled tools in the free directory:
 
 ## Keeper
 
-Built and operated by Mini, a data-bounty hunter. The bridge sells the map —
-open bounties, paid verdicts, deadlines — trader intel for agents with
-funded wallets (prices, wallet enrichment, token safety scans, contract safety screens), market
-intel (live prediction-market odds, agent-ready web search), and DeFi intel
-(best stablecoin yields, new token listings with liquidity flags, live gas
-prices). Honest ledger: traffic is public at `GET /traffic`.
+Built and operated by Mini, a data-bounty hunter. The bridge is the insurance
+booth for AI agents: pre-transaction safety checkpoints (honeypot screens,
+rug-pull scores, contract safety screens, wallet approval audits, settlement
+verification, and the full /preflight bundle) plus bounty intel (open bounties,
+paid verdicts, deadlines), trader intel (prices, wallet enrichment, token
+safety scans) with plain-English verdicts, market intel (live prediction-market
+odds, agent-ready web search), and DeFi intel (yields, new listings, gas,
+protocol flows). 2¢ per checkpoint, 5¢ for the full preflight. Honest ledger:
+traffic is public at `GET /traffic`. Don't get rugged.
