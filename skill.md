@@ -1,9 +1,9 @@
 # TrollBridge — agent skill
 
-Pay-per-call intel for AI agents. Fifteen tolled lanes on Base or Solana
+Pay-per-call intel for AI agents. Sixteen tolled lanes on Base or Solana
 (`eip155:8453` or `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`). No accounts, no API keys — your wallet is your identity.
 
-## Tolled lanes (all GET)
+## Tolled lanes (fifteen GET, one POST)
 
 | Lane | Toll | What you get |
 |---|---|---|
@@ -22,25 +22,27 @@ Pay-per-call intel for AI agents. Fifteen tolled lanes on Base or Solana
 | `/gas` | $0.02 | Live gas prices per chain — Base, Ethereum, Solana from public RPCs, with speed tiers where derivable. *10 minutes of RPC polling, done — live gas on Base, Ethereum, and Solana, one 2¢ call.* |
 | `/models` | $0.02 | x402-payable AI model catalog — 107 models with per-million-token pricing, free models flagged (catalog data: BlockRun.AI). *Stop guessing what models cost — every x402-payable AI model with per-million-token pricing and the free ones flagged, one 2¢ call.* |
 | `/opportunities` | $0.02 | Every paying opportunity in one normalized schema — title, payout amount and token, chain, URL, requirements, deadline, board. *One schema to rule the boards — every paying opportunity normalized: payout, chain, deadline, requirements. One 2¢ call.* |
+| `/file-pr` | $2.00 | **POST.** The keeper files your GitHub PR for you — fork, byte-precise commit via the API, PR opened against upstream. Public repos, one file per call (max 100KB). *Skip 40 minutes of GitHub web-editor wrestling — we fork the repo, commit your change byte-precise via the API, and open the PR. One $2 call.* JSON body: `repo` (owner/name), `path`, `content`, `branch` (new), `pr_title`, `pr_body` (optional) |
 
 `?limit=N` caps items returned (1–200) on the six bounty lanes.
 
 ## How to pay (x402 v2)
 
-1. `GET` a lane. Without payment you get **HTTP 402** with the payment requirements
+1. `GET` a lane (`POST` for `/file-pr`, with the JSON body). Without payment you get **HTTP 402** with the payment requirements
    in the response headers and JSON body — the 402 is the source of truth for the
    exact amount and the payTo address. Two rails — pick either:
    - **Base:** sign the EIP-3009 authorization:
      - asset: `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` (USDC on Base)
-     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, `/gas`, and `/models`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, and `/new-pairs`
+     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, `/gas`, and `/models`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, and `/new-pairs`; `2000000` ($2.00) on POST `/file-pr`
      - network: `eip155:8453`
    - **Solana:** sign the SPL `transferChecked` (facilitator sponsors the fee —
      you need USDC only, no SOL):
      - asset: `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` (USDC on Solana)
-     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, `/gas`, and `/models`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, and `/new-pairs`
+     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, `/gas`, and `/models`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, and `/new-pairs`; `2000000` ($2.00) on POST `/file-pr`
      - network: `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`
 3. Retry the request with the signed payment in the `X-Payment` header.
-   A settled payment returns **HTTP 200** with the lane's JSON.
+   A settled payment returns **HTTP 200** with the lane's JSON. (`POST /file-pr`
+   returns the filed PR: `pr_url`, `pr_number`, `repo`, `branch`.)
 
 ## Free endpoints (never tolled)
 
