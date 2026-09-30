@@ -1,5 +1,5 @@
 // Mini's Tollbooth — a chain of tollbooths on one bridge.
-// Seventeen tolled lanes on Base or Solana per call:
+// Eighteen tolled lanes on Base or Solana per call:
 //   Bounty intel ($0.02 USDC each):
 //   GET /bounties    — every open bounty across all boards (aibtc + Taskmarket + Superteam)
 //   GET /fresh       — bounties posted in the last 24h
@@ -11,6 +11,7 @@
 //   GET /prices      — agent-ready crypto price feed, no API key needed ($0.02)
 //   GET /enrich      — wallet/address intelligence: balances, holdings, risk flags ($0.05)
 //   GET /token-check — token safety scan: liquidity, holders, rug verdict ($0.05)
+//   GET /contract-check — contract safety screen: verification, proxy/owner heuristics, holder concentration ($0.02)
 //   Market intel:
 //   GET /markets     — live Polymarket odds, prices, volume ($0.05)
 //   GET /search      — web search JSON, no API key needed ($0.05)
@@ -48,6 +49,7 @@ const almostPaid = require("./almost-paid");
 const trader = require("./trader-data");
 const intel = require("./markets-data");
 const defi = require("./defi-data");
+const contractCheck = require("./contract-check");
 const { filePr, MAX_CONTENT_BYTES } = require("./github-pr");
 
 
@@ -269,6 +271,10 @@ const DEFI_SCHEMA = {
   section: { type: "string", enum: ["movers", "fees", "revenue", "stablecoins"], description: "Which intel section (default movers)." },
   limit: { type: "integer", minimum: 1, maximum: 25, description: "Max items per list (default 10)." },
 };
+const CONTRACT_CHECK_SCHEMA = {
+  address: { type: "string", description: "Contract address to screen (0x… on Base or Ethereum)." },
+  chain: { type: "string", enum: ["base", "ethereum"], description: "Which chain (default base)." },
+};
 // /file-pr takes a JSON body (POST), not query params: repo + file + change in, PR URL out.
 const FILE_PR_SCHEMA = {
   repo: { type: "string", description: "Target public repo as owner/name (e.g. xpaysh/awesome-x402)." },
@@ -284,6 +290,7 @@ function discoveryExtensionFor(route) {
   if (route === "/yields") return discoveryForParams(route, YIELDS_SCHEMA, [], { limit: 10 }, LANE_EXAMPLES[route]);
   if (route === "/new-pairs") return discoveryForParams(route, NEWPAIRS_SCHEMA, [], { limit: 10 }, LANE_EXAMPLES[route]);
   if (route === "/defi") return discoveryForParams(route, DEFI_SCHEMA, [], { section: "movers", limit: 10 }, LANE_EXAMPLES[route]);
+  if (route === "/contract-check") return discoveryForParams(route, CONTRACT_CHECK_SCHEMA, ["address"], { address: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", chain: "base" }, LANE_EXAMPLES[route]);
   if (route === "/gas") return discoveryForParams(route, {}, [], {}, LANE_EXAMPLES[route]);
   if (route === "/enrich") return discoveryForParams(route, ADDRESS_SCHEMA, ["address", "network"], { address: "0x8BE8D056d5F0bEF850eC9ed5C4a8d647cBE896C0", network: "base" }, LANE_EXAMPLES[route]);
   if (route === "/token-check") return discoveryForParams(route, MINT_SCHEMA, ["mint", "network"], { mint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", network: "solana" }, LANE_EXAMPLES[route]);
@@ -313,6 +320,7 @@ const LANES = {
   "/new-pairs": "New token listings — the newest DexScreener pairs with live liquidity, volume, and thin-liquidity flags.",
   "/gas": "Live gas prices per chain — Base, Ethereum, and Solana from public RPCs, with speed tiers where derivable.",
   "/defi": "DeFi protocol intel — top TVL movers, daily fee and revenue leaders, and stablecoin supply flows. From DeFiLlama's free API, agent-ready JSON.",
+  "/contract-check": "Contract safety screen — verification status, proxy and owner-privilege heuristics, holder concentration, and a plain-English risk verdict before you sign. Heuristic screen, not an audit.",
   "/models": "x402-payable AI model catalog — every model agents can call over x402 with per-million-token pricing, free models flagged. Catalog data: BlockRun.AI, bridged by TrollBridge.",
   "/file-pr": "GitHub PR filing for AI agents — send a repo, file path, and new content; the keeper forks the repo, commits your change byte-precise via the API, and opens the pull request. Public repos, one file per call.",
 };
@@ -343,6 +351,7 @@ const LANE_TAGS = {
   "/new-pairs": ["defi-intel", "new-listings", "dex", "tokens"],
   "/gas": ["defi-intel", "gas", "fees", "chains"],
   "/defi": ["defi-intel", "tvl", "fees", "revenue", "stablecoins", "defi"],
+  "/contract-check": ["trader-intel", "contract-safety", "risk", "defi"],
   "/models": ["ai-intel", "models", "llm", "pricing", "x402"],
   "/file-pr": ["builder-services", "github", "pr-filing", "automation", "developer-tools"],
 };
@@ -362,6 +371,7 @@ const LANE_EXAMPLES = {
   "/new-pairs": { count: 10, pairs: [{ chain: "solana", dex: "raydium", base_token: { symbol: "EXAMPLE", name: "Example" }, price_usd: 0.001, liquidity_usd: 25000, flags: [] }] },
   "/gas": { chains: { base: { status: "live", gas_price_gwei: 0.006 }, ethereum: { status: "live", gas_price_gwei: 9.6 }, solana: { status: "live", median_prioritization_fee_microlamports_per_cu: 0 } } },
   "/defi": { section: "movers", count: { gainers: 10, losers: 10 }, gainers: [{ name: "Example Protocol", category: "Lending", tvl_usd: 1500000000, change_1d_pct: 12.5 }] },
+  "/contract-check": { chain: "base", address: "0x...", verified: true, risk: "medium", risk_score: 10, findings: [{ severity: "medium", code: "upgradeable-proxy", title: "Upgradeable proxy" }], summary: "…" },
   "/models": { count: 110, free_models: ["nvidia/llama-3.2-11b-vision"], models: [{ id: "openai/gpt-6-luna", name: "GPT-6 Luna", provider: "openai", billing_mode: "paid", price_per_1m_input_usd: 0.1 }] },
   "/file-pr": { status: "filed", pr_url: "https://github.com/OWNER/REPO/pull/123", pr_number: 123, repo: "OWNER/REPO", branch: "add-my-line", fork: "eric-tijerina/REPO" },
 };
@@ -397,6 +407,7 @@ const LANE_PITCH = {
   "/new-pairs": "Save an hour of new-listing triage — the newest pairs with liquidity flags, one 5¢ call.",
   "/gas": "10 minutes of RPC polling, done — live gas on Base, Ethereum, and Solana, one 2¢ call.",
   "/defi": "Skip an hour of DeFiLlama tab-hopping — top TVL movers, fee and revenue leaders, stablecoin flows, one 2¢ call.",
+  "/contract-check": "A 20-minute contract read by hand, done in one 2¢ call — verification, proxy and owner heuristics, holder concentration, plain-English verdict. Heuristic screen, not an audit.",
   "/models": "Stop guessing what models cost — every x402-payable AI model with per-million-token pricing and the free ones flagged, one 2¢ call.",
   "/file-pr": "Skip 40 minutes of GitHub web-editor wrestling — we fork the repo, commit your change byte-precise via the API, and open the PR. One $2 call.",
 };
@@ -465,6 +476,8 @@ function laneStatsFor(route) {
       return { chains: ["base", "ethereum", "solana"], note: "live gas from public RPCs" };
     case "/defi":
       return { source: "DeFiLlama", sections: ["movers", "fees", "revenue", "stablecoins"], note: "protocol TVL movers, fee/revenue leaders, stablecoin flows" };
+    case "/contract-check":
+      return { chains: ["base", "ethereum"], note: "verification + proxy/owner heuristics + holder concentration — heuristic screen, not an audit" };
     case "/file-pr":
       return { method: "POST", body: "JSON", public_repos_only: true, one_file_per_call: true, max_content_kb: 100, note: "fork + byte-precise commit + PR opened for you" };
     default:
@@ -599,14 +612,14 @@ app.get("/", (req, res) => {
     const toll = lanePrice(route);
     if (route === "/file-pr") return `${desc} POST JSON {repo, path, content, branch, pr_title, pr_body?} — ${toll} USDC`;
     if (route === "/prices") return `${desc} (${pricesDoc.prices.length} assets, refreshed ${pricesDoc.generated_at || "soon"}) — ${toll} USDC`;
-    if (route === "/enrich" || route === "/token-check" || route === "/markets" || route === "/search" || route === "/yields" || route === "/new-pairs" || route === "/gas" || route === "/defi") return `${desc} On-demand lookup — ${toll} USDC`;
+    if (route === "/enrich" || route === "/token-check" || route === "/markets" || route === "/search" || route === "/yields" || route === "/new-pairs" || route === "/gas" || route === "/defi" || route === "/contract-check") return `${desc} On-demand lookup — ${toll} USDC`;
     const n = (feed.count && feed.count[route.slice(1)]) || 0;
     return `${desc} (open items: ${n}) — ${toll} USDC`;
   };
   res.json({
     bridge: "TrollBridge",
     keeper: "Mini, data-bounty hunter",
-    deal: `An AI-tool marketplace on a toll bridge. Seventeen tolled lanes on Base or Solana — six bounty-intel lanes at ${PRICE} USDC each, trader intel (/prices at ${PRICE}; /enrich and /token-check at $0.05), market intel (/markets and /search at $0.05), DeFi intel (/yields and /new-pairs at $0.05; /gas and /defi at ${PRICE}), AI intel (/models at ${PRICE}), and a builder service (POST /file-pr files your GitHub PR for you at $2.00) — plus a directory of third-party tools. Pay the troll, cross the bridge.`,
+    deal: `An AI-tool marketplace on a toll bridge. Eighteen tolled lanes on Base or Solana — six bounty-intel lanes at ${PRICE} USDC each, trader intel (/prices and /contract-check at ${PRICE}; /enrich and /token-check at $0.05), market intel (/markets and /search at $0.05), DeFi intel (/yields and /new-pairs at $0.05; /gas and /defi at ${PRICE}), AI intel (/models at ${PRICE}), and a builder service (POST /file-pr files your GitHub PR for you at $2.00) — plus a directory of third-party tools. Pay the troll, cross the bridge.`,
     lanes: Object.fromEntries(
       Object.entries(LANES).map(([route, desc]) => [`GET ${route}`, laneBlurb(route, desc)])
     ),
@@ -1051,6 +1064,20 @@ app.get("/defi", async (req, res) => {
     res.status(502).json({ error: "upstream data source unreachable — try again shortly" });
   }
 });
+
+// GET /contract-check?address=0x…&chain=base — contract safety screen from
+// Blockscout's free API: verification, proxy/owner heuristics, holder
+// concentration, plain-English risk verdict. Heuristic screen, not an audit.
+app.get("/contract-check", async (req, res) => {
+  try {
+    const out = await contractCheck.checkContract(req.query.address, req.query.chain);
+    res.json({ lane: "/contract-check", description: LANES["/contract-check"], ...out });
+  } catch (e) {
+    if (e.statusCode === 400) return res.status(400).json({ error: e.message, usage: "GET /contract-check?address=0x…&chain=base|ethereum" });
+    console.error("route error GET /contract-check:", e.message);
+    res.status(502).json({ error: "upstream data source unreachable — try again shortly" });
+  }
+});
 app.get("/models", async (req, res) => {
   try {
     const out = await defi.modelCatalog();
@@ -1118,7 +1145,7 @@ app.get("/.well-known/x402", (req, res) => {
     // Domain-ownership verification for agent-tools.cloud (claim pending).
     agentToolsVerify: "atc_aAIHBleoK4GPm8pbuJMh1oJ4G1VXjE4X",
     description:
-      "Pay-per-call intel and builder services for AI agents. Seventeen tolled lanes: bounty intel (every open bounty across all boards, fresh bounties from the last 24h, recently-paid verdicts proving the boards pay, class-action claim deadlines, verified free sweepstakes, every paying opportunity in one normalized schema) plus trader intel (agent-ready price feed, wallet/address intelligence, token safety scans) plus market intel (live Polymarket prediction-market odds, agent-ready web search) plus DeFi intel (best stablecoin yields, newest token listings with liquidity flags, live gas prices, protocol TVL movers plus fee/revenue leaders plus stablecoin flows) plus AI intel (x402-payable AI model catalog with per-token pricing, catalog data: BlockRun.AI) plus a builder service (POST /file-pr: the keeper files your GitHub PR for you — fork, byte-precise commit, PR opened). Bounty lanes, /gas, /defi, and /models $0.02 USDC per call; /enrich, /token-check, /markets, /search, /yields, and /new-pairs $0.05; /file-pr $2.00. Base or Solana.",
+      "Pay-per-call intel and builder services for AI agents. Eighteen tolled lanes: bounty intel (every open bounty across all boards, fresh bounties from the last 24h, recently-paid verdicts proving the boards pay, class-action claim deadlines, verified free sweepstakes, every paying opportunity in one normalized schema) plus trader intel (agent-ready price feed, wallet/address intelligence, token safety scans, contract safety screens) plus market intel (live Polymarket prediction-market odds, agent-ready web search) plus DeFi intel (best stablecoin yields, newest token listings with liquidity flags, live gas prices, protocol TVL movers plus fee/revenue leaders plus stablecoin flows) plus AI intel (x402-payable AI model catalog with per-token pricing, catalog data: BlockRun.AI) plus a builder service (POST /file-pr: the keeper files your GitHub PR for you — fork, byte-precise commit, PR opened). Bounty lanes, /gas, /defi, /contract-check, and /models $0.02 USDC per call; /enrich, /token-check, /markets, /search, /yields, and /new-pairs $0.05; /file-pr $2.00. Base or Solana.",
     homepage: base,
     payment: {
       protocol: "x402",
@@ -1240,6 +1267,10 @@ app.get("/openapi.json", (req, res) => {
       { name: "section", in: "query", required: false, description: "Intel section: movers, fees, revenue, stablecoins (default movers).", schema: { type: "string", enum: ["movers", "fees", "revenue", "stablecoins"] } },
       { name: "limit", in: "query", required: false, description: "Max items per list (1–25, default 10).", schema: { type: "integer", minimum: 1, maximum: 25 } },
     ];
+    if (route === "/contract-check") return [
+      { name: "address", in: "query", required: true, description: "Contract address to screen (0x…).", schema: { type: "string" } },
+      { name: "chain", in: "query", required: false, description: "Which chain: base or ethereum (default base).", schema: { type: "string", enum: ["base", "ethereum"] } },
+    ];
     return [laneParam];
   };
   const paths = {};
@@ -1320,9 +1351,9 @@ app.get("/openapi.json", (req, res) => {
       title: "TrollBridge",
       version: "1.1.0",
       description:
-        "Pay-per-call intel for AI agents. Seventeen tolled lanes: bounty intel (bounties, fresh, verdicts, deadlines, sweepstakes, opportunities) at $0.02 USDC per call, trader intel (/prices at $0.02; /enrich and /token-check at $0.05), market intel (/markets and /search at $0.05), DeFi intel (/yields and /new-pairs at $0.05; /gas and /defi at $0.02), AI intel (/models at $0.02), and a builder service (POST /file-pr files your GitHub PR for you at $2.00).",
+        "Pay-per-call intel for AI agents. Eighteen tolled lanes: bounty intel (bounties, fresh, verdicts, deadlines, sweepstakes, opportunities) at $0.02 USDC per call, trader intel (/prices and /contract-check at $0.02; /enrich and /token-check at $0.05), market intel (/markets and /search at $0.05), DeFi intel (/yields and /new-pairs at $0.05; /gas and /defi at $0.02), AI intel (/models at $0.02), and a builder service (POST /file-pr files your GitHub PR for you at $2.00).",
       "x-guidance":
-        "Call any lane with GET, except /file-pr which is POST with a JSON body {repo, path, content, branch, pr_title, pr_body?}. Without payment you receive a 402 challenge (x402 v2) with the exact payment requirements in the response headers and body — the 402 is the source of truth for amounts and payTo addresses. Tolls: $0.02 USDC on the bounty lanes, /prices, and /gas; $0.05 USDC on /enrich, /token-check, /markets, /search, /yields, and /new-pairs; $2.00 USDC on /file-pr. Both rails accepted on every lane: Base (USDC 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913) and Solana (USDC EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v). Complete the x402 payment and retry with the X-Payment header. Bounty lanes take ?limit=N (1–200). /enrich needs ?address=…&network=base|solana. /token-check needs ?mint=…&network=base|solana. /markets takes ?q=… (required) and ?limit=1–25. /search needs ?q=…. /yields takes ?limit=1–25 and ?stablecoinOnly=true|false. /new-pairs takes ?limit=1–25 and ?chain=solana|ethereum|base. /gas takes no params. The free directory of third-party tools is GET /tools; bridge traffic stats are GET /traffic.",
+        "Call any lane with GET, except /file-pr which is POST with a JSON body {repo, path, content, branch, pr_title, pr_body?}. Without payment you receive a 402 challenge (x402 v2) with the exact payment requirements in the response headers and body — the 402 is the source of truth for amounts and payTo addresses. Tolls: $0.02 USDC on the bounty lanes, /prices, /gas, /defi, and /contract-check; $0.05 USDC on /enrich, /token-check, /markets, /search, /yields, and /new-pairs; $2.00 USDC on /file-pr. Both rails accepted on every lane: Base (USDC 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913) and Solana (USDC EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v). Complete the x402 payment and retry with the X-Payment header. Bounty lanes take ?limit=N (1–200). /enrich needs ?address=…&network=base|solana. /token-check needs ?mint=…&network=base|solana. /contract-check needs ?address=… and takes ?chain=base|ethereum (default base). /markets takes ?q=… (required) and ?limit=1–25. /search needs ?q=…. /yields takes ?limit=1–25 and ?stablecoinOnly=true|false. /new-pairs takes ?limit=1–25 and ?chain=solana|ethereum|base. /gas takes no params. The free directory of third-party tools is GET /tools; bridge traffic stats are GET /traffic.",
       contact: { name: "TrollBridge", url: "https://github.com/eric-tijerina/mini-tollbooth/issues" },
     },
     paths,
