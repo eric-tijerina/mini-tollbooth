@@ -99,12 +99,44 @@ async function searchMarkets(q, limit) {
     query,
     count: events.length,
     events,
+    verdict: marketsVerdict(events),
     source: "polymarket gamma api (free, no key)",
     note: "Prices are per-outcome probabilities in USD (0–1). Refresh: 15 min cache.",
     cached: false,
   };
   marketsCache.set(key, out);
   return out;
+}
+
+// ---- /markets verdict: where is the lopsided conviction? ----
+function marketsVerdict(events) {
+  const reads = [];
+  for (const ev of events || []) {
+    for (const m of ev.outcomes || []) {
+      const priced = (m.prices || []).filter((p) => p.price != null);
+      if (!priced.length) continue;
+      const top = priced.reduce((a, b) => (a.price > b.price ? a : b));
+      const vol = num(m.volume_24h_usd) || 0;
+      if ((top.price >= 0.75 || top.price <= 0.25) && vol >= 1000) {
+        reads.push({
+          question: m.question,
+          lean: `${top.outcome} at ${Math.round(top.price * 100)}¢`,
+          volume_24h_usd: vol,
+          url: ev.url,
+        });
+      }
+      if (reads.length >= 5) break;
+    }
+    if (reads.length >= 5) break;
+  }
+  const summary = reads.length
+    ? `Conviction is lopsided in ${reads.length} market${reads.length > 1 ? "s" : ""} — sharpest: "${reads[0].question}" leaning ${reads[0].lean} on $${Math.round(reads[0].volume_24h_usd).toLocaleString()} 24h volume.`
+    : "No lopsided high-conviction markets in this set — odds look balanced or volume is thin.";
+  return {
+    summary,
+    conviction_reads: reads,
+    disclaimer: "Heuristic read of public odds — not financial advice, not a betting tip.",
+  };
 }
 
 // ---- /search: web search for agents ----
