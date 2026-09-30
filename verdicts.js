@@ -38,6 +38,7 @@ const DISCLAIMER =
   "Heuristic verdict from public on-chain data — not financial advice and not a security audit. Verify independently before moving funds.";
 
 const TRANSFER_SEL = "0xa9059cbb"; // transfer(address,uint256)
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const APPROVE_SEL = "0x095ea7b3"; // approve(address,uint256)
 const ALLOWANCE_SEL = "0xdd62ed3e"; // allowance(address,address)
 const OWNER_SEL = "0x8da5cb5b"; // owner()
@@ -253,41 +254,81 @@ async function runHoneypot(api, chain, addr) {
     } catch { /* source scan is a bonus */ }
   }
 
-  // Sell simulation: eth_call a tiny transfer FROM recent senders (wallets that
-  // just moved this token — they hold or held it). If every sender's transfer
-  // reverts, nobody can sell — the textbook honeypot. (Blockscout's /holders
-  // endpoint hangs on large-holder tokens, so recent transfers are the
-  // reliable holder source.)
-  const sim = { holders_tested: 0, succeeded: 0, reverted: 0, transport_failed: false, note: null };
+  // Sell simulation: eth_call a tiny transfer FROM funded holder wallets. We
+  // sample recent transfer senders, then REQUIRE each one to (a) actually hold
+  // a balance (balanceOf > 0) and (b) be an EOA, not a contract — a zero-balance
+  // sender or a contract reverts benignly and would be a false alarm. Only
+  // funded-holder reverts count. ≥2 funded-holder reverts = suspicious
+  // (selective blocking); every funded holder reverting = honeypot. Fewer than
+  // 2 funded holders = sample too small, no simulation-based finding.
+  // (Blockscout's /holders endpoint hangs on large-holder tokens, so recent
+  // transfers are the reliable holder source.)
+  const sim = { holders_tested: 0, succeeded: 0, reverted: 0, skipped: 0, transport_failed: false, note: null };
   try {
     const transfers = await getJSON(`${api}/tokens/${addr}/transfers`);
-    const senders = [];
+    const candidates = [];
     for (const t of (transfers && transfers.items) || []) {
       const f = t.from && t.from.hash;
-      if (f && !DEAD_ADDRESSES.has(f.toLowerCase()) && f.toLowerCase() !== addr.toLowerCase() && !senders.includes(f)) {
-        senders.push(f);
+      const fl = (f || "").toLowerCase();
+      if (f && !DEAD_ADDRESSES.has(fl) && fl !== addr.toLowerCase() && !candidates.some((c) => c.toLowerCase() === fl)) {
+        candidates.push(f);
       }
-      if (senders.length >= 3) break;
+      if (candidates.length >= 8) break;
     }
-    const data = TRANSFER_SEL + padAddr("0x000000000000000000000000000000000000dEaD") + padUint(1000n);
-    for (const sender of senders) {
-      const r = await rpcRaw(EVM_RPCS[chain], "eth_call", [{ from: sender, to: addr, data }, "latest"]);
-      if (!r.transportOk) { sim.transport_failed = true; break; }
+    const transferTo = "0x000000000000000000000000000000000000dEaD";
+    // Transport resilience: an isolated RPC hiccup skips that sender and we
+    // keep screening; 2 consecutive transport failures means the RPCs are
+    // down, so abort fast instead of burning minutes on dead calls.
+    let transportStrikes = 0;
+    const strike = () => {
+      transportStrikes++;
+      sim.skipped++;
+      if (transportStrikes >= 2) { sim.transport_failed = true; return true; }
+      return false;
+    };
+    for (const sender of candidates) {
+      if (sim.holders_tested >= 3 || sim.transport_failed) break;
+      await sleep(350); // stay under public-RPC rate limits (429s kill the sim)
+      // (a) must hold a balance — zero-balance senders revert benignly
+      const balCall = await rpcRaw(EVM_RPCS[chain], "eth_call", [{ to: addr, data: BALANCEOF_SEL + padAddr(sender) }, "latest"], 15000);
+      if (!balCall.transportOk) { if (strike()) break; else continue; }
+      transportStrikes = 0;
+      let bal = 0n;
+      try { bal = BigInt(balCall.result || "0x0"); } catch { bal = 0n; }
+      if (balCall.reverted || bal === 0n) { sim.skipped++; continue; }
+      await sleep(350);
+      // (b) must be an EOA — contracts can revert for unrelated reasons
+      const codeCall = await rpcRaw(EVM_RPCS[chain], "eth_getCode", [sender, "latest"], 15000);
+      if (!codeCall.transportOk) { if (strike()) break; else continue; }
+      transportStrikes = 0;
+      const code = codeCall.result || "0x";
+      if (!codeCall.reverted && code !== "0x" && code !== "0x0") { sim.skipped++; continue; }
+      await sleep(350);
+      // funded EOA holder — simulate a tiny sell (their balance or 1000 units)
+      const amount = bal < 1000n ? bal : 1000n;
+      const data = TRANSFER_SEL + padAddr(transferTo) + padUint(amount);
+      const r = await rpcRaw(EVM_RPCS[chain], "eth_call", [{ from: sender, to: addr, data }, "latest"], 15000);
+      if (!r.transportOk) { if (strike()) break; else continue; }
+      transportStrikes = 0;
       sim.holders_tested++;
       if (r.reverted) sim.reverted++;
       else sim.succeeded++;
     }
-    if (sim.holders_tested === 0 && !sim.transport_failed) sim.note = "no recent sender addresses available to simulate from";
-    if (sim.transport_failed) sim.note = "holder/simulation lookup hit an upstream timeout — verdict rests on code patterns only";
+    if (!sim.transport_failed && sim.holders_tested < 2) {
+      sim.note = sim.holders_tested === 0
+        ? "no funded holder wallets available to simulate from — verdict rests on code patterns only"
+        : "only one funded holder available to simulate from — sample too small, verdict rests on code patterns only";
+    }
+    if (sim.transport_failed) sim.note = "holder/simulation lookup hit upstream timeouts — verdict rests on code patterns only";
   } catch {
     sim.transport_failed = true;
     sim.note = "holder/simulation lookup hit an upstream timeout — verdict rests on code patterns only";
   }
-  if (!sim.transport_failed && sim.holders_tested > 0) {
-    if (sim.reverted === sim.holders_tested) {
-      findings.push({ severity: "critical", code: "sell-simulation-reverted", title: `Simulated sells revert for all ${sim.holders_tested} tested holder(s)`, detail: "A tiny transfer simulated from real holder wallets reverts on-chain — holders cannot move their tokens. This is the textbook honeypot signature." });
-    } else if (sim.reverted > 0) {
-      findings.push({ severity: "high", code: "sell-simulation-partial", title: `Simulated sells revert for ${sim.reverted}/${sim.holders_tested} tested holder(s)`, detail: "Some holders' transfers revert while others succeed — selective transfer blocking, consistent with a blacklist-style honeypot." });
+  if (!sim.transport_failed && sim.holders_tested >= 2) {
+    if (sim.reverted >= 2 && sim.reverted === sim.holders_tested) {
+      findings.push({ severity: "critical", code: "sell-simulation-reverted", title: `Simulated sells revert for all ${sim.holders_tested} funded holders tested`, detail: "A tiny transfer simulated from real funded holder wallets reverts on-chain — holders cannot move their tokens. This is the textbook honeypot signature." });
+    } else if (sim.reverted >= 2) {
+      findings.push({ severity: "high", code: "sell-simulation-partial", title: `Simulated sells revert for ${sim.reverted}/${sim.holders_tested} funded holders tested`, detail: "Some funded holders' transfers revert while others succeed — selective transfer blocking, consistent with a blacklist-style honeypot." });
     }
   }
 
@@ -295,12 +336,12 @@ async function runHoneypot(api, chain, addr) {
   const score = Math.min(100, findings.reduce((s, f) => s + (SEV[f.severity] || 0), 0));
   const verdict = score >= 50 ? "honeypot" : score >= 20 ? "suspicious" : "safe";
   const worst = findings.find((f) => f.severity === "critical") || findings[0];
-  const simOk = !sim.transport_failed && sim.holders_tested > 0;
+  const simOk = !sim.transport_failed && sim.holders_tested >= 2;
   const summary =
     verdict === "safe"
       ? (simOk
-        ? "Simulated sells succeed and no transfer-blocking patterns found. Heuristic screen, not an audit — read the code before real money."
-        : "No transfer-blocking patterns found in the code; sell simulation was unavailable (upstream timeout), so this rests on static patterns only. Heuristic screen, not an audit.")
+        ? `Simulated sells succeed from ${sim.holders_tested} funded holder wallets and no transfer-blocking patterns found. Heuristic screen, not an audit — read the code before real money.`
+        : "No transfer-blocking patterns found in the code; sell simulation was unavailable or had too few funded holders, so this rests on static patterns only. Heuristic screen, not an audit.")
       : `${verdict.toUpperCase()} (${score}/100): ${worst ? worst.title.toLowerCase() : "flagged patterns"}. Heuristic screen, not an audit.`;
 
   return {
@@ -801,11 +842,11 @@ function preflightDanger(checkName, out) {
   if (checkName === "contract-check")
     return out.risk === "critical" ? 3 : out.risk === "high" ? 2 : out.risk === "medium" ? 1 : 0;
   if (checkName === "approval-risk")
-    return out.verdict === "urgent" ? 2 : out.verdict === "review" ? 1 : 0;
+    // Owner's call: wallet risk vetoes alone — an "urgent" wallet (unlimited
+    // approvals to risky spenders) triggers "do not touch" on its own.
+    return out.verdict === "urgent" ? 3 : out.verdict === "review" ? 1 : 0;
   return 0;
 }
-
-const SEV_RANK = { critical: 4, high: 3, medium: 2, low: 1, info: 0 };
 
 function worstFindingOf(checkName, out) {
   const findings = out.findings || [];
@@ -862,18 +903,21 @@ async function runPreflight(addr, ch, wallet) {
 
   const checks = {};
   let maxDanger = 0;
-  let riskiest = null;
+  // riskiestCheck is the check driving the overall verdict — the riskiest
+  // finding is always drawn from THIS check, so the headline and the
+  // highlight can never disagree (L2).
+  let riskiestCheck = null;
   let okCount = 0;
+  const failedNames = [];
   for (const r of results) {
-    if (!r.ok) { checks[r.name] = { error: r.error }; continue; }
+    if (!r.ok) { checks[r.name] = { error: r.error }; failedNames.push(r.name); continue; }
     okCount++;
     const d = preflightDanger(r.name, r.out);
-    if (d > maxDanger) maxDanger = d;
-    const worst = worstFindingOf(r.name, r.out);
-    if (worst && (!riskiest || (SEV_RANK[worst.severity] || 0) > (SEV_RANK[riskiest.severity] || 0))) riskiest = worst;
+    if (d > maxDanger) { maxDanger = d; riskiestCheck = r; }
     checks[r.name] = slimCheck(r.name, r.out);
   }
   if (!wallet) checks["approval-risk"] = { skipped: "pass ?wallet=0x… to include the wallet approval audit" };
+  const riskiest = riskiestCheck ? worstFindingOf(riskiestCheck.name, riskiestCheck.out) : null;
 
   let overall, summary;
   if (okCount === 0) {
@@ -881,11 +925,19 @@ async function runPreflight(addr, ch, wallet) {
     summary = "Every upstream check failed — no signal either way. Try again shortly; do not treat this as a clearance.";
   } else {
     overall = maxDanger >= 3 ? "do not touch" : maxDanger >= 1 ? "proceed with caution" : "cleared for takeoff";
-    summary = overall === "cleared for takeoff"
-      ? `All ${okCount} checks came back clean. Heuristic bundle, not an audit — read the code before real money.`
-      : overall === "do not touch"
-      ? `DO NOT TOUCH: ${riskiest ? riskiest.title.toLowerCase() : "a critical finding"} (${riskiest ? riskiest.check : "checks"}). Heuristic bundle, not an audit.`
-      : `${okCount} check(s) ran: ${riskiest ? riskiest.title.toLowerCase() : "a flag"} (${riskiest ? riskiest.check : "checks"}) needs your eyes before money moves. Heuristic bundle, not an audit.`;
+    // M1: a silently failed sub-check can never ride along on a clearance —
+    // cap at caution and name the check that didn't run.
+    if (failedNames.length && overall === "cleared for takeoff") overall = "proceed with caution";
+    const failedNote = failedNames.length
+      ? ` ${failedNames.join(" + ")} did not run (upstream error) — this is not a full clearance.`
+      : "";
+    summary = overall === "do not touch"
+      ? `DO NOT TOUCH: ${riskiest ? riskiest.title.toLowerCase() : "a critical finding"} (${riskiest ? riskiest.check : "checks"}).${failedNote} Heuristic bundle, not an audit.`
+      : overall === "proceed with caution"
+      ? (failedNames.length
+        ? `${failedNames.join(" + ")} did not run (upstream error) — not a full clearance.${riskiest ? ` Also: ${riskiest.title.toLowerCase()} (${riskiest.check}).` : ""} Heuristic bundle, not an audit.`
+        : `${riskiest ? `${riskiest.title.toLowerCase()} (${riskiest.check})` : "A flag"} needs your eyes before money moves. Heuristic bundle, not an audit.`)
+      : `All ${okCount} checks came back clean. Heuristic bundle, not an audit — read the code before real money.`;
   }
 
   return {
