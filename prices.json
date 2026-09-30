@@ -1,27 +1,27 @@
 {
-  "generated_at": "2026-09-30T18:45:39.346Z",
+  "generated_at": "2026-09-30T18:57:43.057Z",
   "refresh": "every 6h",
   "sources": "coingecko + dexscreener (free tiers, no keys)",
   "prices": [
     {
       "symbol": "BTC",
       "name": "Bitcoin",
-      "price_usd": 83838,
-      "change_24h_pct": 0.2722198186930655,
+      "price_usd": 83903,
+      "change_24h_pct": 0.3639916876362044,
       "source": "coingecko"
     },
     {
       "symbol": "ETH",
       "name": "Ethereum",
-      "price_usd": 2674.28,
-      "change_24h_pct": -0.7257445056794537,
+      "price_usd": 2677.35,
+      "change_24h_pct": -0.6214754043804964,
       "source": "coingecko"
     },
     {
       "symbol": "SOL",
       "name": "Solana",
-      "price_usd": 118.45,
-      "change_24h_pct": -0.5663329785708752,
+      "price_usd": 118.56,
+      "change_24h_pct": -0.4637728041793815,
       "source": "coingecko"
     },
     {
@@ -40,10 +40,10 @@
       "name": "USD Coin",
       "network": "solana",
       "token_address": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-      "price_usd": 1.0004,
+      "price_usd": 1.00039,
       "change_24h_pct": 0.01,
-      "liquidity_usd": 1578531.72,
-      "volume_24h_usd": 1162515.51,
+      "liquidity_usd": 1578518.34,
+      "volume_24h_usd": 1161363.3,
       "source": "dexscreener"
     }
   ],
