@@ -10,6 +10,11 @@
 //   /receipt-check — "did it land?" settlement verification: tx status,
 //                    confirmations, value moved, token transfers decoded.
 //                    Verdict: settled / pending / failed / not-found.
+//   /preflight     — the full insurance inspection in one call: honeypot
+//                    screen + rug-pull score + contract safety screen, plus
+//                    the wallet approval audit when a wallet= is given.
+//                    One overall verdict: cleared for takeoff / proceed with
+//                    caution / do not touch.
 //
 // HEURISTIC VERDICTS, NOT AUDITS: every response carries that wording. These
 // are pattern matches against public on-chain data, not security reviews —
@@ -776,10 +781,132 @@ async function runReceiptSolana(sig) {
   };
 }
 
+// ====================================================================
+// /preflight — the full insurance inspection in one call
+// ====================================================================
+// Runs the honeypot screen, the rug-pull score, and the contract safety
+// screen against the token contract in parallel, plus the wallet approval
+// audit when a wallet= address is supplied. Rolls everything up into one
+// overall verdict: cleared for takeoff / proceed with caution / do not touch.
+const { checkContract } = require("./contract-check");
+const preflightCache = makeCache(5 * 60 * 1000);
+
+function preflightDanger(checkName, out) {
+  if (checkName === "honeypot")
+    return out.verdict === "honeypot" ? 3 : out.verdict === "suspicious" ? 2 : 0;
+  if (checkName === "rug-score")
+    return String(out.verdict).startsWith("likely rug") ? 3
+      : out.verdict === "high risk" ? 2
+      : out.verdict === "caution" ? 1 : 0;
+  if (checkName === "contract-check")
+    return out.risk === "critical" ? 3 : out.risk === "high" ? 2 : out.risk === "medium" ? 1 : 0;
+  if (checkName === "approval-risk")
+    return out.verdict === "urgent" ? 2 : out.verdict === "review" ? 1 : 0;
+  return 0;
+}
+
+const SEV_RANK = { critical: 4, high: 3, medium: 2, low: 1, info: 0 };
+
+function worstFindingOf(checkName, out) {
+  const findings = out.findings || [];
+  // approval-risk reports revoke_priority instead of findings — treat the top
+  // revoke item as the finding.
+  const pool = findings.length
+    ? findings
+    : (out.revoke_priority || []).map((r) => ({
+        severity: r.priority === "urgent" ? "high" : "medium",
+        code: "risky-approval",
+        title: `${r.token_symbol || "token"} approval to ${String(r.spender).slice(0, 10)}…`,
+        detail: r.reason,
+      }));
+  const worst = pool.find((f) => f.severity === "critical")
+    || pool.find((f) => f.severity === "high")
+    || pool[0] || null;
+  if (!worst) return null;
+  return { check: checkName, severity: worst.severity, code: worst.code, title: worst.title, detail: worst.detail };
+}
+
+function slimCheck(checkName, out) {
+  if (checkName === "honeypot") return { verdict: out.verdict, risk_score: out.risk_score, summary: out.summary };
+  if (checkName === "rug-score") return { verdict: out.verdict, risk_score: out.risk_score, summary: out.summary };
+  if (checkName === "contract-check") return { risk: out.risk, risk_score: out.risk_score, summary: out.summary };
+  if (checkName === "approval-risk") return { verdict: out.verdict, approvals_found: out.approvals_found, unlimited_count: out.unlimited_count, summary: out.summary };
+  return { summary: out.summary };
+}
+
+async function preflight(address, chain, wallet) {
+  const addr = (address || "").trim();
+  if (!isAddress(addr)) throw badRequest("address must be a 0x… Ethereum-style address (40 hex chars)");
+  const ch = (chain || "base").toLowerCase();
+  if (!BLOCKSCOUT[ch]) throw badRequest("chain must be base or ethereum");
+  const w = (wallet || "").trim();
+  if (w && !isAddress(w)) throw badRequest("wallet must be a 0x… Ethereum-style address (40 hex chars)");
+  const key = `preflight:${ch}:${addr.toLowerCase()}:${w ? w.toLowerCase() : "-"}`;
+  return withCache(preflightCache, key, () => runPreflight(addr, ch, w || null));
+}
+
+async function runPreflight(addr, ch, wallet) {
+  const jobs = {
+    honeypot: honeypotScreen(addr, ch),
+    "rug-score": rugScore(addr, ch),
+    "contract-check": checkContract(addr, ch),
+  };
+  if (wallet) jobs["approval-risk"] = approvalRisk(wallet, ch);
+  const names = Object.keys(jobs);
+  const results = await Promise.all(names.map((n) =>
+    jobs[n].then(
+      (out) => ({ name: n, ok: true, out }),
+      (e) => ({ name: n, ok: false, error: String((e && e.message) || "check failed").slice(0, 200) })
+    )
+  ));
+
+  const checks = {};
+  let maxDanger = 0;
+  let riskiest = null;
+  let okCount = 0;
+  for (const r of results) {
+    if (!r.ok) { checks[r.name] = { error: r.error }; continue; }
+    okCount++;
+    const d = preflightDanger(r.name, r.out);
+    if (d > maxDanger) maxDanger = d;
+    const worst = worstFindingOf(r.name, r.out);
+    if (worst && (!riskiest || (SEV_RANK[worst.severity] || 0) > (SEV_RANK[riskiest.severity] || 0))) riskiest = worst;
+    checks[r.name] = slimCheck(r.name, r.out);
+  }
+  if (!wallet) checks["approval-risk"] = { skipped: "pass ?wallet=0x… to include the wallet approval audit" };
+
+  let overall, summary;
+  if (okCount === 0) {
+    overall = "proceed with caution";
+    summary = "Every upstream check failed — no signal either way. Try again shortly; do not treat this as a clearance.";
+  } else {
+    overall = maxDanger >= 3 ? "do not touch" : maxDanger >= 1 ? "proceed with caution" : "cleared for takeoff";
+    summary = overall === "cleared for takeoff"
+      ? `All ${okCount} checks came back clean. Heuristic bundle, not an audit — read the code before real money.`
+      : overall === "do not touch"
+      ? `DO NOT TOUCH: ${riskiest ? riskiest.title.toLowerCase() : "a critical finding"} (${riskiest ? riskiest.check : "checks"}). Heuristic bundle, not an audit.`
+      : `${okCount} check(s) ran: ${riskiest ? riskiest.title.toLowerCase() : "a flag"} (${riskiest ? riskiest.check : "checks"}) needs your eyes before money moves. Heuristic bundle, not an audit.`;
+  }
+
+  return {
+    chain: ch,
+    address: addr,
+    wallet: wallet || null,
+    overall_verdict: overall,
+    riskiest_finding: riskiest,
+    checks,
+    summary,
+    source: "trollbridge verdict bundle: honeypotScreen + rugScore + checkContract (+ approvalRisk)",
+    disclaimer: DISCLAIMER,
+    note: "Heuristic bundle, not an audit. Not financial advice. Refresh: 5-min cache.",
+  };
+}
+
 module.exports = {
   honeypotScreen,
   approvalRisk,
   rugScore,
   receiptCheck,
+  preflight,
   VERDICT_CHAINS: ["base", "ethereum"],
 };
