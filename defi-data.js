@@ -1,4 +1,4 @@
-// TrollBridge /yields + /new-pairs + /gas lanes — data layer (the $0 edition).
+// TrollBridge /yields + /new-pairs + /gas + /defi lanes — data layer (the $0 edition).
 // /yields: DeFiLlama's free yields API (no key) — best stablecoin yields.
 //   1h cache; outlier pools excluded; yields move slowly.
 // /new-pairs: DexScreener's free API (no key) — newest token profiles,
@@ -13,6 +13,11 @@
 //   x402-payable AI model with per-million-token pricing, agent-ready.
 //   BlockRun's ToS permits resale with attribution, so the response and the
 //   lane description credit them. 30-min cache.
+// /defi: DeFi protocol intel from DeFiLlama's free API (no key, no signup).
+//   Sections: movers (top TVL gainers/losers 24h, CEX balances excluded),
+//   fees (daily fee leaders), revenue (daily revenue leaders), stablecoins
+//   (supply ranked + 1d/7d supply flows). 1h cache; on upstream failure the
+//   last cached value is served marked stale — never a made-up number.
 const UA = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" };
 const LLAMA_YIELDS = "https://yields.llama.fi/pools";
 const DEX_PROFILES = "https://api.dexscreener.com/token-profiles/latest/v1";
@@ -290,7 +295,7 @@ async function gasPrices() {
   return out;
 }
 
-module.exports = { topYields, newPairs, gasPrices, modelCatalog };
+module.exports = { topYields, newPairs, gasPrices, modelCatalog, defiIntel };
 
 // ---- /models: x402-payable AI model catalog, bridged from BlockRun.AI ----
 async function modelCatalog() {
@@ -334,5 +339,143 @@ async function modelCatalog() {
     cached: false,
   };
   modelsCache.set(key, out);
+  return out;
+}
+
+// ---- /defi: DeFi protocol intel from DeFiLlama's free API (no key) ----
+const LLAMA_PROTOCOLS = "https://api.llama.fi/protocols";
+const LLAMA_FEES = "https://api.llama.fi/overview/fees?dataType=dailyFees";
+const LLAMA_REVENUE = "https://api.llama.fi/overview/fees?dataType=dailyRevenue";
+const LLAMA_STABLECOINS = "https://stablecoins.llama.fi/stablecoins";
+const defiCache = makeCache(60 * 60 * 1000);
+const DEFI_SECTIONS = ["movers", "fees", "revenue", "stablecoins"];
+
+function usdRound(v) {
+  const n = num(v);
+  return n == null ? null : Math.round(n);
+}
+function pct2(v) {
+  const n = num(v);
+  return n == null ? null : +n.toFixed(2);
+}
+function topChains(chains, n = 3) {
+  return Array.isArray(chains) ? chains.slice(0, n) : [];
+}
+function llamaUrl(slug) {
+  return slug ? `https://defillama.com/protocol/${slug}` : null;
+}
+
+async function tvlMovers(n) {
+  const j = await getJSON(LLAMA_PROTOCOLS);
+  const list = (Array.isArray(j) ? j : []).filter(
+    (p) => p.category !== "CEX" && (p.tvl || 0) >= 1e6 && Number.isFinite(Number(p.change_1d))
+  );
+  const row = (p) => ({
+    name: p.name,
+    symbol: p.symbol || null,
+    category: p.category || null,
+    chains: topChains(p.chains),
+    tvl_usd: usdRound(p.tvl),
+    change_1d_pct: pct2(p.change_1d),
+    change_7d_pct: pct2(p.change_7d),
+    defillama_url: llamaUrl(p.slug),
+  });
+  const gainers = [...list].sort((a, b) => b.change_1d - a.change_1d).slice(0, n).map(row);
+  const losers = [...list].sort((a, b) => a.change_1d - b.change_1d).slice(0, n).map(row);
+  return {
+    count: { gainers: gainers.length, losers: losers.length },
+    gainers,
+    losers,
+    protocols_scanned: list.length,
+    source: "defillama protocols api (free, no key)",
+    note: "Top TVL movers by 24h change. CEX balances and sub-$1M TVL excluded. Refresh: 1h cache.",
+  };
+}
+
+async function feeLeaders(n, dataType) {
+  const label = dataType === "dailyRevenue" ? "revenue" : "fees";
+  const j = await getJSON(dataType === "dailyRevenue" ? LLAMA_REVENUE : LLAMA_FEES);
+  const top = [...(j.protocols || [])]
+    .filter((p) => (p.total24h || 0) > 0)
+    .sort((a, b) => (b.total24h || 0) - (a.total24h || 0))
+    .slice(0, n)
+    .map((p) => ({
+      name: p.displayName || p.name,
+      category: p.category || null,
+      chains: topChains(p.chains),
+      [`${label}_24h_usd`]: usdRound(p.total24h),
+      [`${label}_7d_usd`]: usdRound(p.total7d),
+      change_1d_pct: pct2(p.change_1d),
+      change_7d_pct: pct2(p.change_7d),
+      defillama_url: llamaUrl(p.slug),
+    }));
+  return {
+    count: top.length,
+    leaders: top,
+    [`total_${label}_24h_usd`]: usdRound(j.total24h),
+    source: `defillama ${label} overview api (free, no key)`,
+    note: `Protocols ranked by trailing 24h ${label}. Refresh: 1h cache.`,
+  };
+}
+
+async function stablecoinFlows(n) {
+  const j = await getJSON(LLAMA_STABLECOINS);
+  const flow = (cur, prev) => {
+    const c = num(cur);
+    const p = num(prev);
+    if (c == null || !p) return null;
+    return +(((c - p) / p) * 100).toFixed(2);
+  };
+  const top = [...(j.peggedAssets || [])]
+    .filter((a) => a.circulating && (a.circulating.peggedUSD || 0) > 0)
+    .sort((a, b) => b.circulating.peggedUSD - a.circulating.peggedUSD)
+    .slice(0, n)
+    .map((a) => {
+      const cur = a.circulating.peggedUSD;
+      const chainRows = a.chainCirculating
+        ? Object.entries(a.chainCirculating)
+            .map(([chain, v]) => ({ chain, circulating_usd: usdRound(v.current && v.current.peggedUSD) }))
+            .filter((c) => c.circulating_usd)
+            .sort((x, y) => y.circulating_usd - x.circulating_usd)
+            .slice(0, 3)
+        : [];
+      return {
+        name: a.name,
+        symbol: a.symbol,
+        peg_type: a.pegType || null,
+        peg_mechanism: a.pegMechanism || null,
+        circulating_usd: usdRound(cur),
+        change_1d_pct: flow(cur, a.circulatingPrevDay && a.circulatingPrevDay.peggedUSD),
+        change_7d_pct: flow(cur, a.circulatingPrevWeek && a.circulatingPrevWeek.peggedUSD),
+        top_chains: chainRows,
+      };
+    });
+  return {
+    count: top.length,
+    stablecoins: top,
+    source: "defillama stablecoins api (free, no key)",
+    note: "Ranked by circulating supply (USD-pegged). Flows show supply expansion/contraction, not price moves. Refresh: 1h cache.",
+  };
+}
+
+async function defiIntel(section, limit) {
+  const sec = DEFI_SECTIONS.includes(section) ? section : "movers";
+  const n = clampLimit(limit, 10, 25);
+  const key = `${sec}:${n}`;
+  const hit = defiCache.get(key);
+  if (hit && hit.fresh) return { ...hit.fresh, cached: true };
+  let out;
+  try {
+    if (sec === "movers") out = await tvlMovers(n);
+    else if (sec === "fees") out = await feeLeaders(n, "dailyFees");
+    else if (sec === "revenue") out = await feeLeaders(n, "dailyRevenue");
+    else out = await stablecoinFlows(n);
+  } catch (e) {
+    // Upstream down: serve the last good value honestly marked stale.
+    if (hit && hit.stale) return { ...hit.stale, stale: true, cached: true };
+    throw e;
+  }
+  out = { section: sec, generated_at: new Date().toISOString(), cached: false, ...out };
+  defiCache.set(key, out);
   return out;
 }
