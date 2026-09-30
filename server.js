@@ -98,7 +98,7 @@ const app = express();
 // Required behind Render/Railway/Fly proxies: without this the middleware
 // reports http:// URLs and facilitators reject the route metadata.
 app.set("trust proxy", 1);
-app.use(express.json({ limit: "256kb" })); // (was sized for the parked /file-pr 100KB cap)
+app.use(express.json({ limit: "256kb" }));
 
 
 // ---- Bridge traffic ledger ----
@@ -749,6 +749,7 @@ app.get("/traffic", (req, res) => {
   );
   full.history = usage.history || [];
   full.almost_paid = almostPaid.almostPaidSummary(usage);
+  full.strategy = almostPaid.strategySummary(usage);
   res.json(full);
 });
 
