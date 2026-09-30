@@ -212,6 +212,57 @@ function loadCurated(name) {
   }
 }
 
+// --- /opportunities lane: one normalized schema across every board ---
+// {title, payout_amount, payout_token, payout_raw, chain, url,
+//  requirements, deadline, board, posted_at}
+// Built from the same open-bounty records as /bounties — no new fetches,
+// no new failure modes. Boards that are down simply contribute nothing,
+// same as the other lanes. Never invents: unparseable rewards keep
+// payout_amount/token null with the raw string preserved; chain is only
+// set when the token strongly implies it (sats -> Stacks via aibtc),
+// otherwise null.
+function parseReward(raw) {
+  const out = { payout_amount: null, payout_token: null, payout_raw: raw || null };
+  if (!raw || /see listing/i.test(String(raw))) return out;
+  const s = String(raw).replace(/,/g, "");
+  const m = s.match(/\$?\s*([\d.]+)(?:\s*-\s*\$?[\d.]+)?\s*([a-zA-Z$]+)?/);
+  if (!m || !m[1]) return out;
+  const amount = Number(m[1]);
+  if (!Number.isFinite(amount)) return out;
+  let tok = (m[2] || "").toUpperCase();
+  if (!tok || tok === "$") tok = /^\s*\$/.test(s) ? "USD" : null;
+  out.payout_amount = amount;
+  out.payout_token = tok;
+  return out;
+}
+function inferChain(board, payout_token) {
+  // aibtc pays sBTC on Stacks — the only token->chain mapping we know
+  // first-hand. Everything else stays null rather than guessed.
+  if (board === "aibtc" && payout_token === "SATS") return "stacks";
+  return null;
+}
+function buildOpportunities(bounties) {
+  return (bounties || [])
+    .filter((b) => b && !b.error && b.title)
+    .map((b) => {
+      const { payout_amount, payout_token, payout_raw } = parseReward(b.reward);
+      const tags = Array.isArray(b.tags) ? b.tags : [];
+      return {
+        title: b.title,
+        payout_amount,
+        payout_token,
+        payout_raw,
+        chain: inferChain(b.board, payout_token),
+        url: b.url || null,
+        requirements: tags.filter((t) => t && !/^(bounty|project)$/i.test(String(t))),
+        deadline: b.expires || null,
+        board: b.board,
+        posted_at: b.posted_at || null,
+      };
+    })
+    .sort((x, y) => Date.parse(y.posted_at || 0) - Date.parse(x.posted_at || 0));
+}
+
 // --- /prices lane: agent-ready spot prices, free sources only ---
 // CoinGecko (no key) for the majors + DexScreener (no key) for the watched
 // DEX tokens. Runs with the feed build (every 6h). On ANY failure the old
@@ -307,6 +358,11 @@ async function build() {
   const deadlines = loadCurated("deadlines");
   const sweepstakes = loadCurated("sweepstakes");
 
+  // Lane 15: every open bounty normalized to one schema — the product
+  // version of /bounties for agents that want payouts, chains, deadlines
+  // without learning five boards' formats.
+  const opportunities = buildOpportunities(bounties);
+
   const feed = {
     generated_at: new Date().toISOString(),
     booth: "mini-tollbooth",
@@ -316,18 +372,21 @@ async function build() {
       verdicts: "GET /verdicts — recently paid bounties, proof the boards pay",
       deadlines: "GET /deadlines — class-action claim deadlines worth money",
       sweepstakes: "GET /sweepstakes — free sweepstakes with real prizes",
+      opportunities: "GET /opportunities — every paying opportunity, one normalized schema",
     },
     bounties,
     fresh,
     verdicts: paid,
     deadlines: deadlines ? deadlines.deadlines : [],
     sweepstakes: sweepstakes ? sweepstakes.sweepstakes : [],
+    opportunities,
     count: {
       bounties: bounties.length,
       fresh: fresh.length,
       verdicts: paid.length,
       deadlines: deadlines ? deadlines.deadlines.length : 0,
       sweepstakes: sweepstakes ? sweepstakes.sweepstakes.length : 0,
+      opportunities: opportunities.length,
     },
     board_errors: [...errors.map((e) => `${e.board}: ${e.error}`), ...verdictErrors],
   };
@@ -335,7 +394,8 @@ async function build() {
   console.log(
     `wrote ${OUT}: ${feed.count.bounties} bounties (${feed.count.fresh} fresh), ` +
       `${feed.count.verdicts} verdicts, ` +
-      `${feed.count.deadlines} deadlines, ${feed.count.sweepstakes} sweepstakes` +
+      `${feed.count.deadlines} deadlines, ${feed.count.sweepstakes} sweepstakes, ` +
+      `${feed.count.opportunities} opportunities` +
       (feed.board_errors.length ? ` | board errors: ${feed.board_errors.join("; ")}` : "")
   );
   return feed;
@@ -344,4 +404,4 @@ async function build() {
 if (require.main === module) {
   build().catch((e) => { console.error("feed build failed:", e.message); process.exit(1); });
 }
-module.exports = { build, buildPrices };
+module.exports = { build, buildPrices, buildOpportunities, parseReward };
