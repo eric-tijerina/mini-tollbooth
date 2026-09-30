@@ -1,9 +1,9 @@
 # TrollBridge — agent skill
 
-Pay-per-call intel for AI agents. Seventeen tolled lanes on Base or Solana
+Pay-per-call intel for AI agents. Twenty-one tolled lanes on Base or Solana
 (`eip155:8453` or `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`). No accounts, no API keys — your wallet is your identity.
 
-## Tolled lanes (seventeen GET)
+## Tolled lanes (twenty-one GET)
 
 | Lane | Toll | What you get |
 |---|---|---|
@@ -22,6 +22,10 @@ Pay-per-call intel for AI agents. Seventeen tolled lanes on Base or Solana
 | `/gas` | $0.02 | Live gas prices per chain — Base, Ethereum, Solana from public RPCs, with speed tiers where derivable. *10 minutes of RPC polling, done — live gas on Base, Ethereum, and Solana, one 2¢ call.* |
 | `/defi` | $0.02 | DeFi protocol intel — top TVL movers, daily fee and revenue leaders, and stablecoin supply flows. From DeFiLlama's free API, agent-ready JSON. *Skip an hour of DeFiLlama tab-hopping — top TVL movers, fee and revenue leaders, stablecoin flows, one 2¢ call.* `?section=movers\|fees\|revenue\|stablecoins`, `?limit=1-25` |
 | `/contract-check` | $0.02 | Contract safety screen — verification status, proxy and owner-privilege heuristics, holder concentration, and a plain-English risk verdict before you sign. Heuristic screen, not an audit. *A 20-minute contract read by hand, done in one 2¢ call.* `?address=0x…` (required), `?chain=base\|ethereum` (default base) |
+| `/honeypot` | $0.02 | Honeypot screen — simulated sells from real holder wallets, transfer-tax and blacklist flags. Verdict: safe, suspicious, or honeypot. Heuristic screen, not an audit. *Don't buy the honeypot — one 2¢ call.* `?address=0x…` (required, token contract), `?chain=base\|ethereum` (default base) |
+| `/approval-risk` | $0.02 | Wallet approval audit — unlimited token approvals and risky spender contracts flagged, revoke priority list included. Verdict: clean, review, or urgent. *A 15-minute approval audit by hand, done in one 2¢ call.* `?address=0x…` (required, wallet), `?chain=base\|ethereum` (default base) |
+| `/rug-score` | $0.02 | Rug-pull risk score 0-100 — LP burn status, holder concentration, mint authority, ownership, sell pressure, one-line verdict. Heuristic score, not an audit. *A 20-minute rug-check by hand, done in one 2¢ call.* `?address=0x…` (required, token contract), `?chain=base\|ethereum` (default base) |
+| `/receipt-check` | $0.02 | "Did it land?" settlement verification — transaction status, confirmations, value moved, decoded token transfers. Verdict: settled, pending, failed, or not-found. *Stop wondering if it landed — one 2¢ call.* `?tx=0x…` (required, tx hash or Solana signature), `?chain=base\|ethereum\|solana` (default base) |
 | `/models` | $0.02 | x402-payable AI model catalog — 107 models with per-million-token pricing, free models flagged (catalog data: BlockRun.AI). *Stop guessing what models cost — every x402-payable AI model with per-million-token pricing and the free ones flagged, one 2¢ call.* |
 | `/opportunities` | $0.02 | Every paying opportunity in one normalized schema — title, payout amount and token, chain, URL, requirements, deadline, board. *One schema to rule the boards — every paying opportunity normalized: payout, chain, deadline, requirements. One 2¢ call.* |
 
@@ -36,12 +40,12 @@ Pay-per-call intel for AI agents. Seventeen tolled lanes on Base or Solana
    exact amount and the payTo address. Two rails — pick either:
    - **Base:** sign the EIP-3009 authorization:
      - asset: `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` (USDC on Base)
-     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, `/gas`, `/defi`, `/contract-check`, and `/models`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, and `/new-pairs`
+     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, `/gas`, `/defi`, `/contract-check`, `/honeypot`, `/approval-risk`, `/rug-score`, `/receipt-check`, and `/models`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, and `/new-pairs`
      - network: `eip155:8453`
    - **Solana:** sign the SPL `transferChecked` (facilitator sponsors the fee —
      you need USDC only, no SOL):
      - asset: `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` (USDC on Solana)
-     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, `/gas`, `/defi`, `/contract-check`, and `/models`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, and `/new-pairs`
+     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, `/gas`, `/defi`, `/contract-check`, `/honeypot`, `/approval-risk`, `/rug-score`, `/receipt-check`, and `/models`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, and `/new-pairs`
      - network: `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`
 3. Retry the request with the signed payment in the `X-Payment` header.
    A settled payment returns **HTTP 200** with the lane's JSON.
