@@ -1,8 +1,9 @@
-// Mini's Tollbooth — the insurance booth for AI agents.
-// Twenty-seven checkpoints on one bridge. Every lane answers the question
+// Mini's Tollbooth — the insurance booth for AI agents, plus Mini's Agent
+// Supply Store on the side of the road.
+// Twenty-eight checkpoints on one bridge. Every lane answers the question
 // before money moves: is this safe to touch? 2¢ per checkpoint, 5¢ for the
-// full preflight. Don't get rugged — pay the toll, cross covered.
-// Twenty-seven tolled lanes on Base or Solana per call:
+// full preflight or the road-pack combo meal. Don't get rugged — pay the toll, cross covered.
+// Twenty-eight tolled lanes on Base or Solana per call:
 //   Bounty intel ($0.02 USDC each):
 //   GET /bounties    — every open bounty across all boards (aibtc + Taskmarket + Superteam)
 //   GET /fresh       — bounties posted in the last 24h
@@ -28,6 +29,8 @@
 //   GET /airdrop-verdict — legit or drainer: static page forensics on a claim URL
 //   GET /deployer-history — who made this token, and what else did they make
 //   GET /wallet-watch   — has anything changed: stateful monitoring via a baseline token
+//   Mini's Agent Supply Store — grab-and-go bundles:
+//   GET /road-pack    — the combo meal: gas + prices + DeFi movers + model shelf + trip brief ($0.05)
 //   Market intel:
 //   GET /markets     — live Polymarket odds, prices, volume ($0.05)
 //   GET /search      — web search JSON, no API key needed ($0.05)
@@ -69,6 +72,7 @@ const defi = require("./defi-data");
 const contractCheck = require("./contract-check");
 const verdicts = require("./verdicts");
 const shield = require("./shield");
+const roadpack = require("./roadpack");
 // /file-pr PARKED (2026-09-30): github-pr.js ships hardened but dormant — no
 // route calls filePr. Re-enable only under a neutral bot identity (separate
 // GitHub account + PAT, Eric's hands), never the keeper's personal token.
@@ -341,6 +345,9 @@ const WATCH_SCHEMA = {
   chain: { type: "string", enum: ["base", "ethereum"], description: "Which chain (default base)." },
   prev_state: { type: "string", description: "Optional base64-encoded state object from a previous /wallet-watch call — returns a diff against it." },
 };
+const ROADPACK_SCHEMA = {
+  limit: { type: "integer", minimum: 1, maximum: 25, description: "Max token prices in the pack (default 10)." },
+};
 function discoveryExtensionFor(route) {
   if (route === "/markets") return discoveryForParams(route, MARKETS_SCHEMA, ["q"], { q: "bitcoin", limit: 5 }, LANE_EXAMPLES[route]);
   if (route === "/search") return discoveryForParams(route, SEARCH_SCHEMA, ["q"], { q: "solana price" }, LANE_EXAMPLES[route]);
@@ -358,6 +365,7 @@ function discoveryExtensionFor(route) {
   if (route === "/airdrop-verdict") return discoveryForParams(route, AIRDROP_SCHEMA, ["url"], { url: "https://example.com/claim" }, LANE_EXAMPLES[route]);
   if (route === "/deployer-history") return discoveryForParams(route, DEPLOYER_SCHEMA, ["address"], { address: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", chain: "base" }, LANE_EXAMPLES[route]);
   if (route === "/wallet-watch") return discoveryForParams(route, WATCH_SCHEMA, ["wallet"], { wallet: "0x8BE8D056d5F0bEF850eC9ed5C4a8d647cBE896C0", chain: "base" }, LANE_EXAMPLES[route]);
+  if (route === "/road-pack") return discoveryForParams(route, ROADPACK_SCHEMA, [], { limit: 10 }, LANE_EXAMPLES[route]);
   if (route === "/gas") return discoveryForParams(route, {}, [], {}, LANE_EXAMPLES[route]);
   if (route === "/enrich") return discoveryForParams(route, ADDRESS_SCHEMA, ["address", "network"], { address: "0x8BE8D056d5F0bEF850eC9ed5C4a8d647cBE896C0", network: "base" }, LANE_EXAMPLES[route]);
   if (route === "/token-check") return discoveryForParams(route, MINT_SCHEMA, ["mint", "network"], { mint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", network: "solana" }, LANE_EXAMPLES[route]);
@@ -395,6 +403,7 @@ const LANES = {
   "/deployer-history": "Who made this token — trace the deployer and investigate what else they launched: verification, scam flags, dead-contract patterns. Verdict: clean, mixed, or serial-rugger.",
   "/wallet-watch": "Has anything changed — stateful wallet monitoring. Set a baseline, pass it back later, get a plain-words diff of approvals, balances, and exposure. Verdict: baseline, no-changes, or changed.",
   "/models": "x402-payable AI model catalog — every model agents can call over x402 with per-million-token pricing, free models flagged. Catalog data: BlockRun.AI, bridged by TrollBridge.",
+  "/road-pack": "The combo meal from Mini's Agent Supply Store — cheapest gas, top token prices with momentum verdicts, DeFi TVL movers, and the AI model shelf, plus a plain-English trip brief, in one 5¢ call. 8¢ of intel, one toll.",
 };
 // Per-lane tolls. Anything not listed here costs PRICE (default $0.02).
 const LANE_PRICES = {
@@ -405,6 +414,7 @@ const LANE_PRICES = {
   "/yields": "$0.05",
   "/new-pairs": "$0.05",
   "/preflight": "$0.05",
+  "/road-pack": "$0.05",
 };
 const lanePrice = (route) => LANE_PRICES[route] || PRICE;
 const LANE_TAGS = {
@@ -435,6 +445,7 @@ const LANE_TAGS = {
   "/deployer-history": ["verdict-intel", "deployer", "rug-check", "token-safety", "insurance"],
   "/wallet-watch": ["verdict-intel", "monitoring", "wallet-safety", "insurance", "defi"],
   "/models": ["ai-intel", "models", "llm", "pricing", "x402"],
+  "/road-pack": ["supply-store", "bundle", "gas", "prices", "defi", "models"],
 };
 const LANE_EXAMPLES = {
   "/bounties": { id: "aibtc-example", title: "Example bounty", reward: "10000 sats", board: "aibtc" },
@@ -464,6 +475,7 @@ const LANE_EXAMPLES = {
   "/deployer-history": { chain: "base", address: "0x...", deployer: "0x...", verdict: "mixed", contracts_created: 4 },
   "/wallet-watch": { chain: "base", wallet: "0x...", verdict: "baseline", baseline_token: "abc123", changes: [] },
   "/models": { count: 110, free_models: ["nvidia/llama-3.2-11b-vision"], models: [{ id: "openai/gpt-6-luna", name: "GPT-6 Luna", provider: "openai", billing_mode: "paid", price_per_1m_input_usd: 0.1 }] },
+  "/road-pack": { bundle: "road-pack", trip_brief: ["⛽ Base is cheapest at 0.05 gwei — route non-urgent EVM transactions through base.", "💹 All tracked assets flat (±5%) over 24h — no momentum either way."], sections: { gas: { status: "live" }, prices: { status: "live" }, defi_movers: { status: "live" }, models: { status: "live" } } },
 };
 const tollConfig = {};
 // x402 v2 carries the payment terms in the `payment-required` header and
@@ -509,6 +521,7 @@ const LANE_PITCH = {
   "/deployer-history": "Know who you're trusting — the deployer's full track record: every contract they launched, scam flags, dead patterns, one 2¢ call.",
   "/wallet-watch": "Your wallet, watched — set a baseline, get a plain-words diff of everything that changed since, one 2¢ call.",
   "/models": "Stop guessing what models cost — every x402-payable AI model with per-million-token pricing and the free ones flagged, one 2¢ call.",
+  "/road-pack": "The combo meal from Mini's Agent Supply Store — gas, prices, DeFi movers, and the AI model shelf plus a plain-English trip brief, one 5¢ call. 8¢ of intel, one toll.",
 };
 function readJsonSafe(rel) {
   try {
@@ -597,6 +610,8 @@ function laneStatsFor(route) {
       return { chains: ["base", "ethereum"], note: "deployer contract history → clean/mixed/serial-rugger" };
     case "/wallet-watch":
       return { chains: ["base", "ethereum"], note: "baseline + diff monitoring → baseline/no-changes/changed" };
+    case "/road-pack":
+      return { note: "combo meal — gas + prices + DeFi movers + model shelf + trip brief, one 5¢ call" };
     default:
       return { note: LANE_PITCH[route] || "tolled lane" };
   }
@@ -722,21 +737,23 @@ app.get("/", (req, res) => {
   const laneBlurb = (route, desc) => {
     const toll = lanePrice(route);
     if (route === "/prices") return `${desc} (${pricesDoc.prices.length} assets, refreshed ${pricesDoc.generated_at || "soon"}) — ${toll} USDC`;
-    if (route === "/enrich" || route === "/token-check" || route === "/markets" || route === "/search" || route === "/yields" || route === "/new-pairs" || route === "/gas" || route === "/defi" || route === "/contract-check" || route === "/honeypot" || route === "/approval-risk" || route === "/rug-score" || route === "/receipt-check" || route === "/preflight" || route === "/tx-dryrun" || route === "/permit-scan" || route === "/airdrop-verdict" || route === "/deployer-history" || route === "/wallet-watch") return `${desc} On-demand lookup — ${toll} USDC`;
+    if (route === "/enrich" || route === "/token-check" || route === "/markets" || route === "/search" || route === "/yields" || route === "/new-pairs" || route === "/gas" || route === "/defi" || route === "/contract-check" || route === "/honeypot" || route === "/approval-risk" || route === "/rug-score" || route === "/receipt-check" || route === "/preflight" || route === "/tx-dryrun" || route === "/permit-scan" || route === "/airdrop-verdict" || route === "/deployer-history" || route === "/wallet-watch" || route === "/road-pack") return `${desc} On-demand lookup — ${toll} USDC`;
     const n = (feed.count && feed.count[route.slice(1)]) || 0;
     return `${desc} (open items: ${n}) — ${toll} USDC`;
   };
   res.json({
     bridge: "TrollBridge",
     keeper: "Mini, data-bounty hunter",
-    deal: `The insurance booth for AI agents. Twenty-seven checkpoints on Base or Solana — 2¢ per checkpoint, 5¢ for the full preflight. Every lane answers the question before money moves: is this safe to touch? Honeypot screens, rug-pull scores, contract safety screens, wallet approval audits, settlement verification — plus bounty intel, market intel, and DeFi intel, all with plain-English verdicts. Don't get rugged — pay the toll, cross covered.`,
+    deal: `The insurance booth for AI agents, with Mini's Agent Supply Store on the side of the road. Twenty-eight checkpoints on Base or Solana — 2¢ per checkpoint, 5¢ for the full preflight or the road-pack combo meal. Every lane answers the question before money moves: is this safe to touch? Honeypot screens, rug-pull scores, contract safety screens, wallet approval audits, settlement verification — plus bounty intel, market intel, and DeFi intel, all with plain-English verdicts. Don't get rugged — pay the toll, cross covered.`,
     lanes: Object.fromEntries(
       Object.entries(LANES).map(([route, desc]) => [`GET ${route}`, laneBlurb(route, desc)])
     ),
     marketplace: {
+      store: "Mini's Agent Supply Store — gas, tools, and everything you forgot to pack, on the side of the road.",
       tools_live: liveTools.length,
       browse_free: "GET /tools — the directory is always free. You only pay a tool's own toll when you call it.",
       list_yours: "POST /tools/apply — developers list their x402-tolled tools here. First 10 third-party listings are FREE (founding tools).",
+      combo_meal: "GET /road-pack — the combo meal: gas + prices + DeFi movers + model shelf + trip brief, one 5¢ call.",
       terms: registry.listing_terms,
     },
     network: NETWORK + (IS_MAINNET ? " (MAINNET — real money)" : " (testnet — proving the flow)"),
@@ -1276,6 +1293,24 @@ app.get("/models", async (req, res) => {
   }
 });
 
+// ---- Mini's Agent Supply Store: grab-and-go bundle lanes ----
+// Same pay-or-nothing deal: the toll middleware challenges first; these
+// handlers only run on a paid crossing.
+
+// GET /road-pack?limit=10 — the combo meal: cheapest gas, top token prices
+// with momentum verdicts, DeFi TVL movers, and the AI model shelf, plus a
+// plain-English trip brief, in one 5¢ call.
+app.get("/road-pack", async (req, res) => {
+  try {
+    const out = await roadpack.roadPack(req.query.limit);
+    res.json({ lane: "/road-pack", description: LANES["/road-pack"], ...out });
+  } catch (e) {
+    if (e.statusCode === 400) return res.status(400).json({ error: e.message, usage: "GET /road-pack?limit=1-25" });
+    console.error("route error GET /road-pack:", e.message);
+    res.status(502).json({ error: "upstream data source unreachable — try again shortly" });
+  }
+});
+
 // ---- Skill-moat lanes: slow work other agents can't do fast ----
 // Same pay-or-nothing deal: the toll middleware challenges first; these
 // handlers only run on a paid crossing.
@@ -1399,7 +1434,7 @@ app.get("/.well-known/x402", (req, res) => {
     // Domain-ownership verification for agent-tools.cloud (claim pending).
     agentToolsVerify: "atc_aAIHBleoK4GPm8pbuJMh1oJ4G1VXjE4X",
     description:
-      "The insurance booth for AI agents. Twenty-seven checkpoints: pre-transaction safety lanes (honeypot screens, wallet approval audits, rug-pull risk scores, settlement verification, the full /preflight bundle, plus the skill-moat batch — /tx-dryrun transaction simulation, /permit-scan invisible-drainer check, /airdrop-verdict claim-page forensics, /deployer-history deployer forensics, /wallet-watch stateful monitoring) plus bounty intel (every open bounty across all boards, fresh bounties from the last 24h, recently-paid verdicts proving the boards pay, class-action claim deadlines, verified free sweepstakes, every paying opportunity in one normalized schema) plus trader intel (agent-ready price feed, wallet/address intelligence, token safety scans, contract safety screens) plus market intel (live Polymarket prediction-market odds, agent-ready web search) plus DeFi intel (best stablecoin yields, newest token listings with liquidity flags, live gas prices, protocol TVL movers plus fee/revenue leaders plus stablecoin flows) plus AI intel (x402-payable AI model catalog with per-token pricing, catalog data: BlockRun.AI). Every lane carries a plain-English verdict — heuristic screens, not audits. Don't get rugged. Tolls: $0.02 USDC per checkpoint on the bounty lanes, /gas, /defi, /contract-check, /honeypot, /approval-risk, /rug-score, /receipt-check, /prices, /models, /tx-dryrun, /permit-scan, /airdrop-verdict, /deployer-history, and /wallet-watch; $0.05 on /enrich, /token-check, /markets, /search, /yields, /new-pairs, and /preflight. Base or Solana.",
+      "The insurance booth for AI agents, with Mini's Agent Supply Store on the side of the road. Twenty-eight checkpoints: pre-transaction safety lanes (honeypot screens, wallet approval audits, rug-pull risk scores, settlement verification, the full /preflight bundle, plus the skill-moat batch — /tx-dryrun transaction simulation, /permit-scan invisible-drainer check, /airdrop-verdict claim-page forensics, /deployer-history deployer forensics, /wallet-watch stateful monitoring) plus bounty intel (every open bounty across all boards, fresh bounties from the last 24h, recently-paid verdicts proving the boards pay, class-action claim deadlines, verified free sweepstakes, every paying opportunity in one normalized schema) plus trader intel (agent-ready price feed, wallet/address intelligence, token safety scans, contract safety screens) plus market intel (live Polymarket prediction-market odds, agent-ready web search) plus DeFi intel (best stablecoin yields, newest token listings with liquidity flags, live gas prices, protocol TVL movers plus fee/revenue leaders plus stablecoin flows) plus AI intel (x402-payable AI model catalog with per-token pricing, catalog data: BlockRun.AI) plus the supply store's first combo meal (/road-pack: gas + prices + DeFi movers + model shelf + trip brief in one call). Every lane carries a plain-English verdict — heuristic screens, not audits. Don't get rugged. Tolls: $0.02 USDC per checkpoint on the bounty lanes, /gas, /defi, /contract-check, /honeypot, /approval-risk, /rug-score, /receipt-check, /prices, /models, /tx-dryrun, /permit-scan, /airdrop-verdict, /deployer-history, and /wallet-watch; $0.05 on /enrich, /token-check, /markets, /search, /yields, /new-pairs, /preflight, and /road-pack. Base or Solana.",
     homepage: base,
     payment: {
       protocol: "x402",
@@ -1569,6 +1604,9 @@ app.get("/openapi.json", (req, res) => {
       { name: "chain", in: "query", required: false, description: "Which chain: base or ethereum (default base).", schema: { type: "string", enum: ["base", "ethereum"] } },
       { name: "prev_state", in: "query", required: false, description: "Base64-encoded state object from a previous /wallet-watch call — returns a diff against it.", schema: { type: "string" } },
     ];
+    if (route === "/road-pack") return [
+      { name: "limit", in: "query", required: false, description: "Max token prices in the pack (default 10, max 25).", schema: { type: "integer", minimum: 1, maximum: 25 } },
+    ];
     return [laneParam];
   };
   const paths = {};
@@ -1591,9 +1629,9 @@ app.get("/openapi.json", (req, res) => {
       title: "TrollBridge",
       version: "1.1.0",
       description:
-        "The insurance booth for AI agents. Twenty-seven checkpoints: pre-transaction safety lanes (honeypot, approval-risk, rug-score, receipt-check, tx-dryrun, permit-scan, airdrop-verdict, deployer-history, wallet-watch at $0.02 USDC per call; the full /preflight bundle at $0.05), bounty intel (bounties, fresh, verdicts, deadlines, sweepstakes, opportunities) at $0.02 USDC per call, trader intel (/prices and /contract-check at $0.02; /enrich and /token-check at $0.05), market intel (/markets and /search at $0.05), DeFi intel (/yields and /new-pairs at $0.05; /gas and /defi at $0.02), AI intel (/models at $0.02). Every lane answers before money moves — heuristic verdicts, not audits. Don't get rugged.",
+        "The insurance booth for AI agents, with Mini's Agent Supply Store on the side of the road. Twenty-eight checkpoints: pre-transaction safety lanes (honeypot, approval-risk, rug-score, receipt-check, tx-dryrun, permit-scan, airdrop-verdict, deployer-history, wallet-watch at $0.02 USDC per call; the full /preflight bundle at $0.05), bounty intel (bounties, fresh, verdicts, deadlines, sweepstakes, opportunities) at $0.02 USDC per call, trader intel (/prices and /contract-check at $0.02; /enrich and /token-check at $0.05), market intel (/markets and /search at $0.05), DeFi intel (/yields and /new-pairs at $0.05; /gas and /defi at $0.02), AI intel (/models at $0.02), supply store (/road-pack combo meal at $0.05). Every lane answers before money moves — heuristic verdicts, not audits. Don't get rugged.",
       "x-guidance":
-        "Call any lane with GET. Without payment you receive a 402 challenge (x402 v2) with the exact payment requirements in the response headers and body — the 402 is the source of truth for amounts and payTo addresses. Tolls: $0.02 USDC on the bounty lanes, /prices, /gas, /defi, /contract-check, /honeypot, /approval-risk, /rug-score, /receipt-check, and /models; $0.05 USDC on /enrich, /token-check, /markets, /search, /yields, /new-pairs, and /preflight. Both rails accepted on every lane: Base (USDC 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913) and Solana (USDC EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v). Complete the x402 payment and retry with the X-Payment header. Bounty lanes take ?limit=N (1–200). /enrich needs ?address=…&network=base|solana. /token-check needs ?mint=…&network=base|solana. /contract-check needs ?address=… and takes ?chain=base|ethereum (default base). /honeypot needs ?address=… (token contract) and takes ?chain=base|ethereum (default base). /approval-risk needs ?address=… (wallet) and takes ?chain=base|ethereum (default base). /rug-score needs ?address=… (token contract) and takes ?chain=base|ethereum (default base). /receipt-check needs ?tx=… (tx hash or Solana signature) and takes ?chain=base|ethereum|solana (default base). /preflight needs ?address=… (token contract), takes ?chain=base|ethereum (default base) and optional ?wallet=0x… (adds the wallet approval audit). /tx-dryrun needs ?to=…&data=0x…&from=0x… (target contract, hex calldata, sender wallet), takes ?value=0 (wei) and ?chain=base|ethereum (default base). /permit-scan needs ?address=… (wallet) and takes ?chain=base|ethereum (default base). /airdrop-verdict needs ?url=… (http/https claim page). /deployer-history needs ?address=… (token contract) and takes ?chain=base|ethereum (default base). /wallet-watch needs ?wallet=… and takes ?chain=base|ethereum (default base) plus optional ?prev_state=… (base64 of a previous state object for a diff). /markets takes ?q=… (required) and ?limit=1–25. /search needs ?q=…. /yields takes ?limit=1–25 and ?stablecoinOnly=true|false. /new-pairs takes ?limit=1–25 and ?chain=solana|ethereum|base. /gas takes no params. The free directory of third-party tools is GET /tools; bridge traffic stats are GET /traffic.",
+        "Call any lane with GET. Without payment you receive a 402 challenge (x402 v2) with the exact payment requirements in the response headers and body — the 402 is the source of truth for amounts and payTo addresses. Tolls: $0.02 USDC on the bounty lanes, /prices, /gas, /defi, /contract-check, /honeypot, /approval-risk, /rug-score, /receipt-check, and /models; $0.05 USDC on /enrich, /token-check, /markets, /search, /yields, /new-pairs, /preflight, and /road-pack. Both rails accepted on every lane: Base (USDC 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913) and Solana (USDC EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v). Complete the x402 payment and retry with the X-Payment header. Bounty lanes take ?limit=N (1–200). /enrich needs ?address=…&network=base|solana. /token-check needs ?mint=…&network=base|solana. /contract-check needs ?address=… and takes ?chain=base|ethereum (default base). /honeypot needs ?address=… (token contract) and takes ?chain=base|ethereum (default base). /approval-risk needs ?address=… (wallet) and takes ?chain=base|ethereum (default base). /rug-score needs ?address=… (token contract) and takes ?chain=base|ethereum (default base). /receipt-check needs ?tx=… (tx hash or Solana signature) and takes ?chain=base|ethereum|solana (default base). /preflight needs ?address=… (token contract), takes ?chain=base|ethereum (default base) and optional ?wallet=0x… (adds the wallet approval audit). /tx-dryrun needs ?to=…&data=0x…&from=0x… (target contract, hex calldata, sender wallet), takes ?value=0 (wei) and ?chain=base|ethereum (default base). /permit-scan needs ?address=… (wallet) and takes ?chain=base|ethereum (default base). /airdrop-verdict needs ?url=… (http/https claim page). /deployer-history needs ?address=… (token contract) and takes ?chain=base|ethereum (default base). /wallet-watch needs ?wallet=… and takes ?chain=base|ethereum (default base) plus optional ?prev_state=… (base64 of a previous state object for a diff). /road-pack takes ?limit=1–25 (max token prices in the pack, default 10). /markets takes ?q=… (required) and ?limit=1–25. /search needs ?q=…. /yields takes ?limit=1–25 and ?stablecoinOnly=true|false. /new-pairs takes ?limit=1–25 and ?chain=solana|ethereum|base. /gas takes no params. The free directory of third-party tools is GET /tools; bridge traffic stats are GET /traffic.",
       contact: { name: "TrollBridge", url: "https://github.com/eric-tijerina/mini-tollbooth/issues" },
     },
     paths,
