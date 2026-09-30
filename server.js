@@ -711,7 +711,149 @@ for (const route of Object.keys(LANES)) {
   tollConfig[`GET ${route}`] = cfg;
   tollConfig[`HEAD ${route}`] = { ...cfg };
 }
-app.use(paymentMiddleware(tollConfig, server));
+// ---- TrollBridge Fuel (GAS): burn-to-cross ----
+// The gas station beside the tollbooth. Agents buy GAS from the FuelPump
+// (1 GAS = 0.015 USDC), then burn it to cross instead of paying a USDC
+// toll: burn N GAS on-chain, then call any tolled lane with
+// ?fuelTx=<burn tx hash>. The burn is verified against Base mainnet
+// before the lane serves its data.
+//
+// Burn rate: 1 GAS per 2-cent lane crossing, 3 GAS per 5-cent lane
+// crossing. Derived from LANE_PRICES so the rate can never drift from
+// the tolls.
+//
+// Anti-reuse: spent burn hashes live in data/fuel-used.json plus an
+// in-memory Set. NOTE (v1 edge): this host's filesystem is ephemeral,
+// so a redeploy resets the local spent-set. The chain remains the source
+// of truth for burns — only the spent-set is local — so the worst case
+// is a burn tx being honored twice across a redeploy, never a
+// fabricated burn passing verification.
+const GAS_TOKEN = "0x35250be330E7CfD6A19466A800a02a42343dA5d5";
+const GAS_TOKEN_LC = GAS_TOKEN.toLowerCase();
+const FUEL_PUMP = "0xf141F99aE6dd74DD188581A15Ef89CD7885Ce207";
+const BASE_RPC_URL = "https://mainnet.base.org";
+const TRANSFER_TOPIC0 = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4c0a77163347d4e12";
+const ZERO_ADDRESS_TOPIC = "0x0000000000000000000000000000000000000000000000000000000000000000";
+const WEI_PER_GAS = 10n ** 18n;
+// 5-cent lanes cost 3 GAS to cross; everything else costs 1 GAS.
+const fuelWeiFor = (route) => (lanePrice(route) === "$0.05" ? 3n * WEI_PER_GAS : WEI_PER_GAS);
+const FIVE_CENT_FUEL_LANES = Object.keys(LANES).filter((r) => lanePrice(r) === "$0.05");
+
+const FUEL_USED_PATH = path.join(__dirname, "data", "fuel-used.json");
+let fuelUsedSet = null;
+function loadFuelUsed() {
+  if (fuelUsedSet) return fuelUsedSet;
+  fuelUsedSet = new Set();
+  try {
+    const arr = JSON.parse(fs.readFileSync(FUEL_USED_PATH, "utf8"));
+    if (Array.isArray(arr)) {
+      for (const h of arr) if (typeof h === "string") fuelUsedSet.add(h.toLowerCase());
+    }
+  } catch { /* first run: no spent burns yet */ }
+  return fuelUsedSet;
+}
+function markFuelUsed(txHash) {
+  const set = loadFuelUsed();
+  set.add(txHash.toLowerCase());
+  try {
+    fs.writeFileSync(FUEL_USED_PATH, JSON.stringify([...set]));
+  } catch { /* best-effort; the chain is the source of truth */ }
+}
+
+async function fetchBurnReceipt(txHash) {
+  const resp = await fetch(BASE_RPC_URL, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_getTransactionReceipt", params: [txHash] }),
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!resp.ok) throw new Error(`base rpc ${resp.status}`);
+  const body = await resp.json();
+  return body.result || null;
+}
+
+// Sum of GAS burned in a tx: Transfer logs on the GAS contract whose
+// `to` (topics[2]) is the zero address — our GAS.burn() emits exactly that.
+function burnValueFromReceipt(receipt) {
+  let total = 0n;
+  for (const log of receipt.logs || []) {
+    if (String(log.address || "").toLowerCase() !== GAS_TOKEN_LC) continue;
+    const topics = log.topics || [];
+    if (String(topics[0] || "").toLowerCase() !== TRANSFER_TOPIC0) continue;
+    if (String(topics[2] || "").toLowerCase() !== ZERO_ADDRESS_TOPIC) continue;
+    try {
+      total += BigInt(log.data);
+    } catch { /* malformed log data: skip */ }
+  }
+  return total;
+}
+
+async function verifyFuelBurn(route, txHash) {
+  let receipt;
+  try {
+    receipt = await fetchBurnReceipt(txHash);
+  } catch {
+    return false;
+  }
+  if (!receipt || receipt.status !== "0x1") return false;
+  return burnValueFromReceipt(receipt) >= fuelWeiFor(route);
+}
+
+// The 402 the toll collector would have returned, plus one short field.
+// Used when a ?fuelTx= was offered but the burn didn't check out. The
+// PAYMENT-REQUIRED header mirrors the collector's exactly (base64 JSON),
+// so agents can fall back to a normal USDC payment.
+function fuelReject(res, route, fuelError) {
+  const price = lanePrice(route);
+  const body = unpaidBodyFor(route, price);
+  body.fuel_error = fuelError;
+  const headerPayload = {
+    x402Version: body.x402Version,
+    error: body.error,
+    resource: body.resource,
+    accepts: body.accepts,
+    extensions: body.extensions,
+  };
+  res.set("PAYMENT-REQUIRED", Buffer.from(JSON.stringify(headerPayload), "utf8").toString("base64"));
+  return res.status(402).json(body);
+}
+
+const x402collector = paymentMiddleware(tollConfig, server);
+// Burn-to-cross wraps the toll collector: a tolled lane called with a
+// valid ?fuelTx= skips the USDC toll and serves its data like a paid
+// crossing. Anything else falls through to the normal x402 flow, so
+// non-fuel callers see zero behavior change. A real x402 payment header
+// always takes precedence over ?fuelTx=.
+app.use(async (req, res, next) => {
+  const route = req.path;
+  const fuelTx = req.query.fuelTx;
+  const hasPaymentHeader = !!(req.headers["payment-signature"] || req.headers["x-payment"]);
+  if (req.method !== "GET" || !LANES[route] || fuelTx === undefined || hasPaymentHeader) {
+    return x402collector(req, res, next);
+  }
+  const txHash = String(fuelTx).toLowerCase();
+  if (!/^0x[0-9a-f]{64}$/.test(txHash)) {
+    return fuelReject(res, route, "fuel burn not accepted — see GET /fuel");
+  }
+  if (loadFuelUsed().has(txHash)) {
+    return fuelReject(res, route, "fuel already spent");
+  }
+  let ok = false;
+  try {
+    ok = await verifyFuelBurn(route, txHash);
+  } catch {
+    ok = false;
+  }
+  if (!ok) {
+    return fuelReject(res, route, "fuel burn not accepted — see GET /fuel");
+  }
+  markFuelUsed(txHash);
+  // Flagged for the traffic ledger: the tracker's finish hook counts this
+  // 200 as a fuel crossing (not unpaid_2xx, not a USDC paid crossing).
+  req.fuelCrossing = true;
+  usageDirty = true;
+  return next(); // past the toll collector: the lane handler serves data
+});
 
 // Routes the traffic ledger watches: the tolled lanes, the free directory,
 // and the free discovery surfaces (landing page, skill card, x402 manifest,
@@ -725,6 +867,7 @@ const DISCOVERY_ROUTES = {
 const TRACKED_ROUTES = {
   ...LANES,
   "/tools": "Free directory of third-party tools on the bridge.",
+  "/fuel": "Free fuel desk — TrollBridge Fuel (GAS) price and burn-to-cross instructions.",
   ...DISCOVERY_ROUTES,
 };
 
@@ -760,17 +903,19 @@ app.get("/", (req, res) => {
     payTo: PAY_TO,
     feed_generated_at: feed.generated_at,
     how_to_pay: "Request any lane. You'll get HTTP 402 with payment instructions; retry with the X-Payment header. See https://github.com/coinbase/x402",
+    fuel: "TrollBridge Fuel (GAS) — burn fuel instead of paying USDC: GET /fuel for the price, the contracts, and how to burn-to-cross.",
   });
 });
 
 function trafficSummary() {
   const lanes = {};
-  let totalChallenged = 0, totalPaid = 0, totalUnpaid2xx = 0, totalDirVisits = 0, totalDiscovery = 0;
+  let totalChallenged = 0, totalPaid = 0, totalFuel = 0, totalUnpaid2xx = 0, totalDirVisits = 0, totalDiscovery = 0;
   const allPayers = new Set();
   for (const [route, st] of Object.entries(usage.lanes)) {
     lanes[route] = {
       challenged: st.challenged,
       paid: st.paid,
+      fuel_crossings: st.fuel_crossings || 0,
       failed: st.failed || 0,
       unpaid_2xx: st.unpaid_2xx || 0,
       visits: st.visits || 0,
@@ -780,6 +925,7 @@ function trafficSummary() {
     };
     totalChallenged += st.challenged;
     totalPaid += st.paid;
+    totalFuel += st.fuel_crossings || 0;
     totalUnpaid2xx += st.unpaid_2xx || 0;
     if (route === "/tools") totalDirVisits += st.visits || 0;
     else if (DISCOVERY_ROUTES[route]) totalDiscovery += st.visits || 0;
@@ -799,6 +945,7 @@ function trafficSummary() {
     totals: {
       challenged: totalChallenged,
       paid_crossings: totalPaid,
+      fuel_crossings: totalFuel,
       unpaid_2xx: totalUnpaid2xx,
       directory_visits: totalDirVisits,
       discovery_views: totalDiscovery,
@@ -968,6 +1115,33 @@ app.get("/tools", (req, res) => {
     updated_at: registry.updated_at,
     listing_terms: registry.listing_terms,
     tools: registry.tools,
+  });
+});
+
+// The fuel desk — free and untolled by design. TrollBridge Fuel (GAS) is
+// the bridge's fuel: burn it on Base, then cross any tolled lane with
+// ?fuelTx=<burn tx hash> instead of paying the USDC toll.
+app.get("/fuel", (req, res) => {
+  res.json({
+    fuel: "TrollBridge Fuel (GAS)",
+    symbol: "GAS",
+    decimals: 18,
+    chain: "Base",
+    chain_id: 8453,
+    contracts: {
+      gas_token: GAS_TOKEN,
+      fuel_pump: FUEL_PUMP,
+    },
+    price: "0.015 USDC per GAS",
+    how_to_buy: "Approve USDC to the FuelPump contract, then call buy(gasWei) — 1 GAS costs 0.015 USDC and lands in your wallet.",
+    how_to_redeem:
+      "Call GAS.burn(n) with n in wei (1 GAS = 1000000000000000000), then call any tolled lane with ?fuelTx=<burn transaction hash>. The burn is verified on Base before the lane serves its data, and each burn transaction works exactly once.",
+    burn_rate: "1 GAS per 2-cent lane crossing; 3 GAS per 5-cent lane crossing.",
+    five_cent_lanes: FIVE_CENT_FUEL_LANES,
+    supply: {
+      total: "1000000",
+      note: "Fixed supply — no mint function, no backdoors. Every crossing burns fuel.",
+    },
   });
 });
 
@@ -1623,6 +1797,24 @@ app.get("/openapi.json", (req, res) => {
       ),
     };
   }
+  // The fuel desk is free and untolled — listed here so indexers see it
+  // as a free lane, not a tolled one.
+  paths["/fuel"] = {
+    get: {
+      operationId: "fuel",
+      summary: "TrollBridge Fuel (GAS) — price and burn-to-cross instructions",
+      description:
+        "Free, untolled. TrollBridge Fuel (GAS) is the bridge's fuel: burn GAS on Base, then call any tolled lane with ?fuelTx=<burn tx hash> to cross without a USDC toll. 1 GAS per 2-cent lane, 3 GAS per 5-cent lane (/enrich, /token-check, /markets, /search, /yields, /new-pairs, /preflight, /road-pack). Buy GAS from the FuelPump at 0.015 USDC per GAS.",
+      tags: ["free"],
+      parameters: [],
+      responses: {
+        200: {
+          description: "Fuel desk — contracts, price, how to buy, how to burn-to-cross.",
+          content: { "application/json": { schema: { type: "object" } } },
+        },
+      },
+    },
+  };
   res.json({
     openapi: "3.1.0",
     info: {
@@ -1631,7 +1823,7 @@ app.get("/openapi.json", (req, res) => {
       description:
         "The insurance booth for AI agents, with Mini's Agent Supply Store on the side of the road. Twenty-eight checkpoints: pre-transaction safety lanes (honeypot, approval-risk, rug-score, receipt-check, tx-dryrun, permit-scan, airdrop-verdict, deployer-history, wallet-watch at $0.02 USDC per call; the full /preflight bundle at $0.05), bounty intel (bounties, fresh, verdicts, deadlines, sweepstakes, opportunities) at $0.02 USDC per call, trader intel (/prices and /contract-check at $0.02; /enrich and /token-check at $0.05), market intel (/markets and /search at $0.05), DeFi intel (/yields and /new-pairs at $0.05; /gas and /defi at $0.02), AI intel (/models at $0.02), supply store (/road-pack combo meal at $0.05). Every lane answers before money moves — heuristic verdicts, not audits. Don't get rugged.",
       "x-guidance":
-        "Call any lane with GET. Without payment you receive a 402 challenge (x402 v2) with the exact payment requirements in the response headers and body — the 402 is the source of truth for amounts and payTo addresses. Tolls: $0.02 USDC on the bounty lanes, /prices, /gas, /defi, /contract-check, /honeypot, /approval-risk, /rug-score, /receipt-check, and /models; $0.05 USDC on /enrich, /token-check, /markets, /search, /yields, /new-pairs, /preflight, and /road-pack. Both rails accepted on every lane: Base (USDC 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913) and Solana (USDC EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v). Complete the x402 payment and retry with the X-Payment header. Bounty lanes take ?limit=N (1–200). /enrich needs ?address=…&network=base|solana. /token-check needs ?mint=…&network=base|solana. /contract-check needs ?address=… and takes ?chain=base|ethereum (default base). /honeypot needs ?address=… (token contract) and takes ?chain=base|ethereum (default base). /approval-risk needs ?address=… (wallet) and takes ?chain=base|ethereum (default base). /rug-score needs ?address=… (token contract) and takes ?chain=base|ethereum (default base). /receipt-check needs ?tx=… (tx hash or Solana signature) and takes ?chain=base|ethereum|solana (default base). /preflight needs ?address=… (token contract), takes ?chain=base|ethereum (default base) and optional ?wallet=0x… (adds the wallet approval audit). /tx-dryrun needs ?to=…&data=0x…&from=0x… (target contract, hex calldata, sender wallet), takes ?value=0 (wei) and ?chain=base|ethereum (default base). /permit-scan needs ?address=… (wallet) and takes ?chain=base|ethereum (default base). /airdrop-verdict needs ?url=… (http/https claim page). /deployer-history needs ?address=… (token contract) and takes ?chain=base|ethereum (default base). /wallet-watch needs ?wallet=… and takes ?chain=base|ethereum (default base) plus optional ?prev_state=… (base64 of a previous state object for a diff). /road-pack takes ?limit=1–25 (max token prices in the pack, default 10). /markets takes ?q=… (required) and ?limit=1–25. /search needs ?q=…. /yields takes ?limit=1–25 and ?stablecoinOnly=true|false. /new-pairs takes ?limit=1–25 and ?chain=solana|ethereum|base. /gas takes no params. The free directory of third-party tools is GET /tools; bridge traffic stats are GET /traffic.",
+        "Call any lane with GET. Without payment you receive a 402 challenge (x402 v2) with the exact payment requirements in the response headers and body — the 402 is the source of truth for amounts and payTo addresses. Tolls: $0.02 USDC on the bounty lanes, /prices, /gas, /defi, /contract-check, /honeypot, /approval-risk, /rug-score, /receipt-check, and /models; $0.05 USDC on /enrich, /token-check, /markets, /search, /yields, /new-pairs, /preflight, and /road-pack. Both rails accepted on every lane: Base (USDC 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913) and Solana (USDC EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v). Complete the x402 payment and retry with the X-Payment header. Bounty lanes take ?limit=N (1–200). /enrich needs ?address=…&network=base|solana. /token-check needs ?mint=…&network=base|solana. /contract-check needs ?address=… and takes ?chain=base|ethereum (default base). /honeypot needs ?address=… (token contract) and takes ?chain=base|ethereum (default base). /approval-risk needs ?address=… (wallet) and takes ?chain=base|ethereum (default base). /rug-score needs ?address=… (token contract) and takes ?chain=base|ethereum (default base). /receipt-check needs ?tx=… (tx hash or Solana signature) and takes ?chain=base|ethereum|solana (default base). /preflight needs ?address=… (token contract), takes ?chain=base|ethereum (default base) and optional ?wallet=0x… (adds the wallet approval audit). /tx-dryrun needs ?to=…&data=0x…&from=0x… (target contract, hex calldata, sender wallet), takes ?value=0 (wei) and ?chain=base|ethereum (default base). /permit-scan needs ?address=… (wallet) and takes ?chain=base|ethereum (default base). /airdrop-verdict needs ?url=… (http/https claim page). /deployer-history needs ?address=… (token contract) and takes ?chain=base|ethereum (default base). /wallet-watch needs ?wallet=… and takes ?chain=base|ethereum (default base) plus optional ?prev_state=… (base64 of a previous state object for a diff). /road-pack takes ?limit=1–25 (max token prices in the pack, default 10). /markets takes ?q=… (required) and ?limit=1–25. /search needs ?q=…. /yields takes ?limit=1–25 and ?stablecoinOnly=true|false. /new-pairs takes ?limit=1–25 and ?chain=solana|ethereum|base. /gas takes no params. The free directory of third-party tools is GET /tools; bridge traffic stats are GET /traffic; TrollBridge Fuel (GAS) price and burn-to-cross instructions are GET /fuel.",
       contact: { name: "TrollBridge", url: "https://github.com/eric-tijerina/mini-tollbooth/issues" },
     },
     paths,
