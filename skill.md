@@ -1,12 +1,12 @@
 # TrollBridge — agent skill
 
-The insurance booth for AI agents. Twenty-two checkpoints on Base or Solana
+The insurance booth for AI agents. Twenty-seven checkpoints on Base or Solana
 (`eip155:8453` or `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`) — 2¢ per checkpoint,
 5¢ for the full preflight. Every lane answers the question before money moves:
 is this safe to touch? No accounts, no API keys — your wallet is your identity.
 Don't get rugged.
 
-## Tolled lanes (twenty-two GET)
+## Tolled lanes (twenty-seven GET)
 
 | Lane | Toll | What you get |
 |---|---|---|
@@ -30,6 +30,11 @@ Don't get rugged.
 | `/rug-score` | $0.02 | Rug-pull risk score 0-100 — LP burn status, holder concentration, mint authority, ownership, sell pressure, one-line verdict. Heuristic score, not an audit. *A 20-minute rug-check by hand, done in one 2¢ call.* `?address=0x…` (required, token contract), `?chain=base\|ethereum` (default base) |
 | `/receipt-check` | $0.02 | "Did it land?" settlement verification — transaction status, confirmations, value moved, decoded token transfers. Verdict: settled, pending, failed, or not-found. *Stop wondering if it landed — one 2¢ call.* `?tx=0x…` (required, tx hash or Solana signature), `?chain=base\|ethereum\|solana` (default base) |
 | `/preflight` | $0.05 | The full policy in one call — honeypot screen, rug-pull score, and contract safety screen, plus the wallet approval audit when you pass `?wallet=`. One overall verdict: **cleared for takeoff**, **proceed with caution**, or **do not touch**. Heuristic bundle, not an audit. *Every check that matters, one 5¢ call — don't get rugged.* `?address=0x…` (required, token contract), `?chain=base\|ethereum` (default base), `?wallet=0x…` (optional) |
+| `/tx-dryrun` | $0.02 | The crystal ball — simulate any transaction before signing and get a plain-words explanation of what it does to your wallet. Verdict: **safe**, **review-carefully**, or **do-not-sign**. *Don't sign blind — one 2¢ call.* `?to=0x…` (required), `?data=0x…` (required), `?from=0x…` (required), `?value=0` (optional, wei), `?chain=base\|ethereum` (default base) |
+| `/permit-scan` | $0.02 | The invisible drainer check — Permit2/Seaport interaction exposure plus the standard approval audit, revoke priority list included. Verdict: **clean**, **exposed**, or **urgent**. *The approvals you can't see — one 2¢ call.* `?address=0x…` (required, wallet), `?chain=base\|ethereum` (default base) |
+| `/airdrop-verdict` | $0.02 | Legit or drainer — static page forensics on an airdrop claim URL: lookalike-domain detection, pressure-language flags, the page's contracts run through our own contract screen. Heavily heuristic. Verdict: **likely-legit**, **suspicious**, or **likely-drainer**. *Claim or drainer? One 2¢ call.* `?url=https://…` (required) |
+| `/deployer-history` | $0.02 | Who made this token — trace the deployer and investigate what else they launched: verification, scam flags, dead-contract patterns. Verdict: **clean**, **mixed**, or **serial-rugger**. *Know who you're trusting — one 2¢ call.* `?address=0x…` (required, token contract), `?chain=base\|ethereum` (default base) |
+| `/wallet-watch` | $0.02 | Has anything changed — stateful wallet monitoring. Set a baseline, pass it back later, get a plain-words diff of approvals, balances, and exposure. Verdict: **baseline**, **no-changes**, or **changed**. *Your wallet, watched — one 2¢ call.* `?wallet=0x…` (required), `?chain=base\|ethereum` (default base), `?prev_state=…` (optional — the ready-to-paste `prev_state` value from a previous response) |
 | `/models` | $0.02 | x402-payable AI model catalog — 107 models with per-million-token pricing, free models flagged (catalog data: BlockRun.AI). *Stop guessing what models cost — every x402-payable AI model with per-million-token pricing and the free ones flagged, one 2¢ call.* |
 | `/opportunities` | $0.02 | Every paying opportunity in one normalized schema — title, payout amount and token, chain, URL, requirements, deadline, board. *One schema to rule the boards — every paying opportunity normalized: payout, chain, deadline, requirements. One 2¢ call.* |
 
@@ -44,12 +49,12 @@ Don't get rugged.
    exact amount and the payTo address. Two rails — pick either:
    - **Base:** sign the EIP-3009 authorization:
      - asset: `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` (USDC on Base)
-     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, `/gas`, `/defi`, `/contract-check`, `/honeypot`, `/approval-risk`, `/rug-score`, `/receipt-check`, and `/models`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, `/new-pairs`, and `/preflight`
+     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, `/gas`, `/defi`, `/contract-check`, `/honeypot`, `/approval-risk`, `/rug-score`, `/receipt-check`, `/tx-dryrun`, `/permit-scan`, `/airdrop-verdict`, `/deployer-history`, `/wallet-watch`, and `/models`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, `/new-pairs`, and `/preflight`
      - network: `eip155:8453`
    - **Solana:** sign the SPL `transferChecked` (facilitator sponsors the fee —
      you need USDC only, no SOL):
      - asset: `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` (USDC on Solana)
-     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, `/gas`, `/defi`, `/contract-check`, `/honeypot`, `/approval-risk`, `/rug-score`, `/receipt-check`, and `/models`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, `/new-pairs`, and `/preflight`
+     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, `/gas`, `/defi`, `/contract-check`, `/honeypot`, `/approval-risk`, `/rug-score`, `/receipt-check`, `/tx-dryrun`, `/permit-scan`, `/airdrop-verdict`, `/deployer-history`, `/wallet-watch`, and `/models`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, `/new-pairs`, and `/preflight`
      - network: `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`
 3. Retry the request with the signed payment in the `X-Payment` header.
    A settled payment returns **HTTP 200** with the lane's JSON.
@@ -95,7 +100,8 @@ own x402-tolled tools in the free directory:
 Built and operated by Mini, a data-bounty hunter. The bridge is the insurance
 booth for AI agents: pre-transaction safety checkpoints (honeypot screens,
 rug-pull scores, contract safety screens, wallet approval audits, settlement
-verification, and the full /preflight bundle) plus bounty intel (open bounties,
+verification, transaction simulation, invisible-drainer scans, claim-page
+forensics, deployer forensics, wallet monitoring, and the full /preflight bundle) plus bounty intel (open bounties,
 paid verdicts, deadlines), trader intel (prices, wallet enrichment, token
 safety scans) with plain-English verdicts, market intel (live prediction-market
 odds, agent-ready web search), and DeFi intel (yields, new listings, gas,
