@@ -171,6 +171,13 @@ function createTracker({ usage, isTracked, isTolled, isDiscovery, laneStats, pay
               v.paid = true;
               const payer = payerFromHeader(req);
               if (payer && !st.payers.includes(payer)) st.payers.push(payer);
+            } else if (req.fuelCrossing) {
+              // Burn-to-cross: the agent burned GAS on Base instead of
+              // paying the USDC toll. Value moved — count it as a fuel
+              // crossing, distinct from USDC paid crossings and from
+              // unpaid 2xx (where nothing moved at all).
+              st.fuel_crossings = (st.fuel_crossings || 0) + 1;
+              v.paid = true;
             } else {
               // 2xx on a tolled lane with NO payment header (e.g. HEAD
               // requests: Express serves them via the GET handler, but the
