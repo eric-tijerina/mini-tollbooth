@@ -1,12 +1,13 @@
 # TrollBridge — agent skill
 
-The insurance booth for AI agents. Twenty-seven checkpoints on Base or Solana
+The insurance booth for AI agents, with Mini's Agent Supply Store on the side
+of the road. Twenty-eight checkpoints on Base or Solana
 (`eip155:8453` or `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`) — 2¢ per checkpoint,
-5¢ for the full preflight. Every lane answers the question before money moves:
-is this safe to touch? No accounts, no API keys — your wallet is your identity.
-Don't get rugged.
+5¢ for the full preflight or the road-pack combo meal. Every lane answers the
+question before money moves: is this safe to touch? No accounts, no API keys —
+your wallet is your identity. Don't get rugged.
 
-## Tolled lanes (twenty-seven GET)
+## Tolled lanes (twenty-eight GET)
 
 | Lane | Toll | What you get |
 |---|---|---|
@@ -35,6 +36,7 @@ Don't get rugged.
 | `/airdrop-verdict` | $0.02 | Legit or drainer — static page forensics on an airdrop claim URL: lookalike-domain detection, pressure-language flags, the page's contracts run through our own contract screen. Heavily heuristic. Verdict: **likely-legit**, **suspicious**, or **likely-drainer**. *Claim or drainer? One 2¢ call.* `?url=https://…` (required) |
 | `/deployer-history` | $0.02 | Who made this token — trace the deployer and investigate what else they launched: verification, scam flags, dead-contract patterns. Verdict: **clean**, **mixed**, or **serial-rugger**. *Know who you're trusting — one 2¢ call.* `?address=0x…` (required, token contract), `?chain=base\|ethereum` (default base) |
 | `/wallet-watch` | $0.02 | Has anything changed — stateful wallet monitoring. Set a baseline, pass it back later, get a plain-words diff of approvals, balances, and exposure. Verdict: **baseline**, **no-changes**, or **changed**. *Your wallet, watched — one 2¢ call.* `?wallet=0x…` (required), `?chain=base\|ethereum` (default base), `?prev_state=…` (optional — the ready-to-paste `prev_state` value from a previous response) |
+| `/road-pack` | $0.05 | The combo meal from Mini's Agent Supply Store — cheapest gas, top token prices with momentum verdicts, DeFi TVL movers, and the AI model shelf, plus a plain-English trip brief, in one call. 8¢ of intel, one 5¢ toll. *Gas, tools, and everything you forgot to pack — one 5¢ call.* `?limit=1–25` (optional, max token prices, default 10) |
 | `/models` | $0.02 | x402-payable AI model catalog — 107 models with per-million-token pricing, free models flagged (catalog data: BlockRun.AI). *Stop guessing what models cost — every x402-payable AI model with per-million-token pricing and the free ones flagged, one 2¢ call.* |
 | `/opportunities` | $0.02 | Every paying opportunity in one normalized schema — title, payout amount and token, chain, URL, requirements, deadline, board. *One schema to rule the boards — every paying opportunity normalized: payout, chain, deadline, requirements. One 2¢ call.* |
 
@@ -49,12 +51,12 @@ Don't get rugged.
    exact amount and the payTo address. Two rails — pick either:
    - **Base:** sign the EIP-3009 authorization:
      - asset: `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` (USDC on Base)
-     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, `/gas`, `/defi`, `/contract-check`, `/honeypot`, `/approval-risk`, `/rug-score`, `/receipt-check`, `/tx-dryrun`, `/permit-scan`, `/airdrop-verdict`, `/deployer-history`, `/wallet-watch`, and `/models`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, `/new-pairs`, and `/preflight`
+     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, `/gas`, `/defi`, `/contract-check`, `/honeypot`, `/approval-risk`, `/rug-score`, `/receipt-check`, `/tx-dryrun`, `/permit-scan`, `/airdrop-verdict`, `/deployer-history`, `/wallet-watch`, and `/models`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, `/new-pairs`, `/preflight`, and `/road-pack`
      - network: `eip155:8453`
    - **Solana:** sign the SPL `transferChecked` (facilitator sponsors the fee —
      you need USDC only, no SOL):
      - asset: `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` (USDC on Solana)
-     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, `/gas`, `/defi`, `/contract-check`, `/honeypot`, `/approval-risk`, `/rug-score`, `/receipt-check`, `/tx-dryrun`, `/permit-scan`, `/airdrop-verdict`, `/deployer-history`, `/wallet-watch`, and `/models`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, `/new-pairs`, and `/preflight`
+     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, `/gas`, `/defi`, `/contract-check`, `/honeypot`, `/approval-risk`, `/rug-score`, `/receipt-check`, `/tx-dryrun`, `/permit-scan`, `/airdrop-verdict`, `/deployer-history`, `/wallet-watch`, and `/models`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, `/new-pairs`, `/preflight`, and `/road-pack`
      - network: `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`
 3. Retry the request with the signed payment in the `X-Payment` header.
    A settled payment returns **HTTP 200** with the lane's JSON.
