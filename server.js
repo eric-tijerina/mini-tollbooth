@@ -728,9 +728,9 @@ for (const route of Object.keys(LANES)) {
 // of truth for burns — only the spent-set is local — so the worst case
 // is a burn tx being honored twice across a redeploy, never a
 // fabricated burn passing verification.
-const GAS_TOKEN = "0x35250be330E7CfD6A19466A800a02a42343dA5d5";
+const GAS_TOKEN = "0x7dc59b82BDb9F3f273D619a34705749Ebd72e697";
 const GAS_TOKEN_LC = GAS_TOKEN.toLowerCase();
-const FUEL_PUMP = "0xf141F99aE6dd74DD188581A15Ef89CD7885Ce207";
+const FUEL_PUMP = "0x8C84E6D97847A47aeb94Bb07Dc81Dad1560eEfa2";
 const BASE_RPC_URL = "https://mainnet.base.org";
 const TRANSFER_TOPIC0 = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4c0a77163347d4e12";
 const ZERO_ADDRESS_TOPIC = "0x0000000000000000000000000000000000000000000000000000000000000000";
