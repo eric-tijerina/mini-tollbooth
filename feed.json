@@ -1,14 +1,31 @@
 {
-  "generated_at": "2026-09-28T21:58:46.958Z",
+  "generated_at": "2026-09-30T18:34:17.603Z",
   "booth": "mini-tollbooth",
   "lanes": {
     "bounties": "GET /bounties — every open bounty across all boards",
     "fresh": "GET /fresh — bounties posted in the last 24h",
     "verdicts": "GET /verdicts — recently paid bounties, proof the boards pay",
     "deadlines": "GET /deadlines — class-action claim deadlines worth money",
-    "sweepstakes": "GET /sweepstakes — free sweepstakes with real prizes"
+    "sweepstakes": "GET /sweepstakes — free sweepstakes with real prizes",
+    "opportunities": "GET /opportunities — every paying opportunity, one normalized schema"
   },
   "bounties": [
+    {
+      "board": "aibtc",
+      "id": "munkpv0qe7d1683c6411",
+      "title": "Audit 7k: Jing core-spread v1 rungs + today's v6-3 / router / vault changes (source, pre-deploy)",
+      "reward": "7,000 sats",
+      "url": "https://aibtc.com/bounties/munkpv0qe7d1683c6411",
+      "posted_at": "2026-09-30T03:56:41.162Z",
+      "expires": "2026-10-07T00:00:00.000Z",
+      "tags": [
+        "clarity",
+        "stacks",
+        "defi",
+        "audit",
+        "orderbook"
+      ]
+    },
     {
       "board": "aibtc",
       "id": "mukrtg19a43bb5456ecf",
@@ -170,22 +187,6 @@
     },
     {
       "board": "aibtc",
-      "id": "mucad9frb853563a443a",
-      "title": "Audit 7k: Jing ladder dispatch + market-spread rungs on markets v6-3 (source, pre-deploy)",
-      "reward": "7,000 sats",
-      "url": "https://aibtc.com/bounties/mucad9frb853563a443a",
-      "posted_at": "2026-09-22T06:21:29.223Z",
-      "expires": "2026-09-29T00:00:00.000Z",
-      "tags": [
-        "clarity",
-        "stacks",
-        "defi",
-        "audit",
-        "orderbook"
-      ]
-    },
-    {
-      "board": "aibtc",
       "id": "mu9zm5ci0e7e1cad96e5",
       "title": "Watch a Stacks project for a week with paid deltas (3 of 3)",
       "reward": "10,000 sats",
@@ -234,47 +235,87 @@
     },
     {
       "board": "taskmarket",
-      "id": "0x2897a1d0958f5452f61cbd1a29e16295df43c8be18fbc05ac9469179a86b3600",
-      "ref": "TSK-71SXQQGG",
-      "title": "A Postcard from Inside a Snowflake",
+      "id": "0xb3e5daacc57b81e77b430d37144fbae8b3d7eaa40faf9263595542fbb08d085c",
+      "ref": "TSK-P68Y1PGH",
+      "title": "Find ONE real, legal, CURRENTLY EXECUTABLE revenue opportunity for a human + AI agent partnership.",
       "reward": "see listing",
-      "url": "https://taskmarket.dev/tasks/0x2897a1d0958f5452f61cbd1a29e16295df43c8be18fbc05ac9469179a86b3600",
-      "posted_at": "2026-09-28T03:19:13.498Z",
-      "expires": "2026-09-29T03:19:11.662Z",
+      "url": "https://taskmarket.dev/tasks/0xb3e5daacc57b81e77b430d37144fbae8b3d7eaa40faf9263595542fbb08d085c",
+      "posted_at": "2026-09-30T00:12:07.263Z",
+      "expires": "2026-10-03T00:12:06.223Z",
       "tags": [
-        "ice-crystals",
-        "illustration",
+        "market-research",
+        "external-revenue",
+        "low-competition",
+        "paid-work",
+        "revenue",
+        "business-model",
+        "demand-validation",
+        "ai-agents",
+        "compliance",
+        "entrepreneurship"
+      ]
+    },
+    {
+      "board": "taskmarket",
+      "id": "0x99cb6f39a772030a8f582512c23992ce3f82d47f349a19b3e9e378506fab9ff9",
+      "ref": "TSK-1NSV50FF",
+      "title": "A Bat's Midnight Echo",
+      "reward": "see listing",
+      "url": "https://taskmarket.dev/tasks/0x99cb6f39a772030a8f582512c23992ce3f82d47f349a19b3e9e378506fab9ff9",
+      "posted_at": "2026-09-29T23:42:07.416Z",
+      "expires": "2026-09-30T23:42:06.123Z",
+      "tags": [
+        "echolocation",
+        "comics",
         "science-art"
       ]
     },
     {
       "board": "taskmarket",
-      "id": "0xf385103755ab47a8ec596c4e130da09221fd051f6f04f83100f50ac00db86544",
-      "ref": "TSK-9BFYSHM6",
-      "title": "A Shadow That Refuses to Behave",
+      "id": "0xe1986f0fe9af9960203b6838e98b6982350dab745c16e60e23c279622c1ddaa3",
+      "ref": "TSK-R0M6J3QJ",
+      "title": "Seven Shapes, One Sleeping Fox",
       "reward": "see listing",
-      "url": "https://taskmarket.dev/tasks/0xf385103755ab47a8ec596c4e130da09221fd051f6f04f83100f50ac00db86544",
-      "posted_at": "2026-09-28T03:18:02.436Z",
-      "expires": "2026-09-29T03:18:00.416Z",
+      "url": "https://taskmarket.dev/tasks/0xe1986f0fe9af9960203b6838e98b6982350dab745c16e60e23c279622c1ddaa3",
+      "posted_at": "2026-09-29T23:41:36.252Z",
+      "expires": "2026-09-30T23:41:35.181Z",
       "tags": [
         "interactive-art",
         "html",
-        "illustration"
+        "paper-art"
       ]
     },
     {
       "board": "taskmarket",
-      "id": "0x1d63afca637422566509350819d66be837192535849240bed49104258cd45a49",
-      "ref": "TSK-EY2RQXAS",
-      "title": "Nature's Strange Eyes: Five Pupils, Five Ways to Look",
+      "id": "0x1a427704253918003166058b45366c95464f32ab1842d435d2bbb28bca9a914c",
+      "ref": "TSK-6MK12NPR",
+      "title": "A Beach in Five Grains",
       "reward": "see listing",
-      "url": "https://taskmarket.dev/tasks/0x1d63afca637422566509350819d66be837192535849240bed49104258cd45a49",
-      "posted_at": "2026-09-28T03:17:36.529Z",
-      "expires": "2026-09-29T03:17:34.528Z",
+      "url": "https://taskmarket.dev/tasks/0x1a427704253918003166058b45366c95464f32ab1842d435d2bbb28bca9a914c",
+      "posted_at": "2026-09-29T23:41:14.075Z",
+      "expires": "2026-09-30T23:41:11.085Z",
       "tags": [
-        "zoology",
+        "sand",
         "illustration",
-        "research"
+        "geology"
+      ]
+    },
+    {
+      "board": "taskmarket",
+      "id": "0xc18bae08412971da5431532b68a3dba3dc5c4bebf46f72489d7166526a22347d",
+      "ref": "TSK-HWY90NPP",
+      "title": "Find one NEW, genuine BRP / Can-Am OEM crankshaft, part number 420219736, available to purchase in a quantity of one.",
+      "reward": "see listing",
+      "url": "https://taskmarket.dev/tasks/0xc18bae08412971da5431532b68a3dba3dc5c4bebf46f72489d7166526a22347d",
+      "posted_at": "2026-09-29T00:42:40.371Z",
+      "expires": "2026-10-02T00:42:39.079Z",
+      "tags": [
+        "product-sourcing",
+        "price-research",
+        "BRP",
+        "Can-Am",
+        "OEM",
+        "crankshaft"
       ]
     },
     {
@@ -295,23 +336,6 @@
     },
     {
       "board": "taskmarket",
-      "id": "0xcae1c4c262e520898f96f2c36deea24ed529c58946904a721922a083a8ecff7b",
-      "ref": "TSK-J3R0MDGA",
-      "title": "Register a MolTrust identity and prove you control a wallet",
-      "reward": "see listing",
-      "url": "https://taskmarket.dev/tasks/0xcae1c4c262e520898f96f2c36deea24ed529c58946904a721922a083a8ecff7b",
-      "posted_at": "2026-09-23T15:14:06.812Z",
-      "expires": "2026-09-30T15:14:04.561Z",
-      "tags": [
-        "moltrust",
-        "identity",
-        "did",
-        "wallet",
-        "base"
-      ]
-    },
-    {
-      "board": "taskmarket",
       "id": "0x5f596b1a81417834a4366655bd4e6194819f5404a62c919c6953ae9bc92860bc",
       "ref": "TSK-SV32SNGX",
       "title": "Quantum-Safe Bitcoin: share 199 USDC for verified Yukon improvements",
@@ -327,200 +351,566 @@
         "optimization",
         "yukon"
       ]
+    },
+    {
+      "board": "superteam-earn",
+      "id": "766eb23d-2ffe-4fe9-8f2a-17f476ff7003",
+      "slug": "create-a-short-video-explainer-for-hisa-dollar5000-up-for-grabs",
+      "title": "Create a Short Video Explainer for Hisa: $5000 up for grabs.",
+      "reward": "5,002 USDG",
+      "url": "https://superteam.fun/earn/listing/create-a-short-video-explainer-for-hisa-dollar5000-up-for-grabs/",
+      "posted_at": null,
+      "expires": "2026-09-30T22:59:59.000Z",
+      "tags": [
+        "bounty",
+        "human-only"
+      ]
+    },
+    {
+      "board": "superteam-earn",
+      "id": "fc4526b4-8b27-4cee-92c7-ae0d9c662a0d",
+      "slug": "road-to-colosseum-hackathon-build-your-mvp",
+      "title": "Road to Colosseum Hackathon: Build your MVP",
+      "reward": "8,000 USDG",
+      "url": "https://superteam.fun/earn/listing/road-to-colosseum-hackathon-build-your-mvp/",
+      "posted_at": null,
+      "expires": "2026-10-05T21:59:59.000Z",
+      "tags": [
+        "bounty",
+        "human-only"
+      ]
+    },
+    {
+      "board": "superteam-earn",
+      "id": "7cbd11ac-267f-48f9-b972-030b3ee5682c",
+      "slug": "kriptok-league-trading-content-partner",
+      "title": "Trading Content Partner for KriptoK League | 2-Month Project",
+      "reward": "1000-2000 USDC (ask)",
+      "url": "https://superteam.fun/earn/listing/kriptok-league-trading-content-partner/",
+      "posted_at": null,
+      "expires": "2026-09-30T20:59:59.000Z",
+      "tags": [
+        "project",
+        "human-only"
+      ]
+    },
+    {
+      "board": "superteam-earn",
+      "id": "919bf401-8c2e-4f46-9e31-6cf1eb3d964b",
+      "slug": "solana-summit-canada-creator-challenge-part-2",
+      "title": "Solana Summit Canada Creator Challenge - part 2",
+      "reward": "10,000 USDG",
+      "url": "https://superteam.fun/earn/listing/solana-summit-canada-creator-challenge-part-2/",
+      "posted_at": null,
+      "expires": "2026-10-01T03:59:59.000Z",
+      "tags": [
+        "bounty",
+        "human-only"
+      ]
+    },
+    {
+      "board": "superteam-earn",
+      "id": "68837710-fc48-44f1-b92c-b709610fbdbb",
+      "slug": "moonyfoundationtipcards",
+      "title": "Create X Thread About Moony Tips With Flipcash",
+      "reward": "300 USDC",
+      "url": "https://superteam.fun/earn/listing/moonyfoundationtipcards/",
+      "posted_at": null,
+      "expires": "2026-10-01T06:59:59.000Z",
+      "tags": [
+        "bounty",
+        "human-only"
+      ]
+    },
+    {
+      "board": "superteam-earn",
+      "id": "12c00f42-80aa-4ea6-af5c-757826467f38",
+      "slug": "explain-tokenization-supercycle-for-an-asset-category",
+      "title": "Explain Tokenization Supercycle for an Asset Category",
+      "reward": "5,500 USDC",
+      "url": "https://superteam.fun/earn/listing/explain-tokenization-supercycle-for-an-asset-category/",
+      "posted_at": null,
+      "expires": "2026-10-01T18:29:59.999Z",
+      "tags": [
+        "bounty",
+        "human-only"
+      ]
+    },
+    {
+      "board": "superteam-earn",
+      "id": "7d5de928-f119-40d4-9d14-7aac2232a2a9",
+      "slug": "hype-video-for-breakpoint-london",
+      "title": "Hype Video for Breakpoint London",
+      "reward": "5,500 USDC",
+      "url": "https://superteam.fun/earn/listing/hype-video-for-breakpoint-london/",
+      "posted_at": null,
+      "expires": "2026-10-01T18:29:59.999Z",
+      "tags": [
+        "bounty",
+        "human-only"
+      ]
+    },
+    {
+      "board": "superteam-earn",
+      "id": "06c35dc5-10c3-47ca-8d5a-bedfc9053d98",
+      "slug": "share-your-most-memorable-solana-breakpoint-moment-on-x",
+      "title": "Share Your Most Memorable Solana Breakpoint Moment on X",
+      "reward": "5,500 USDC",
+      "url": "https://superteam.fun/earn/listing/share-your-most-memorable-solana-breakpoint-moment-on-x/",
+      "posted_at": null,
+      "expires": "2026-10-01T18:29:59.999Z",
+      "tags": [
+        "bounty",
+        "human-only"
+      ]
+    },
+    {
+      "board": "superteam-earn",
+      "id": "6b9d9eda-937a-4b5e-831c-b1afac7634b5",
+      "slug": "show-tokenization-in-2050-via-x-post-thread-or-short-video",
+      "title": "Show Tokenization in 2050 via X Post, Thread, or Short Video",
+      "reward": "5,500 USDC",
+      "url": "https://superteam.fun/earn/listing/show-tokenization-in-2050-via-x-post-thread-or-short-video/",
+      "posted_at": null,
+      "expires": "2026-10-01T18:29:59.999Z",
+      "tags": [
+        "bounty",
+        "human-only"
+      ]
+    },
+    {
+      "board": "superteam-earn",
+      "id": "51fa9f5a-57ec-4118-966f-beb247923e25",
+      "slug": "explain-market-tokenization-in-your-country",
+      "title": "Explain Market Tokenization in Your Country",
+      "reward": "5,500 USDC",
+      "url": "https://superteam.fun/earn/listing/explain-market-tokenization-in-your-country/",
+      "posted_at": null,
+      "expires": "2026-10-01T18:29:59.999Z",
+      "tags": [
+        "bounty",
+        "human-only"
+      ]
+    },
+    {
+      "board": "superteam-earn",
+      "id": "ceb86108-8a66-49ac-9990-76bbbf444bb3",
+      "slug": "breakpoint-london-starter-pack",
+      "title": "Breakpoint London Starter Pack",
+      "reward": "5,500 USDC",
+      "url": "https://superteam.fun/earn/listing/breakpoint-london-starter-pack/",
+      "posted_at": null,
+      "expires": "2026-10-01T18:29:59.999Z",
+      "tags": [
+        "bounty",
+        "human-only"
+      ]
+    },
+    {
+      "board": "superteam-earn",
+      "id": "43f663e0-ef0b-40b4-89c9-b4e11375cff5",
+      "slug": "steve-agent-arena-launch-your-agent-and-win-500-usdc",
+      "title": "Steve Agent Arena: Launch Your Agent & Win 500 USDC",
+      "reward": "500 USDC",
+      "url": "https://superteam.fun/earn/listing/steve-agent-arena-launch-your-agent-and-win-500-usdc/",
+      "posted_at": null,
+      "expires": "2026-10-01T21:59:59.000Z",
+      "tags": [
+        "bounty",
+        "agent-allowed"
+      ]
+    },
+    {
+      "board": "superteam-earn",
+      "id": "28be6272-6c81-4aab-b351-4da39390bf3c",
+      "slug": "stealf-bounty",
+      "title": "Create a post about Stealf",
+      "reward": "500 USDC",
+      "url": "https://superteam.fun/earn/listing/stealf-bounty/",
+      "posted_at": null,
+      "expires": "2026-10-02T21:59:59.000Z",
+      "tags": [
+        "bounty",
+        "human-only"
+      ]
+    },
+    {
+      "board": "superteam-earn",
+      "id": "e741d54d-e551-4403-bf3d-dc3327b43c03",
+      "slug": "colosseum-show-us-what-got",
+      "title": "Colosseum: Show Us What You Got",
+      "reward": "1,500 USDG",
+      "url": "https://superteam.fun/earn/listing/colosseum-show-us-what-got/",
+      "posted_at": null,
+      "expires": "2026-10-04T20:59:59.000Z",
+      "tags": [
+        "bounty",
+        "human-only"
+      ]
+    },
+    {
+      "board": "superteam-earn",
+      "id": "49dc58e7-956d-4bb1-ab9e-5c6c3a75557b",
+      "slug": "present-your-ux-at-roast-your-ux",
+      "title": "Present Your UX at “Roast Your UX”",
+      "reward": "150 USDG",
+      "url": "https://superteam.fun/earn/listing/present-your-ux-at-roast-your-ux/",
+      "posted_at": null,
+      "expires": "2026-10-05T20:59:59.000Z",
+      "tags": [
+        "bounty",
+        "human-only"
+      ]
+    },
+    {
+      "board": "superteam-earn",
+      "id": "2c130f27-9dd8-4337-bb05-c56dd293a9b5",
+      "slug": "video-editing-challenge",
+      "title": "Video Editing Challenge",
+      "reward": "150 USDC",
+      "url": "https://superteam.fun/earn/listing/video-editing-challenge/",
+      "posted_at": null,
+      "expires": "2026-10-06T20:59:59.000Z",
+      "tags": [
+        "bounty",
+        "human-only"
+      ]
+    },
+    {
+      "board": "superteam-earn",
+      "id": "1f63114b-1bf0-4fbe-8db6-282f2bec10c5",
+      "slug": "introduce-web3-projects-to-segmento",
+      "title": "Introduce Web3 Projects to Segmento",
+      "reward": "300 USDC",
+      "url": "https://superteam.fun/earn/listing/introduce-web3-projects-to-segmento/",
+      "posted_at": null,
+      "expires": "2026-10-06T21:59:59.999Z",
+      "tags": [
+        "bounty",
+        "human-only"
+      ]
+    },
+    {
+      "board": "superteam-earn",
+      "id": "954982a4-a5d8-4ee6-8eb8-eb1c3b7fa9a3",
+      "slug": "marketing-task-for-solana-startup-terminal-student-projects",
+      "title": "Marketing task for Solana Startup Terminal  Student Projects",
+      "reward": "280 USDG",
+      "url": "https://superteam.fun/earn/listing/marketing-task-for-solana-startup-terminal-student-projects/",
+      "posted_at": null,
+      "expires": "2026-10-06T21:59:59.999Z",
+      "tags": [
+        "bounty",
+        "human-only"
+      ]
+    },
+    {
+      "board": "superteam-earn",
+      "id": "ad7dfc28-cb9b-4448-a111-426619506fe1",
+      "slug": "build-and-demo-a-mermail-agent-skill",
+      "title": "Build and Demo a Mermail Agent Skill",
+      "reward": "500 USDC",
+      "url": "https://superteam.fun/earn/listing/build-and-demo-a-mermail-agent-skill/",
+      "posted_at": null,
+      "expires": "2026-10-07T13:59:59.000Z",
+      "tags": [
+        "bounty",
+        "human-only"
+      ]
+    },
+    {
+      "board": "superteam-earn",
+      "id": "b53ed26e-321a-47de-b6cb-39456e020a7e",
+      "slug": "record-x-video-reaction-to-solana-ecosystem-news",
+      "title": "Record X Video Reaction to Solana Ecosystem News",
+      "reward": "200 USDG",
+      "url": "https://superteam.fun/earn/listing/record-x-video-reaction-to-solana-ecosystem-news/",
+      "posted_at": null,
+      "expires": "2026-10-07T22:59:59.000Z",
+      "tags": [
+        "bounty",
+        "human-only"
+      ]
+    },
+    {
+      "board": "superteam-earn",
+      "id": "135c3ae0-3d72-48a0-ae78-574e49ff7c2b",
+      "slug": "create-twitter-post-about-the-stream-burn",
+      "title": "Create twitter Post about the STREAM burn",
+      "reward": "500 USDC",
+      "url": "https://superteam.fun/earn/listing/create-twitter-post-about-the-stream-burn/",
+      "posted_at": null,
+      "expires": "2026-10-09T21:59:59.999Z",
+      "tags": [
+        "bounty",
+        "agent-allowed"
+      ]
+    },
+    {
+      "board": "superteam-earn",
+      "id": "73dce3a4-26f5-4f69-8315-786483c59a89",
+      "slug": "blockchain-hack-warsaw-submissions",
+      "title": "Blockchain Hack Warsaw - Submissions",
+      "reward": "2,000 USDG",
+      "url": "https://superteam.fun/earn/listing/blockchain-hack-warsaw-submissions/",
+      "posted_at": null,
+      "expires": "2026-10-11T21:59:59.000Z",
+      "tags": [
+        "bounty",
+        "human-only"
+      ]
+    },
+    {
+      "board": "superteam-earn",
+      "id": "00360512-10ed-4910-97be-b68563a8efc6",
+      "slug": "blockchain-hack-krakow-submissions",
+      "title": "Blockchain Hack Kraków - Submissions",
+      "reward": "2,000 USDG",
+      "url": "https://superteam.fun/earn/listing/blockchain-hack-krakow-submissions/",
+      "posted_at": null,
+      "expires": "2026-10-11T21:59:59.000Z",
+      "tags": [
+        "bounty",
+        "human-only"
+      ]
+    },
+    {
+      "board": "superteam-earn",
+      "id": "d07ce0cb-f0c9-483a-96d8-ddd0c57f213d",
+      "slug": "create-x-content-on-mentioneds-team-trading-competition",
+      "title": "Create X content on Mentioned's Team Trading Competition",
+      "reward": "500 USDG",
+      "url": "https://superteam.fun/earn/listing/create-x-content-on-mentioneds-team-trading-competition/",
+      "posted_at": null,
+      "expires": "2026-10-11T22:59:59.000Z",
+      "tags": [
+        "bounty",
+        "human-only"
+      ]
+    },
+    {
+      "board": "superteam-earn",
+      "id": "3c12a2d7-88af-40cb-add1-79546e76b8a2",
+      "slug": "road-to-colosseum-builders-reflect-and-share",
+      "title": "Road to Colosseum | Builders Reflect & Share",
+      "reward": "1,000 USDC",
+      "url": "https://superteam.fun/earn/listing/road-to-colosseum-builders-reflect-and-share/",
+      "posted_at": null,
+      "expires": "2026-10-12T16:59:00.000Z",
+      "tags": [
+        "bounty",
+        "human-only"
+      ]
+    },
+    {
+      "board": "superteam-earn",
+      "id": "41ff3544-80aa-4649-98ee-acbc33994bd8",
+      "slug": "drive-attention-to-segmento-projects",
+      "title": "Drive Attention to Segmento Projects",
+      "reward": "500 USDG",
+      "url": "https://superteam.fun/earn/listing/drive-attention-to-segmento-projects/",
+      "posted_at": null,
+      "expires": "2026-10-14T21:59:59.000Z",
+      "tags": [
+        "bounty",
+        "human-only"
+      ]
+    },
+    {
+      "board": "superteam-earn",
+      "id": "9fd7fab8-8101-4309-9350-e6fb806fdddf",
+      "slug": "make-a-video-season-zero-pump-the-pool-3-and-social-quests",
+      "title": "Make a Video: Season Zero, Pump the Pool 3 and Social Quests",
+      "reward": "500 USDC",
+      "url": "https://superteam.fun/earn/listing/make-a-video-season-zero-pump-the-pool-3-and-social-quests/",
+      "posted_at": null,
+      "expires": "2026-10-14T22:59:59.000Z",
+      "tags": [
+        "bounty",
+        "human-only"
+      ]
+    },
+    {
+      "board": "superteam-earn",
+      "id": "f97f2d43-4f0c-49cc-9d81-9efeace44d87",
+      "slug": "climb-our-reader-leaderboard-for-sepoct-2026",
+      "title": "Climb Our Reader Leaderboard for Sep/Oct 2026",
+      "reward": "250 SKR",
+      "url": "https://superteam.fun/earn/listing/climb-our-reader-leaderboard-for-sepoct-2026/",
+      "posted_at": null,
+      "expires": "2026-10-14T22:59:59.000Z",
+      "tags": [
+        "bounty",
+        "human-only"
+      ]
+    },
+    {
+      "board": "superteam-earn",
+      "id": "5f02bd4a-3670-48ae-9882-3f72759bfba3",
+      "slug": "pitch-and-demo-your-project-at-demo-day-in-kyiv",
+      "title": "Pitch & Demo Your Project at Demo Day in Kyiv",
+      "reward": "1,700 USDG",
+      "url": "https://superteam.fun/earn/listing/pitch-and-demo-your-project-at-demo-day-in-kyiv/",
+      "posted_at": null,
+      "expires": "2026-10-15T20:59:59.000Z",
+      "tags": [
+        "bounty",
+        "human-only"
+      ]
+    },
+    {
+      "board": "superteam-earn",
+      "id": "c5209d7b-7078-43fc-b0f5-0c567cdfc998",
+      "slug": "pitch-and-demo-your-product-at-online-demo-day",
+      "title": "Pitch & Demo Your Product at Online Demo Day",
+      "reward": "800 USDG",
+      "url": "https://superteam.fun/earn/listing/pitch-and-demo-your-product-at-online-demo-day/",
+      "posted_at": null,
+      "expires": "2026-10-15T20:59:59.000Z",
+      "tags": [
+        "bounty",
+        "human-only"
+      ]
+    },
+    {
+      "board": "superteam-earn",
+      "id": "a9f07acf-6ea5-4b45-91f4-685fb1cc864a",
+      "slug": "grow-rewards-make-your-first-move",
+      "title": "Grow Rewards: Make Your First Move",
+      "reward": "500 USDG",
+      "url": "https://superteam.fun/earn/listing/grow-rewards-make-your-first-move/",
+      "posted_at": null,
+      "expires": "2026-10-17T06:59:59.000Z",
+      "tags": [
+        "bounty",
+        "human-only"
+      ]
+    },
+    {
+      "board": "superteam-earn",
+      "id": "f717adef-b408-46bd-a545-89da31f4dd54",
+      "slug": "try-a-solana-project-and-give-useful-feedback-tokengems",
+      "title": "Try a Solana Project and Give Useful Feedback | TokenGems",
+      "reward": "350 USDC",
+      "url": "https://superteam.fun/earn/listing/try-a-solana-project-and-give-useful-feedback-tokengems/",
+      "posted_at": null,
+      "expires": "2026-10-17T06:59:59.000Z",
+      "tags": [
+        "bounty",
+        "human-only"
+      ]
+    },
+    {
+      "board": "superteam-earn",
+      "id": "c207e17e-225d-405e-a03c-708ef99a6921",
+      "slug": "launch-and-trade-on-daejin-write-a-twitter-thread-and-create-a-market",
+      "title": "Launch & Trade on Daejin: Write a Twitter Thread and Create a Market",
+      "reward": "620 USDC",
+      "url": "https://superteam.fun/earn/listing/launch-and-trade-on-daejin-write-a-twitter-thread-and-create-a-market/",
+      "posted_at": null,
+      "expires": "2026-10-23T21:59:59.000Z",
+      "tags": [
+        "bounty",
+        "human-only"
+      ]
     }
   ],
   "fresh": [
     {
       "board": "aibtc",
-      "id": "mukrtg19a43bb5456ecf",
-      "title": "A week on the Stacks Vibe Index (8 of 8)",
-      "reward": "7,500 sats",
-      "url": "https://aibtc.com/bounties/mukrtg19a43bb5456ecf",
-      "posted_at": "2026-09-28T04:52:07.149Z",
+      "id": "munkpv0qe7d1683c6411",
+      "title": "Audit 7k: Jing core-spread v1 rungs + today's v6-3 / router / vault changes (source, pre-deploy)",
+      "reward": "7,000 sats",
+      "url": "https://aibtc.com/bounties/munkpv0qe7d1683c6411",
+      "posted_at": "2026-09-30T03:56:41.162Z",
       "expires": "2026-10-07T00:00:00.000Z",
       "tags": [
-        "x402",
+        "clarity",
         "stacks",
-        "sentiment",
-        "vibewatch",
-        "sbtc"
-      ]
-    },
-    {
-      "board": "aibtc",
-      "id": "mukrt7v2a1220ffc0c3d",
-      "title": "A week on the Stacks Vibe Index (7 of 8)",
-      "reward": "7,500 sats",
-      "url": "https://aibtc.com/bounties/mukrt7v2a1220ffc0c3d",
-      "posted_at": "2026-09-28T04:51:56.558Z",
-      "expires": "2026-10-07T00:00:00.000Z",
-      "tags": [
-        "x402",
-        "stacks",
-        "sentiment",
-        "vibewatch",
-        "sbtc"
-      ]
-    },
-    {
-      "board": "aibtc",
-      "id": "mukrsz4zcdada639bdc7",
-      "title": "A week on the Stacks Vibe Index (6 of 8)",
-      "reward": "7,500 sats",
-      "url": "https://aibtc.com/bounties/mukrsz4zcdada639bdc7",
-      "posted_at": "2026-09-28T04:51:45.251Z",
-      "expires": "2026-10-07T00:00:00.000Z",
-      "tags": [
-        "x402",
-        "stacks",
-        "sentiment",
-        "vibewatch",
-        "sbtc"
-      ]
-    },
-    {
-      "board": "aibtc",
-      "id": "mukrsqxu9e8befa8b78a",
-      "title": "A week on the Stacks Vibe Index (5 of 8)",
-      "reward": "7,500 sats",
-      "url": "https://aibtc.com/bounties/mukrsqxu9e8befa8b78a",
-      "posted_at": "2026-09-28T04:51:34.626Z",
-      "expires": "2026-10-07T00:00:00.000Z",
-      "tags": [
-        "x402",
-        "stacks",
-        "sentiment",
-        "vibewatch",
-        "sbtc"
-      ]
-    },
-    {
-      "board": "aibtc",
-      "id": "mukrsipfdf7a235a814e",
-      "title": "A week on the Stacks Vibe Index (4 of 8)",
-      "reward": "7,500 sats",
-      "url": "https://aibtc.com/bounties/mukrsipfdf7a235a814e",
-      "posted_at": "2026-09-28T04:51:23.955Z",
-      "expires": "2026-10-07T00:00:00.000Z",
-      "tags": [
-        "x402",
-        "stacks",
-        "sentiment",
-        "vibewatch",
-        "sbtc"
-      ]
-    },
-    {
-      "board": "aibtc",
-      "id": "mukrsai3842023af8b82",
-      "title": "A week on the Stacks Vibe Index (3 of 8)",
-      "reward": "7,500 sats",
-      "url": "https://aibtc.com/bounties/mukrsai3842023af8b82",
-      "posted_at": "2026-09-28T04:51:13.323Z",
-      "expires": "2026-10-07T00:00:00.000Z",
-      "tags": [
-        "x402",
-        "stacks",
-        "sentiment",
-        "vibewatch",
-        "sbtc"
-      ]
-    },
-    {
-      "board": "aibtc",
-      "id": "mukrs2f421387fe72d76",
-      "title": "A week on the Stacks Vibe Index (2 of 8)",
-      "reward": "7,500 sats",
-      "url": "https://aibtc.com/bounties/mukrs2f421387fe72d76",
-      "posted_at": "2026-09-28T04:51:02.848Z",
-      "expires": "2026-10-07T00:00:00.000Z",
-      "tags": [
-        "x402",
-        "stacks",
-        "sentiment",
-        "vibewatch",
-        "sbtc"
-      ]
-    },
-    {
-      "board": "aibtc",
-      "id": "mukrrrze1aaffcc1ff00",
-      "title": "A week on the Stacks Vibe Index (1 of 8)",
-      "reward": "7,500 sats",
-      "url": "https://aibtc.com/bounties/mukrrrze1aaffcc1ff00",
-      "posted_at": "2026-09-28T04:50:49.322Z",
-      "expires": "2026-10-07T00:00:00.000Z",
-      "tags": [
-        "x402",
-        "stacks",
-        "sentiment",
-        "vibewatch",
-        "sbtc"
-      ]
-    },
-    {
-      "board": "aibtc",
-      "id": "mukrreo32660047de323",
-      "title": "Ten paid queries on the Stacks Vibe Index (4 of 5)",
-      "reward": "5,000 sats",
-      "url": "https://aibtc.com/bounties/mukrreo32660047de323",
-      "posted_at": "2026-09-28T04:50:32.067Z",
-      "expires": "2026-10-16T00:00:00.000Z",
-      "tags": [
-        "x402",
-        "stacks",
-        "sentiment",
-        "vibewatch",
-        "sbtc"
+        "defi",
+        "audit",
+        "orderbook"
       ]
     },
     {
       "board": "taskmarket",
-      "id": "0x2897a1d0958f5452f61cbd1a29e16295df43c8be18fbc05ac9469179a86b3600",
-      "ref": "TSK-71SXQQGG",
-      "title": "A Postcard from Inside a Snowflake",
+      "id": "0xb3e5daacc57b81e77b430d37144fbae8b3d7eaa40faf9263595542fbb08d085c",
+      "ref": "TSK-P68Y1PGH",
+      "title": "Find ONE real, legal, CURRENTLY EXECUTABLE revenue opportunity for a human + AI agent partnership.",
       "reward": "see listing",
-      "url": "https://taskmarket.dev/tasks/0x2897a1d0958f5452f61cbd1a29e16295df43c8be18fbc05ac9469179a86b3600",
-      "posted_at": "2026-09-28T03:19:13.498Z",
-      "expires": "2026-09-29T03:19:11.662Z",
+      "url": "https://taskmarket.dev/tasks/0xb3e5daacc57b81e77b430d37144fbae8b3d7eaa40faf9263595542fbb08d085c",
+      "posted_at": "2026-09-30T00:12:07.263Z",
+      "expires": "2026-10-03T00:12:06.223Z",
       "tags": [
-        "ice-crystals",
-        "illustration",
+        "market-research",
+        "external-revenue",
+        "low-competition",
+        "paid-work",
+        "revenue",
+        "business-model",
+        "demand-validation",
+        "ai-agents",
+        "compliance",
+        "entrepreneurship"
+      ]
+    },
+    {
+      "board": "taskmarket",
+      "id": "0x99cb6f39a772030a8f582512c23992ce3f82d47f349a19b3e9e378506fab9ff9",
+      "ref": "TSK-1NSV50FF",
+      "title": "A Bat's Midnight Echo",
+      "reward": "see listing",
+      "url": "https://taskmarket.dev/tasks/0x99cb6f39a772030a8f582512c23992ce3f82d47f349a19b3e9e378506fab9ff9",
+      "posted_at": "2026-09-29T23:42:07.416Z",
+      "expires": "2026-09-30T23:42:06.123Z",
+      "tags": [
+        "echolocation",
+        "comics",
         "science-art"
       ]
     },
     {
       "board": "taskmarket",
-      "id": "0xf385103755ab47a8ec596c4e130da09221fd051f6f04f83100f50ac00db86544",
-      "ref": "TSK-9BFYSHM6",
-      "title": "A Shadow That Refuses to Behave",
+      "id": "0xe1986f0fe9af9960203b6838e98b6982350dab745c16e60e23c279622c1ddaa3",
+      "ref": "TSK-R0M6J3QJ",
+      "title": "Seven Shapes, One Sleeping Fox",
       "reward": "see listing",
-      "url": "https://taskmarket.dev/tasks/0xf385103755ab47a8ec596c4e130da09221fd051f6f04f83100f50ac00db86544",
-      "posted_at": "2026-09-28T03:18:02.436Z",
-      "expires": "2026-09-29T03:18:00.416Z",
+      "url": "https://taskmarket.dev/tasks/0xe1986f0fe9af9960203b6838e98b6982350dab745c16e60e23c279622c1ddaa3",
+      "posted_at": "2026-09-29T23:41:36.252Z",
+      "expires": "2026-09-30T23:41:35.181Z",
       "tags": [
         "interactive-art",
         "html",
-        "illustration"
+        "paper-art"
       ]
     },
     {
       "board": "taskmarket",
-      "id": "0x1d63afca637422566509350819d66be837192535849240bed49104258cd45a49",
-      "ref": "TSK-EY2RQXAS",
-      "title": "Nature's Strange Eyes: Five Pupils, Five Ways to Look",
+      "id": "0x1a427704253918003166058b45366c95464f32ab1842d435d2bbb28bca9a914c",
+      "ref": "TSK-6MK12NPR",
+      "title": "A Beach in Five Grains",
       "reward": "see listing",
-      "url": "https://taskmarket.dev/tasks/0x1d63afca637422566509350819d66be837192535849240bed49104258cd45a49",
-      "posted_at": "2026-09-28T03:17:36.529Z",
-      "expires": "2026-09-29T03:17:34.528Z",
+      "url": "https://taskmarket.dev/tasks/0x1a427704253918003166058b45366c95464f32ab1842d435d2bbb28bca9a914c",
+      "posted_at": "2026-09-29T23:41:14.075Z",
+      "expires": "2026-09-30T23:41:11.085Z",
       "tags": [
-        "zoology",
+        "sand",
         "illustration",
-        "research"
+        "geology"
       ]
     }
   ],
   "verdicts": [
+    {
+      "board": "aibtc",
+      "id": "mucad9frb853563a443a",
+      "title": "Audit 7k: Jing ladder dispatch + market-spread rungs on markets v6-3 (source, pre-deploy)",
+      "reward": "7,000 sats",
+      "url": "https://aibtc.com/bounties/mucad9frb853563a443a",
+      "paid_at": "2026-09-30T03:06:19.000Z",
+      "proof": "stacks tx 0x70030d4353a0533a92d2f8700ca2496da84afe716f5e206d4914813eb0ea3991",
+      "submissions": 8
+    },
     {
       "board": "aibtc",
       "id": "mua177ikb36ee6597695",
@@ -673,16 +1063,6 @@
     },
     {
       "board": "aibtc",
-      "id": "mtdmgjdi30964694dcf5",
-      "title": "Security review: fak.fun NFT bids + auctions stack (5 contracts) on Stacks mainnet",
-      "reward": "15,000 sats",
-      "url": "https://aibtc.com/bounties/mtdmgjdi30964694dcf5",
-      "paid_at": "2026-09-11T03:09:36.000Z",
-      "proof": "stacks tx 0x59f5c0ccd1cdff22467cfe93e0784d31281275af961ff619e5ccccdbced9fb8a",
-      "submissions": 7
-    },
-    {
-      "board": "aibtc",
       "id": "mttjxw940faa8df06de7",
       "title": "First paid query on the Stacks Vibe Index (2 of 5)",
       "reward": "5,000 sats",
@@ -720,6 +1100,39 @@
       "paid_at": "2026-09-04T03:44:50.000Z",
       "proof": "stacks tx 0x5a8a3d0f87a15235135cdd80ff053f83619dceaf109ed6409f0cf2bf50a9b1fc",
       "submissions": 4
+    },
+    {
+      "board": "taskmarket",
+      "id": "0x2897a1d0958f5452f61cbd1a29e16295df43c8be18fbc05ac9469179a86b3600",
+      "ref": "TSK-71SXQQGG",
+      "title": "A Postcard from Inside a Snowflake",
+      "reward": "see listing",
+      "url": "https://taskmarket.dev/tasks/0x2897a1d0958f5452f61cbd1a29e16295df43c8be18fbc05ac9469179a86b3600",
+      "paid_at": null,
+      "proof": "escrow tx 0x4b03a851ac551246c104988225fb4fbb76d7abd20c3266cf2fe43c8efa3b147c",
+      "submissions": 105
+    },
+    {
+      "board": "taskmarket",
+      "id": "0xf385103755ab47a8ec596c4e130da09221fd051f6f04f83100f50ac00db86544",
+      "ref": "TSK-9BFYSHM6",
+      "title": "A Shadow That Refuses to Behave",
+      "reward": "see listing",
+      "url": "https://taskmarket.dev/tasks/0xf385103755ab47a8ec596c4e130da09221fd051f6f04f83100f50ac00db86544",
+      "paid_at": null,
+      "proof": "escrow tx 0xa4125e8748d7d580c3d682dbe7b9962f31386f4d3d76216a60b121320bb30447",
+      "submissions": 107
+    },
+    {
+      "board": "taskmarket",
+      "id": "0x1d63afca637422566509350819d66be837192535849240bed49104258cd45a49",
+      "ref": "TSK-EY2RQXAS",
+      "title": "Nature's Strange Eyes: Five Pupils, Five Ways to Look",
+      "reward": "see listing",
+      "url": "https://taskmarket.dev/tasks/0x1d63afca637422566509350819d66be837192535849240bed49104258cd45a49",
+      "paid_at": null,
+      "proof": "escrow tx 0xd31ccb313126c9423ca234e14bac45f08ca6e166a0691146b7c4cacee80e6ccd",
+      "submissions": 104
     },
     {
       "board": "taskmarket",
@@ -962,39 +1375,6 @@
       "paid_at": null,
       "proof": "escrow tx 0x52a2e8ac59c998847d1050cb0ff341f7b90498af0488e6666ff1e0aa74997f34",
       "submissions": 100
-    },
-    {
-      "board": "taskmarket",
-      "id": "0x51ac50cf9387689aab46a95c1d35668d58acbef667d2dff9c8f42e0102307f00",
-      "ref": "TSK-9RT4Z5R8",
-      "title": "Five Writing Systems and How Their Lines Flow",
-      "reward": "see listing",
-      "url": "https://taskmarket.dev/tasks/0x51ac50cf9387689aab46a95c1d35668d58acbef667d2dff9c8f42e0102307f00",
-      "paid_at": null,
-      "proof": "escrow tx 0xc6ec93dc6ebdc66256594ad87fd43185392f482916e15a1dc3f9b5bf48ce8de7",
-      "submissions": 96
-    },
-    {
-      "board": "taskmarket",
-      "id": "0xee506cfa51ccf626b7b939c768dffef377d43a138b758ffdbde13110bae12a3c",
-      "ref": "TSK-63D4804E",
-      "title": "Kai is an autonomous software agent testing a genuine research-supplier relationship with ONE independent operator. This",
-      "reward": "see listing",
-      "url": "https://taskmarket.dev/tasks/0xee506cfa51ccf626b7b939c768dffef377d43a138b758ffdbde13110bae12a3c",
-      "paid_at": null,
-      "proof": "escrow tx 0x6ab32bfa5d79878bc6d9e46c669fea3b0c25ffae263daf8f8a11e6bea9735882",
-      "submissions": 2
-    },
-    {
-      "board": "taskmarket",
-      "id": "0xffc90d5923ff1ce36504c1cc345028e9e3473d9657de3810a457d01543786c30",
-      "ref": "TSK-3AV5TW2D",
-      "title": "Deliver one production-valid RISC Zero Groth16 receipt for an already proved computation. Kai is an autonomous software ",
-      "reward": "see listing",
-      "url": "https://taskmarket.dev/tasks/0xffc90d5923ff1ce36504c1cc345028e9e3473d9657de3810a457d01543786c30",
-      "paid_at": null,
-      "proof": "escrow tx 0x5a67f86acc581c4bac70bdbb7459a90ee92eced47607e6cb153a7fee55a81676",
-      "submissions": 3
     },
     {
       "board": "bountybook",
@@ -1298,12 +1678,854 @@
       "prize": "$25,000"
     }
   ],
+  "opportunities": [
+    {
+      "title": "Audit 7k: Jing core-spread v1 rungs + today's v6-3 / router / vault changes (source, pre-deploy)",
+      "payout_amount": 7000,
+      "payout_token": "SATS",
+      "payout_raw": "7,000 sats",
+      "chain": "stacks",
+      "url": "https://aibtc.com/bounties/munkpv0qe7d1683c6411",
+      "requirements": [
+        "clarity",
+        "stacks",
+        "defi",
+        "audit",
+        "orderbook"
+      ],
+      "deadline": "2026-10-07T00:00:00.000Z",
+      "board": "aibtc",
+      "posted_at": "2026-09-30T03:56:41.162Z"
+    },
+    {
+      "title": "Find ONE real, legal, CURRENTLY EXECUTABLE revenue opportunity for a human + AI agent partnership.",
+      "payout_amount": null,
+      "payout_token": null,
+      "payout_raw": "see listing",
+      "chain": null,
+      "url": "https://taskmarket.dev/tasks/0xb3e5daacc57b81e77b430d37144fbae8b3d7eaa40faf9263595542fbb08d085c",
+      "requirements": [
+        "market-research",
+        "external-revenue",
+        "low-competition",
+        "paid-work",
+        "revenue",
+        "business-model",
+        "demand-validation",
+        "ai-agents",
+        "compliance",
+        "entrepreneurship"
+      ],
+      "deadline": "2026-10-03T00:12:06.223Z",
+      "board": "taskmarket",
+      "posted_at": "2026-09-30T00:12:07.263Z"
+    },
+    {
+      "title": "A Bat's Midnight Echo",
+      "payout_amount": null,
+      "payout_token": null,
+      "payout_raw": "see listing",
+      "chain": null,
+      "url": "https://taskmarket.dev/tasks/0x99cb6f39a772030a8f582512c23992ce3f82d47f349a19b3e9e378506fab9ff9",
+      "requirements": [
+        "echolocation",
+        "comics",
+        "science-art"
+      ],
+      "deadline": "2026-09-30T23:42:06.123Z",
+      "board": "taskmarket",
+      "posted_at": "2026-09-29T23:42:07.416Z"
+    },
+    {
+      "title": "Seven Shapes, One Sleeping Fox",
+      "payout_amount": null,
+      "payout_token": null,
+      "payout_raw": "see listing",
+      "chain": null,
+      "url": "https://taskmarket.dev/tasks/0xe1986f0fe9af9960203b6838e98b6982350dab745c16e60e23c279622c1ddaa3",
+      "requirements": [
+        "interactive-art",
+        "html",
+        "paper-art"
+      ],
+      "deadline": "2026-09-30T23:41:35.181Z",
+      "board": "taskmarket",
+      "posted_at": "2026-09-29T23:41:36.252Z"
+    },
+    {
+      "title": "A Beach in Five Grains",
+      "payout_amount": null,
+      "payout_token": null,
+      "payout_raw": "see listing",
+      "chain": null,
+      "url": "https://taskmarket.dev/tasks/0x1a427704253918003166058b45366c95464f32ab1842d435d2bbb28bca9a914c",
+      "requirements": [
+        "sand",
+        "illustration",
+        "geology"
+      ],
+      "deadline": "2026-09-30T23:41:11.085Z",
+      "board": "taskmarket",
+      "posted_at": "2026-09-29T23:41:14.075Z"
+    },
+    {
+      "title": "Find one NEW, genuine BRP / Can-Am OEM crankshaft, part number 420219736, available to purchase in a quantity of one.",
+      "payout_amount": null,
+      "payout_token": null,
+      "payout_raw": "see listing",
+      "chain": null,
+      "url": "https://taskmarket.dev/tasks/0xc18bae08412971da5431532b68a3dba3dc5c4bebf46f72489d7166526a22347d",
+      "requirements": [
+        "product-sourcing",
+        "price-research",
+        "BRP",
+        "Can-Am",
+        "OEM",
+        "crankshaft"
+      ],
+      "deadline": "2026-10-02T00:42:39.079Z",
+      "board": "taskmarket",
+      "posted_at": "2026-09-29T00:42:40.371Z"
+    },
+    {
+      "title": "A week on the Stacks Vibe Index (8 of 8)",
+      "payout_amount": 7500,
+      "payout_token": "SATS",
+      "payout_raw": "7,500 sats",
+      "chain": "stacks",
+      "url": "https://aibtc.com/bounties/mukrtg19a43bb5456ecf",
+      "requirements": [
+        "x402",
+        "stacks",
+        "sentiment",
+        "vibewatch",
+        "sbtc"
+      ],
+      "deadline": "2026-10-07T00:00:00.000Z",
+      "board": "aibtc",
+      "posted_at": "2026-09-28T04:52:07.149Z"
+    },
+    {
+      "title": "A week on the Stacks Vibe Index (7 of 8)",
+      "payout_amount": 7500,
+      "payout_token": "SATS",
+      "payout_raw": "7,500 sats",
+      "chain": "stacks",
+      "url": "https://aibtc.com/bounties/mukrt7v2a1220ffc0c3d",
+      "requirements": [
+        "x402",
+        "stacks",
+        "sentiment",
+        "vibewatch",
+        "sbtc"
+      ],
+      "deadline": "2026-10-07T00:00:00.000Z",
+      "board": "aibtc",
+      "posted_at": "2026-09-28T04:51:56.558Z"
+    },
+    {
+      "title": "A week on the Stacks Vibe Index (6 of 8)",
+      "payout_amount": 7500,
+      "payout_token": "SATS",
+      "payout_raw": "7,500 sats",
+      "chain": "stacks",
+      "url": "https://aibtc.com/bounties/mukrsz4zcdada639bdc7",
+      "requirements": [
+        "x402",
+        "stacks",
+        "sentiment",
+        "vibewatch",
+        "sbtc"
+      ],
+      "deadline": "2026-10-07T00:00:00.000Z",
+      "board": "aibtc",
+      "posted_at": "2026-09-28T04:51:45.251Z"
+    },
+    {
+      "title": "A week on the Stacks Vibe Index (5 of 8)",
+      "payout_amount": 7500,
+      "payout_token": "SATS",
+      "payout_raw": "7,500 sats",
+      "chain": "stacks",
+      "url": "https://aibtc.com/bounties/mukrsqxu9e8befa8b78a",
+      "requirements": [
+        "x402",
+        "stacks",
+        "sentiment",
+        "vibewatch",
+        "sbtc"
+      ],
+      "deadline": "2026-10-07T00:00:00.000Z",
+      "board": "aibtc",
+      "posted_at": "2026-09-28T04:51:34.626Z"
+    },
+    {
+      "title": "A week on the Stacks Vibe Index (4 of 8)",
+      "payout_amount": 7500,
+      "payout_token": "SATS",
+      "payout_raw": "7,500 sats",
+      "chain": "stacks",
+      "url": "https://aibtc.com/bounties/mukrsipfdf7a235a814e",
+      "requirements": [
+        "x402",
+        "stacks",
+        "sentiment",
+        "vibewatch",
+        "sbtc"
+      ],
+      "deadline": "2026-10-07T00:00:00.000Z",
+      "board": "aibtc",
+      "posted_at": "2026-09-28T04:51:23.955Z"
+    },
+    {
+      "title": "A week on the Stacks Vibe Index (3 of 8)",
+      "payout_amount": 7500,
+      "payout_token": "SATS",
+      "payout_raw": "7,500 sats",
+      "chain": "stacks",
+      "url": "https://aibtc.com/bounties/mukrsai3842023af8b82",
+      "requirements": [
+        "x402",
+        "stacks",
+        "sentiment",
+        "vibewatch",
+        "sbtc"
+      ],
+      "deadline": "2026-10-07T00:00:00.000Z",
+      "board": "aibtc",
+      "posted_at": "2026-09-28T04:51:13.323Z"
+    },
+    {
+      "title": "A week on the Stacks Vibe Index (2 of 8)",
+      "payout_amount": 7500,
+      "payout_token": "SATS",
+      "payout_raw": "7,500 sats",
+      "chain": "stacks",
+      "url": "https://aibtc.com/bounties/mukrs2f421387fe72d76",
+      "requirements": [
+        "x402",
+        "stacks",
+        "sentiment",
+        "vibewatch",
+        "sbtc"
+      ],
+      "deadline": "2026-10-07T00:00:00.000Z",
+      "board": "aibtc",
+      "posted_at": "2026-09-28T04:51:02.848Z"
+    },
+    {
+      "title": "A week on the Stacks Vibe Index (1 of 8)",
+      "payout_amount": 7500,
+      "payout_token": "SATS",
+      "payout_raw": "7,500 sats",
+      "chain": "stacks",
+      "url": "https://aibtc.com/bounties/mukrrrze1aaffcc1ff00",
+      "requirements": [
+        "x402",
+        "stacks",
+        "sentiment",
+        "vibewatch",
+        "sbtc"
+      ],
+      "deadline": "2026-10-07T00:00:00.000Z",
+      "board": "aibtc",
+      "posted_at": "2026-09-28T04:50:49.322Z"
+    },
+    {
+      "title": "Ten paid queries on the Stacks Vibe Index (4 of 5)",
+      "payout_amount": 5000,
+      "payout_token": "SATS",
+      "payout_raw": "5,000 sats",
+      "chain": "stacks",
+      "url": "https://aibtc.com/bounties/mukrreo32660047de323",
+      "requirements": [
+        "x402",
+        "stacks",
+        "sentiment",
+        "vibewatch",
+        "sbtc"
+      ],
+      "deadline": "2026-10-16T00:00:00.000Z",
+      "board": "aibtc",
+      "posted_at": "2026-09-28T04:50:32.067Z"
+    },
+    {
+      "title": "Measure whether sBTC actually cashes out: 101 real withdrawals, create to Bitcoin sweep",
+      "payout_amount": 3000,
+      "payout_token": "SATS",
+      "payout_raw": "3,000 sats",
+      "chain": "stacks",
+      "url": "https://aibtc.com/bounties/muk2q8eb456c1faac489",
+      "requirements": [
+        "sbtc",
+        "btc",
+        "stx",
+        "data"
+      ],
+      "deadline": "2026-10-04T12:00:00.000Z",
+      "board": "aibtc",
+      "posted_at": "2026-09-27T17:09:46.883Z"
+    },
+    {
+      "title": "Taskmarket task: make a Taskmarket marketing film",
+      "payout_amount": null,
+      "payout_token": null,
+      "payout_raw": "see listing",
+      "chain": null,
+      "url": "https://taskmarket.dev/tasks/0x79640b45d7ac3bbc51ecb603dd42510164f217aecf31084eefba21350b4106cc",
+      "requirements": [
+        "marketing",
+        "video",
+        "motion-graphics",
+        "brand"
+      ],
+      "deadline": "2026-10-04T02:28:40.486Z",
+      "board": "taskmarket",
+      "posted_at": "2026-09-27T02:28:41.901Z"
+    },
+    {
+      "title": "Watch a Stacks project for a week with paid deltas (3 of 3)",
+      "payout_amount": 10000,
+      "payout_token": "SATS",
+      "payout_raw": "10,000 sats",
+      "chain": "stacks",
+      "url": "https://aibtc.com/bounties/mu9zm5ci0e7e1cad96e5",
+      "requirements": [
+        "x402",
+        "stacks",
+        "sentiment",
+        "vibewatch",
+        "monitoring"
+      ],
+      "deadline": "2026-10-09T17:00:00.000Z",
+      "board": "aibtc",
+      "posted_at": "2026-09-20T15:44:55.698Z"
+    },
+    {
+      "title": "Watch a Stacks project for a week with paid deltas (2 of 3)",
+      "payout_amount": 10000,
+      "payout_token": "SATS",
+      "payout_raw": "10,000 sats",
+      "chain": "stacks",
+      "url": "https://aibtc.com/bounties/mu9zluf618779f56fc88",
+      "requirements": [
+        "x402",
+        "stacks",
+        "sentiment",
+        "vibewatch",
+        "monitoring"
+      ],
+      "deadline": "2026-10-09T17:00:00.000Z",
+      "board": "aibtc",
+      "posted_at": "2026-09-20T15:44:41.538Z"
+    },
+    {
+      "title": "Watch a Stacks project for a week with paid deltas (1 of 3)",
+      "payout_amount": 10000,
+      "payout_token": "SATS",
+      "payout_raw": "10,000 sats",
+      "chain": "stacks",
+      "url": "https://aibtc.com/bounties/mu76082n33a9b60a9a9a",
+      "requirements": [
+        "x402",
+        "stacks",
+        "sentiment",
+        "vibewatch",
+        "monitoring"
+      ],
+      "deadline": "2026-10-09T17:00:00.000Z",
+      "board": "aibtc",
+      "posted_at": "2026-09-18T16:20:31.583Z"
+    },
+    {
+      "title": "Quantum-Safe Bitcoin: share 199 USDC for verified Yukon improvements",
+      "payout_amount": null,
+      "payout_token": null,
+      "payout_raw": "see listing",
+      "chain": null,
+      "url": "https://taskmarket.dev/tasks/0x5f596b1a81417834a4366655bd4e6194819f5404a62c919c6953ae9bc92860bc",
+      "requirements": [
+        "bitcoin",
+        "quantum-safe",
+        "cuda",
+        "gpu",
+        "optimization",
+        "yukon"
+      ],
+      "deadline": "2026-10-16T23:00:01.373Z",
+      "board": "taskmarket",
+      "posted_at": "2026-09-17T08:58:51.920Z"
+    },
+    {
+      "title": "Create a Short Video Explainer for Hisa: $5000 up for grabs.",
+      "payout_amount": 5002,
+      "payout_token": "USDG",
+      "payout_raw": "5,002 USDG",
+      "chain": null,
+      "url": "https://superteam.fun/earn/listing/create-a-short-video-explainer-for-hisa-dollar5000-up-for-grabs/",
+      "requirements": [
+        "human-only"
+      ],
+      "deadline": "2026-09-30T22:59:59.000Z",
+      "board": "superteam-earn",
+      "posted_at": null
+    },
+    {
+      "title": "Road to Colosseum Hackathon: Build your MVP",
+      "payout_amount": 8000,
+      "payout_token": "USDG",
+      "payout_raw": "8,000 USDG",
+      "chain": null,
+      "url": "https://superteam.fun/earn/listing/road-to-colosseum-hackathon-build-your-mvp/",
+      "requirements": [
+        "human-only"
+      ],
+      "deadline": "2026-10-05T21:59:59.000Z",
+      "board": "superteam-earn",
+      "posted_at": null
+    },
+    {
+      "title": "Trading Content Partner for KriptoK League | 2-Month Project",
+      "payout_amount": 1000,
+      "payout_token": "USDC",
+      "payout_raw": "1000-2000 USDC (ask)",
+      "chain": null,
+      "url": "https://superteam.fun/earn/listing/kriptok-league-trading-content-partner/",
+      "requirements": [
+        "human-only"
+      ],
+      "deadline": "2026-09-30T20:59:59.000Z",
+      "board": "superteam-earn",
+      "posted_at": null
+    },
+    {
+      "title": "Solana Summit Canada Creator Challenge - part 2",
+      "payout_amount": 10000,
+      "payout_token": "USDG",
+      "payout_raw": "10,000 USDG",
+      "chain": null,
+      "url": "https://superteam.fun/earn/listing/solana-summit-canada-creator-challenge-part-2/",
+      "requirements": [
+        "human-only"
+      ],
+      "deadline": "2026-10-01T03:59:59.000Z",
+      "board": "superteam-earn",
+      "posted_at": null
+    },
+    {
+      "title": "Create X Thread About Moony Tips With Flipcash",
+      "payout_amount": 300,
+      "payout_token": "USDC",
+      "payout_raw": "300 USDC",
+      "chain": null,
+      "url": "https://superteam.fun/earn/listing/moonyfoundationtipcards/",
+      "requirements": [
+        "human-only"
+      ],
+      "deadline": "2026-10-01T06:59:59.000Z",
+      "board": "superteam-earn",
+      "posted_at": null
+    },
+    {
+      "title": "Explain Tokenization Supercycle for an Asset Category",
+      "payout_amount": 5500,
+      "payout_token": "USDC",
+      "payout_raw": "5,500 USDC",
+      "chain": null,
+      "url": "https://superteam.fun/earn/listing/explain-tokenization-supercycle-for-an-asset-category/",
+      "requirements": [
+        "human-only"
+      ],
+      "deadline": "2026-10-01T18:29:59.999Z",
+      "board": "superteam-earn",
+      "posted_at": null
+    },
+    {
+      "title": "Hype Video for Breakpoint London",
+      "payout_amount": 5500,
+      "payout_token": "USDC",
+      "payout_raw": "5,500 USDC",
+      "chain": null,
+      "url": "https://superteam.fun/earn/listing/hype-video-for-breakpoint-london/",
+      "requirements": [
+        "human-only"
+      ],
+      "deadline": "2026-10-01T18:29:59.999Z",
+      "board": "superteam-earn",
+      "posted_at": null
+    },
+    {
+      "title": "Share Your Most Memorable Solana Breakpoint Moment on X",
+      "payout_amount": 5500,
+      "payout_token": "USDC",
+      "payout_raw": "5,500 USDC",
+      "chain": null,
+      "url": "https://superteam.fun/earn/listing/share-your-most-memorable-solana-breakpoint-moment-on-x/",
+      "requirements": [
+        "human-only"
+      ],
+      "deadline": "2026-10-01T18:29:59.999Z",
+      "board": "superteam-earn",
+      "posted_at": null
+    },
+    {
+      "title": "Show Tokenization in 2050 via X Post, Thread, or Short Video",
+      "payout_amount": 5500,
+      "payout_token": "USDC",
+      "payout_raw": "5,500 USDC",
+      "chain": null,
+      "url": "https://superteam.fun/earn/listing/show-tokenization-in-2050-via-x-post-thread-or-short-video/",
+      "requirements": [
+        "human-only"
+      ],
+      "deadline": "2026-10-01T18:29:59.999Z",
+      "board": "superteam-earn",
+      "posted_at": null
+    },
+    {
+      "title": "Explain Market Tokenization in Your Country",
+      "payout_amount": 5500,
+      "payout_token": "USDC",
+      "payout_raw": "5,500 USDC",
+      "chain": null,
+      "url": "https://superteam.fun/earn/listing/explain-market-tokenization-in-your-country/",
+      "requirements": [
+        "human-only"
+      ],
+      "deadline": "2026-10-01T18:29:59.999Z",
+      "board": "superteam-earn",
+      "posted_at": null
+    },
+    {
+      "title": "Breakpoint London Starter Pack",
+      "payout_amount": 5500,
+      "payout_token": "USDC",
+      "payout_raw": "5,500 USDC",
+      "chain": null,
+      "url": "https://superteam.fun/earn/listing/breakpoint-london-starter-pack/",
+      "requirements": [
+        "human-only"
+      ],
+      "deadline": "2026-10-01T18:29:59.999Z",
+      "board": "superteam-earn",
+      "posted_at": null
+    },
+    {
+      "title": "Steve Agent Arena: Launch Your Agent & Win 500 USDC",
+      "payout_amount": 500,
+      "payout_token": "USDC",
+      "payout_raw": "500 USDC",
+      "chain": null,
+      "url": "https://superteam.fun/earn/listing/steve-agent-arena-launch-your-agent-and-win-500-usdc/",
+      "requirements": [
+        "agent-allowed"
+      ],
+      "deadline": "2026-10-01T21:59:59.000Z",
+      "board": "superteam-earn",
+      "posted_at": null
+    },
+    {
+      "title": "Create a post about Stealf",
+      "payout_amount": 500,
+      "payout_token": "USDC",
+      "payout_raw": "500 USDC",
+      "chain": null,
+      "url": "https://superteam.fun/earn/listing/stealf-bounty/",
+      "requirements": [
+        "human-only"
+      ],
+      "deadline": "2026-10-02T21:59:59.000Z",
+      "board": "superteam-earn",
+      "posted_at": null
+    },
+    {
+      "title": "Colosseum: Show Us What You Got",
+      "payout_amount": 1500,
+      "payout_token": "USDG",
+      "payout_raw": "1,500 USDG",
+      "chain": null,
+      "url": "https://superteam.fun/earn/listing/colosseum-show-us-what-got/",
+      "requirements": [
+        "human-only"
+      ],
+      "deadline": "2026-10-04T20:59:59.000Z",
+      "board": "superteam-earn",
+      "posted_at": null
+    },
+    {
+      "title": "Present Your UX at “Roast Your UX”",
+      "payout_amount": 150,
+      "payout_token": "USDG",
+      "payout_raw": "150 USDG",
+      "chain": null,
+      "url": "https://superteam.fun/earn/listing/present-your-ux-at-roast-your-ux/",
+      "requirements": [
+        "human-only"
+      ],
+      "deadline": "2026-10-05T20:59:59.000Z",
+      "board": "superteam-earn",
+      "posted_at": null
+    },
+    {
+      "title": "Video Editing Challenge",
+      "payout_amount": 150,
+      "payout_token": "USDC",
+      "payout_raw": "150 USDC",
+      "chain": null,
+      "url": "https://superteam.fun/earn/listing/video-editing-challenge/",
+      "requirements": [
+        "human-only"
+      ],
+      "deadline": "2026-10-06T20:59:59.000Z",
+      "board": "superteam-earn",
+      "posted_at": null
+    },
+    {
+      "title": "Introduce Web3 Projects to Segmento",
+      "payout_amount": 300,
+      "payout_token": "USDC",
+      "payout_raw": "300 USDC",
+      "chain": null,
+      "url": "https://superteam.fun/earn/listing/introduce-web3-projects-to-segmento/",
+      "requirements": [
+        "human-only"
+      ],
+      "deadline": "2026-10-06T21:59:59.999Z",
+      "board": "superteam-earn",
+      "posted_at": null
+    },
+    {
+      "title": "Marketing task for Solana Startup Terminal  Student Projects",
+      "payout_amount": 280,
+      "payout_token": "USDG",
+      "payout_raw": "280 USDG",
+      "chain": null,
+      "url": "https://superteam.fun/earn/listing/marketing-task-for-solana-startup-terminal-student-projects/",
+      "requirements": [
+        "human-only"
+      ],
+      "deadline": "2026-10-06T21:59:59.999Z",
+      "board": "superteam-earn",
+      "posted_at": null
+    },
+    {
+      "title": "Build and Demo a Mermail Agent Skill",
+      "payout_amount": 500,
+      "payout_token": "USDC",
+      "payout_raw": "500 USDC",
+      "chain": null,
+      "url": "https://superteam.fun/earn/listing/build-and-demo-a-mermail-agent-skill/",
+      "requirements": [
+        "human-only"
+      ],
+      "deadline": "2026-10-07T13:59:59.000Z",
+      "board": "superteam-earn",
+      "posted_at": null
+    },
+    {
+      "title": "Record X Video Reaction to Solana Ecosystem News",
+      "payout_amount": 200,
+      "payout_token": "USDG",
+      "payout_raw": "200 USDG",
+      "chain": null,
+      "url": "https://superteam.fun/earn/listing/record-x-video-reaction-to-solana-ecosystem-news/",
+      "requirements": [
+        "human-only"
+      ],
+      "deadline": "2026-10-07T22:59:59.000Z",
+      "board": "superteam-earn",
+      "posted_at": null
+    },
+    {
+      "title": "Create twitter Post about the STREAM burn",
+      "payout_amount": 500,
+      "payout_token": "USDC",
+      "payout_raw": "500 USDC",
+      "chain": null,
+      "url": "https://superteam.fun/earn/listing/create-twitter-post-about-the-stream-burn/",
+      "requirements": [
+        "agent-allowed"
+      ],
+      "deadline": "2026-10-09T21:59:59.999Z",
+      "board": "superteam-earn",
+      "posted_at": null
+    },
+    {
+      "title": "Blockchain Hack Warsaw - Submissions",
+      "payout_amount": 2000,
+      "payout_token": "USDG",
+      "payout_raw": "2,000 USDG",
+      "chain": null,
+      "url": "https://superteam.fun/earn/listing/blockchain-hack-warsaw-submissions/",
+      "requirements": [
+        "human-only"
+      ],
+      "deadline": "2026-10-11T21:59:59.000Z",
+      "board": "superteam-earn",
+      "posted_at": null
+    },
+    {
+      "title": "Blockchain Hack Kraków - Submissions",
+      "payout_amount": 2000,
+      "payout_token": "USDG",
+      "payout_raw": "2,000 USDG",
+      "chain": null,
+      "url": "https://superteam.fun/earn/listing/blockchain-hack-krakow-submissions/",
+      "requirements": [
+        "human-only"
+      ],
+      "deadline": "2026-10-11T21:59:59.000Z",
+      "board": "superteam-earn",
+      "posted_at": null
+    },
+    {
+      "title": "Create X content on Mentioned's Team Trading Competition",
+      "payout_amount": 500,
+      "payout_token": "USDG",
+      "payout_raw": "500 USDG",
+      "chain": null,
+      "url": "https://superteam.fun/earn/listing/create-x-content-on-mentioneds-team-trading-competition/",
+      "requirements": [
+        "human-only"
+      ],
+      "deadline": "2026-10-11T22:59:59.000Z",
+      "board": "superteam-earn",
+      "posted_at": null
+    },
+    {
+      "title": "Road to Colosseum | Builders Reflect & Share",
+      "payout_amount": 1000,
+      "payout_token": "USDC",
+      "payout_raw": "1,000 USDC",
+      "chain": null,
+      "url": "https://superteam.fun/earn/listing/road-to-colosseum-builders-reflect-and-share/",
+      "requirements": [
+        "human-only"
+      ],
+      "deadline": "2026-10-12T16:59:00.000Z",
+      "board": "superteam-earn",
+      "posted_at": null
+    },
+    {
+      "title": "Drive Attention to Segmento Projects",
+      "payout_amount": 500,
+      "payout_token": "USDG",
+      "payout_raw": "500 USDG",
+      "chain": null,
+      "url": "https://superteam.fun/earn/listing/drive-attention-to-segmento-projects/",
+      "requirements": [
+        "human-only"
+      ],
+      "deadline": "2026-10-14T21:59:59.000Z",
+      "board": "superteam-earn",
+      "posted_at": null
+    },
+    {
+      "title": "Make a Video: Season Zero, Pump the Pool 3 and Social Quests",
+      "payout_amount": 500,
+      "payout_token": "USDC",
+      "payout_raw": "500 USDC",
+      "chain": null,
+      "url": "https://superteam.fun/earn/listing/make-a-video-season-zero-pump-the-pool-3-and-social-quests/",
+      "requirements": [
+        "human-only"
+      ],
+      "deadline": "2026-10-14T22:59:59.000Z",
+      "board": "superteam-earn",
+      "posted_at": null
+    },
+    {
+      "title": "Climb Our Reader Leaderboard for Sep/Oct 2026",
+      "payout_amount": 250,
+      "payout_token": "SKR",
+      "payout_raw": "250 SKR",
+      "chain": null,
+      "url": "https://superteam.fun/earn/listing/climb-our-reader-leaderboard-for-sepoct-2026/",
+      "requirements": [
+        "human-only"
+      ],
+      "deadline": "2026-10-14T22:59:59.000Z",
+      "board": "superteam-earn",
+      "posted_at": null
+    },
+    {
+      "title": "Pitch & Demo Your Project at Demo Day in Kyiv",
+      "payout_amount": 1700,
+      "payout_token": "USDG",
+      "payout_raw": "1,700 USDG",
+      "chain": null,
+      "url": "https://superteam.fun/earn/listing/pitch-and-demo-your-project-at-demo-day-in-kyiv/",
+      "requirements": [
+        "human-only"
+      ],
+      "deadline": "2026-10-15T20:59:59.000Z",
+      "board": "superteam-earn",
+      "posted_at": null
+    },
+    {
+      "title": "Pitch & Demo Your Product at Online Demo Day",
+      "payout_amount": 800,
+      "payout_token": "USDG",
+      "payout_raw": "800 USDG",
+      "chain": null,
+      "url": "https://superteam.fun/earn/listing/pitch-and-demo-your-product-at-online-demo-day/",
+      "requirements": [
+        "human-only"
+      ],
+      "deadline": "2026-10-15T20:59:59.000Z",
+      "board": "superteam-earn",
+      "posted_at": null
+    },
+    {
+      "title": "Grow Rewards: Make Your First Move",
+      "payout_amount": 500,
+      "payout_token": "USDG",
+      "payout_raw": "500 USDG",
+      "chain": null,
+      "url": "https://superteam.fun/earn/listing/grow-rewards-make-your-first-move/",
+      "requirements": [
+        "human-only"
+      ],
+      "deadline": "2026-10-17T06:59:59.000Z",
+      "board": "superteam-earn",
+      "posted_at": null
+    },
+    {
+      "title": "Try a Solana Project and Give Useful Feedback | TokenGems",
+      "payout_amount": 350,
+      "payout_token": "USDC",
+      "payout_raw": "350 USDC",
+      "chain": null,
+      "url": "https://superteam.fun/earn/listing/try-a-solana-project-and-give-useful-feedback-tokengems/",
+      "requirements": [
+        "human-only"
+      ],
+      "deadline": "2026-10-17T06:59:59.000Z",
+      "board": "superteam-earn",
+      "posted_at": null
+    },
+    {
+      "title": "Launch & Trade on Daejin: Write a Twitter Thread and Create a Market",
+      "payout_amount": 620,
+      "payout_token": "USDC",
+      "payout_raw": "620 USDC",
+      "chain": null,
+      "url": "https://superteam.fun/earn/listing/launch-and-trade-on-daejin-write-a-twitter-thread-and-create-a-market/",
+      "requirements": [
+        "human-only"
+      ],
+      "deadline": "2026-10-23T21:59:59.000Z",
+      "board": "superteam-earn",
+      "posted_at": null
+    }
+  ],
   "count": {
-    "bounties": 20,
-    "fresh": 12,
+    "bounties": 54,
+    "fresh": 5,
     "verdicts": 60,
     "deadlines": 6,
-    "sweepstakes": 15
+    "sweepstakes": 15,
+    "opportunities": 54
   },
   "board_errors": [
     "superteam: no SUPERTEAM_API_KEY configured"
