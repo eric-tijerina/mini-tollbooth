@@ -82,6 +82,38 @@ function funnelStage(v) {
   return "discovery_only";
 }
 
+// The insurance-man era: from this moment we count every agent passing
+// through the bridge under the new strategy — unique passers per lane,
+// not just payers. Epoch is fixed; counts are best-effort (usage.json is
+// ephemeral on free-tier redeploys, same as the rest of the ledger).
+const STRATEGY_EPOCH = "2026-09-30T14:15:00-05:00";
+
+function strategySummary(usage) {
+  const epoch = new Date(STRATEGY_EPOCH).getTime();
+  const visitors = usage.visitors || {};
+  const perLane = {};
+  let uniquePassers = 0;
+  const funnel = { discovery_only: 0, challenged: 0, tried_and_failed: 0, paid: 0 };
+  for (const [key, v] of Object.entries(visitors)) {
+    const lastSeen = new Date(v.last_seen || 0).getTime();
+    if (!lastSeen || lastSeen < epoch) continue; // before the strategy era
+    uniquePassers += 1;
+    funnel[funnelStage(v)] += 1;
+    for (const lane of Object.keys(v.lanes || {})) {
+      perLane[lane] = perLane[lane] || { unique_passers: 0, knocks: 0 };
+      perLane[lane].unique_passers += 1;
+      perLane[lane].knocks += v.lanes[lane] || 0;
+    }
+  }
+  return {
+    strategy: "insurance-man",
+    epoch_start: STRATEGY_EPOCH,
+    unique_passers: uniquePassers,
+    per_lane: perLane,
+    funnel_since_epoch: funnel,
+  };
+}
+
 // Express middleware factory. Must be mounted BEFORE the x402 payment
 // middleware so the res.send wrapper is in place for every outcome.
 // Only records an event (and only creates the visitor record) when the
@@ -194,6 +226,7 @@ function almostPaidSummary(usage) {
 
 module.exports = {
   visitorKey,
+  strategySummary,
   paymentHeaderPresent,
   classifyFailure,
   funnelStage,
