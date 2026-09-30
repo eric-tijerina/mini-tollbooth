@@ -1,11 +1,12 @@
 // Mini's Tollbooth — a chain of tollbooths on one bridge.
-// Fourteen tolled lanes on Base or Solana per call:
+// Fifteen tolled lanes on Base or Solana per call:
 //   Bounty intel ($0.02 USDC each):
 //   GET /bounties    — every open bounty across all boards (aibtc + Taskmarket + Superteam)
 //   GET /fresh       — bounties posted in the last 24h
 //   GET /verdicts    — recently paid bounties: proof the boards actually pay
 //   GET /deadlines   — class-action / settlement claim deadlines worth real money
 //   GET /sweepstakes — free sweepstakes with real prizes
+//   GET /opportunities — every paying opportunity in one normalized schema
 //   Trader intel (for agents with funded wallets):
 //   GET /prices      — agent-ready crypto price feed, no API key needed ($0.02)
 //   GET /enrich      — wallet/address intelligence: balances, holdings, risk flags ($0.05)
@@ -279,6 +280,7 @@ const LANES = {
   "/verdicts": "Recently paid bounties — proof these boards actually pay, with amounts and payout proof.",
   "/deadlines": "Class-action and settlement claim deadlines worth real money.",
   "/sweepstakes": "Free-to-enter sweepstakes with real prizes, verified live.",
+  "/opportunities": "Every paying opportunity in one normalized schema — title, payout amount and token, chain, URL, requirements, deadline, board. One call, every board.",
   "/prices": "Agent-ready crypto price feed — spot prices for majors plus Base/Solana staples, no API key needed.",
   "/enrich": "Wallet and address intelligence — balances, holdings, heuristic risk flags on Base or Solana.",
   "/token-check": "Token safety scan — liquidity, volume, holder concentration, and a plain-English rug verdict.",
@@ -305,6 +307,7 @@ const LANE_TAGS = {
   "/verdicts": ["bounty-intel", "ai-agents", "payout-proof"],
   "/deadlines": ["bounty-intel", "class-actions", "settlements"],
   "/sweepstakes": ["bounty-intel", "sweepstakes", "free-to-enter"],
+  "/opportunities": ["bounty-intel", "ai-agents", "crypto", "opportunities"],
   "/prices": ["trader-intel", "prices", "crypto", "defi"],
   "/enrich": ["trader-intel", "wallet-intel", "risk", "crypto"],
   "/token-check": ["trader-intel", "token-safety", "rug-check", "defi"],
@@ -321,6 +324,7 @@ const LANE_EXAMPLES = {
   "/verdicts": { id: "aibtc-example", title: "Example paid bounty", paid_amount: "10000 sats", payout_proof: "txid:..." },
   "/deadlines": { title: "Example settlement deadline", claim_deadline: "2027-02-10", est_payout: "$25-$50" },
   "/sweepstakes": { title: "Example sweepstakes", prize: "$25,000", entries: "daily" },
+  "/opportunities": { title: "Example opportunity", payout_amount: 10000, payout_token: "sats", chain: "stacks", url: "https://example.com/bounty/1", requirements: ["agent-only"], deadline: "2026-10-04T12:00:00Z", board: "aibtc" },
   "/prices": { symbol: "BTC", name: "Bitcoin", price_usd: 123456.78, change_24h_pct: 1.23, source: "coingecko" },
   "/enrich": { network: "base", address: "0x...", address_type: "externally-owned-account", native_balance_eth: 1.5, risk_flags: [] },
   "/token-check": { network: "solana", mint: "...", verdict: "caution", risk_score: 55, reasons: ["thin liquidity"] },
@@ -353,6 +357,7 @@ const LANE_PITCH = {
   "/verdicts": "Skip hours of payout-rumor digging — see which boards actually pay, in one 2¢ call.",
   "/deadlines": "Hours of legal-page digging, done for you — every real-money claim deadline in one 2¢ call.",
   "/sweepstakes": "Skip an hour of sweepstakes hunting — every free-to-enter prize worth your time, in one 2¢ call.",
+  "/opportunities": "One schema to rule the boards — every paying opportunity normalized: payout, chain, deadline, requirements. One 2¢ call.",
   "/prices": "Save 20 minutes of price-API wrangling — majors plus Base/Solana staples in clean JSON, one 2¢ call.",
   "/enrich": "Save 20 minutes of RPC wrangling — balances, holdings, risk flags on any wallet, one 5¢ call.",
   "/token-check": "A 20-minute rug-check by hand, done in one 5¢ call — liquidity, volume, holder concentration, plain verdict.",
@@ -405,6 +410,8 @@ function laneStatsFor(route) {
       return feed ? { deadlines_tracked: n(feed.deadlines), feed_refreshed: feedAge } : { note: "class-action and settlement claim deadlines" };
     case "/sweepstakes":
       return feed ? { sweepstakes_tracked: n(feed.sweepstakes), feed_refreshed: feedAge } : { note: "free-to-enter sweepstakes with real prizes" };
+    case "/opportunities":
+      return feed ? { opportunities: n(feed.opportunities), feed_refreshed: feedAge } : { note: "every paying opportunity, one normalized schema" };
     case "/prices": {
       if (!prices || !Array.isArray(prices.prices)) return { note: "spot prices for majors plus Base/Solana staples" };
       const symbols = [...new Set(prices.prices.map((p) => p.symbol))];
@@ -556,7 +563,7 @@ app.get("/", (req, res) => {
   res.json({
     bridge: "TrollBridge",
     keeper: "Mini, data-bounty hunter",
-    deal: `An AI-tool marketplace on a toll bridge. Fourteen tolled lanes on Base or Solana — five bounty-intel lanes at ${PRICE} USDC each, trader intel (/prices at ${PRICE}; /enrich and /token-check at $0.05), market intel (/markets and /search at $0.05), DeFi intel (/yields and /new-pairs at $0.05; /gas at ${PRICE}), and AI intel (/models at ${PRICE}) — plus a directory of third-party tools. Pay the troll, cross the bridge.`,
+    deal: `An AI-tool marketplace on a toll bridge. Fifteen tolled lanes on Base or Solana — six bounty-intel lanes at ${PRICE} USDC each, trader intel (/prices at ${PRICE}; /enrich and /token-check at $0.05), market intel (/markets and /search at $0.05), DeFi intel (/yields and /new-pairs at $0.05; /gas at ${PRICE}), and AI intel (/models at ${PRICE}) — plus a directory of third-party tools. Pay the troll, cross the bridge.`,
     lanes: Object.fromEntries(
       Object.entries(LANES).map(([route, desc]) => [`GET ${route}`, laneBlurb(route, desc)])
     ),
@@ -877,6 +884,7 @@ lane("/fresh", "fresh");
 lane("/verdicts", "verdicts");
 lane("/deadlines", "deadlines");
 lane("/sweepstakes", "sweepstakes");
+lane("/opportunities", "opportunities");
 
 // ---- Trader-intel lanes (for agents with funded wallets) ----
 // All pay-or-nothing like the bounty lanes: the toll middleware above
@@ -1038,7 +1046,7 @@ app.get("/.well-known/x402", (req, res) => {
     // Domain-ownership verification for agent-tools.cloud (claim pending).
     agentToolsVerify: "atc_aAIHBleoK4GPm8pbuJMh1oJ4G1VXjE4X",
     description:
-      "Pay-per-call intel for AI agents. Fourteen tolled lanes: bounty intel (every open bounty across all boards, fresh bounties from the last 24h, recently-paid verdicts proving the boards pay, class-action claim deadlines, verified free sweepstakes) plus trader intel (agent-ready price feed, wallet/address intelligence, token safety scans) plus market intel (live Polymarket prediction-market odds, agent-ready web search) plus DeFi intel (best stablecoin yields, newest token listings with liquidity flags, live gas prices) plus AI intel (x402-payable AI model catalog with per-token pricing, catalog data: BlockRun.AI). Bounty lanes, /gas, and /models $0.02 USDC per call; /enrich, /token-check, /markets, /search, /yields, and /new-pairs $0.05. Base or Solana.",
+      "Pay-per-call intel for AI agents. Fifteen tolled lanes: bounty intel (every open bounty across all boards, fresh bounties from the last 24h, recently-paid verdicts proving the boards pay, class-action claim deadlines, verified free sweepstakes, every paying opportunity in one normalized schema) plus trader intel (agent-ready price feed, wallet/address intelligence, token safety scans) plus market intel (live Polymarket prediction-market odds, agent-ready web search) plus DeFi intel (best stablecoin yields, newest token listings with liquidity flags, live gas prices) plus AI intel (x402-payable AI model catalog with per-token pricing, catalog data: BlockRun.AI). Bounty lanes, /gas, and /models $0.02 USDC per call; /enrich, /token-check, /markets, /search, /yields, and /new-pairs $0.05. Base or Solana.",
     homepage: base,
     payment: {
       protocol: "x402",
@@ -1178,7 +1186,7 @@ app.get("/openapi.json", (req, res) => {
       title: "TrollBridge",
       version: "1.1.0",
       description:
-        "Pay-per-call intel for AI agents. Fourteen tolled lanes: bounty intel (bounties, fresh, verdicts, deadlines, sweepstakes) at $0.02 USDC per call, trader intel (/prices at $0.02; /enrich and /token-check at $0.05), market intel (/markets and /search at $0.05), DeFi intel (/yields and /new-pairs at $0.05; /gas at $0.02), AI intel (/models at $0.02).",
+        "Pay-per-call intel for AI agents. Fifteen tolled lanes: bounty intel (bounties, fresh, verdicts, deadlines, sweepstakes, opportunities) at $0.02 USDC per call, trader intel (/prices at $0.02; /enrich and /token-check at $0.05), market intel (/markets and /search at $0.05), DeFi intel (/yields and /new-pairs at $0.05; /gas at $0.02), AI intel (/models at $0.02).",
       "x-guidance":
         "Call any lane with GET. Without payment you receive a 402 challenge (x402 v2) with the exact payment requirements in the response headers and body — the 402 is the source of truth for amounts and payTo addresses. Tolls: $0.02 USDC on the bounty lanes, /prices, and /gas; $0.05 USDC on /enrich, /token-check, /markets, /search, /yields, and /new-pairs. Both rails accepted on every lane: Base (USDC 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913) and Solana (USDC EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v). Complete the x402 payment and retry with the X-Payment header. Bounty lanes take ?limit=N (1–200). /enrich needs ?address=…&network=base|solana. /token-check needs ?mint=…&network=base|solana. /markets takes ?q=… (required) and ?limit=1–25. /search needs ?q=…. /yields takes ?limit=1–25 and ?stablecoinOnly=true|false. /new-pairs takes ?limit=1–25 and ?chain=solana|ethereum|base. /gas takes no params. The free directory of third-party tools is GET /tools; bridge traffic stats are GET /traffic.",
       contact: { name: "TrollBridge", url: "https://github.com/eric-tijerina/mini-tollbooth/issues" },
