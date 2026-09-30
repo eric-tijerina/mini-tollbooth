@@ -139,12 +139,37 @@ async function topYields(limit, stablecoinOnly) {
     stablecoin_only: stables,
     count: top.length,
     pools: top,
+    verdict: yieldsVerdict(top),
     source: "defillama yields api (free, no key)",
     note: "APYs are trailing, not guaranteed — outlier pools and sub-$1k TVL excluded. Refresh: 1h cache.",
     cached: false,
   };
   yieldsCache.set(key, out);
   return out;
+}
+
+// ---- /yields verdict: best risk-adjusted pick, not just top APY ----
+function yieldsVerdict(top) {
+  const D = "Heuristic from trailing APYs — not financial advice, yields are not guaranteed.";
+  if (!top.length) return { summary: "No pools matched right now.", pick: null, disclaimer: D };
+  const deep = top.filter((p) => (p.tvl_usd || 0) >= 1e6);
+  const pick = deep[0] || top[0];
+  const topIsThin = top[0] !== pick;
+  const tvlM = (v) => (v == null ? "?" : v >= 1e6 ? `$${(v / 1e6).toFixed(1)}M` : `$${Math.round(v).toLocaleString()}`);
+  const summary = topIsThin
+    ? `Top APY is ${top[0].apy_pct}% on ${top[0].project} ${top[0].symbol}, but TVL is only ${tvlM(top[0].tvl_usd)} — the steadier pick is ${pick.project} ${pick.symbol} at ${pick.apy_pct}% on ${pick.chain} (${tvlM(pick.tvl_usd)} TVL).`
+    : `Best risk-adjusted right now: ${pick.project} ${pick.symbol} at ${pick.apy_pct}% APY on ${pick.chain} (${tvlM(pick.tvl_usd)} TVL).`;
+  return {
+    summary,
+    pick: {
+      chain: pick.chain, project: pick.project, symbol: pick.symbol,
+      apy_pct: pick.apy_pct, tvl_usd: pick.tvl_usd, il_risk: pick.il_risk,
+    },
+    top_apy_skipped_for_thin_tvl: topIsThin
+      ? { project: top[0].project, symbol: top[0].symbol, apy_pct: top[0].apy_pct, tvl_usd: top[0].tvl_usd }
+      : null,
+    disclaimer: D,
+  };
 }
 
 // ---- /new-pairs: newest DexScreener token profiles + live pair data ----
@@ -208,12 +233,32 @@ async function newPairs(limit, chain) {
     chain_filter: chainFilter,
     count: pairs.length,
     pairs,
+    verdict: pairsVerdict(pairs),
     source: "dexscreener free api (no key)",
     note: "Newest token profiles from DexScreener, enriched with live pair data. Profiles skew toward promoted tokens — flags mark thin liquidity, they are not a full safety scan (see /token-check). Refresh: 15-min cache.",
     cached: false,
   };
   pairsCache.set(key, out);
   return out;
+}
+
+// ---- /new-pairs verdict: how much of this batch survives a basic screen ----
+function pairsVerdict(pairs) {
+  const D = "Heuristic flags only — not financial advice, new listings are high-risk.";
+  if (!pairs.length) return { summary: "No new pairs in this window.", clean_count: 0, flagged_count: 0, clean_symbols: [], disclaimer: D };
+  const clean = pairs.filter((p) => (p.flags || []).length === 0 && !p.error);
+  const flagged = pairs.length - clean.length;
+  let summary;
+  if (!clean.length) summary = `All ${pairs.length} new listings show thin-liquidity or sell-pressure flags — treat the whole batch as lottery tickets.`;
+  else if (!flagged) summary = `All ${pairs.length} new listings pass basic liquidity screens — still new, still risky, but no red flags.`;
+  else summary = `${clean.length} of ${pairs.length} new listings pass basic liquidity screens; ${flagged} flagged — screen those before touching them.`;
+  return {
+    summary,
+    clean_count: clean.length,
+    flagged_count: flagged,
+    clean_symbols: clean.slice(0, 10).map((p) => p.base_token && p.base_token.symbol).filter(Boolean),
+    disclaimer: D,
+  };
 }
 
 // ---- /gas: live gas prices per chain ----
@@ -287,12 +332,30 @@ async function gasPrices() {
   const out = {
     generated_at: new Date().toISOString(),
     chains,
+    verdict: gasVerdict(chains),
     source: "public chain RPCs (no key)",
     note: "EVM prices from eth_gasPrice with eth_feeHistory speed tiers; Solana from recent prioritization fees. Refresh: 5-min cache.",
     cached: false,
   };
   gasCache.set(key, out);
   return out;
+}
+
+// ---- /gas verdict: cheapest chain to transact on right now ----
+function gasVerdict(chains) {
+  const D = "Heuristic from live RPCs — not financial advice.";
+  const evm = Object.entries(chains || {}).filter(
+    ([name, c]) => name !== "solana" && c.status === "live" && c.gas_price_gwei != null
+  );
+  if (!evm.length) return { summary: "No live EVM gas data right now.", cheapest: null, disclaimer: D };
+  evm.sort((a, b) => a[1].gas_price_gwei - b[1].gas_price_gwei);
+  const [name, c] = evm[0];
+  const tier = c.tiers && c.tiers.standard_gwei != null ? ` (standard tier ~${c.tiers.standard_gwei} gwei)` : "";
+  const others = evm.slice(1).map(([n, x]) => `${n} ${x.gas_price_gwei} gwei`).join(", ");
+  const summary = evm.length === 1
+    ? `${name} gas is ${c.gas_price_gwei} gwei${tier} — the only live EVM chain right now.`
+    : `${name} is cheapest at ${c.gas_price_gwei} gwei${tier}${others ? ` vs ${others}` : ""} — route non-urgent EVM transactions through ${name}.`;
+  return { summary, cheapest: { chain: name, gas_price_gwei: c.gas_price_gwei }, disclaimer: D };
 }
 
 module.exports = { topYields, newPairs, gasPrices, modelCatalog, defiIntel };
@@ -476,6 +539,43 @@ async function defiIntel(section, limit) {
     throw e;
   }
   out = { section: sec, generated_at: new Date().toISOString(), cached: false, ...out };
+  out.verdict = defiVerdict(sec, out);
   defiCache.set(key, out);
   return out;
+}
+
+// ---- /defi verdict: one plain-English read per section ----
+function defiVerdict(sec, out) {
+  const D = "Heuristic read of public DeFi data — not financial advice.";
+  const tvlM = (v) => (v == null ? "?" : `$${Math.round(v / 1e6).toLocaleString()}M`);
+  const tvlB = (v) => (v == null ? "?" : `$${(v / 1e9).toFixed(1)}B`);
+  if (sec === "movers") {
+    const gainers = out.gainers || [];
+    const losers = out.losers || [];
+    const g = gainers[0];
+    if (!g) return { summary: "No mover data right now.", disclaimer: D };
+    const big = gainers.find((x) => (x.tvl_usd || 0) >= 1e8) || g;
+    const l = losers[0];
+    const summary = `Where to park it: ${big.name} is the momentum leader (+${big.change_1d_pct}% TVL, ${tvlM(big.tvl_usd)})${l ? `; capital is leaving ${l.name} fastest (${l.change_1d_pct}% TVL)` : ""}.`;
+    return { summary, momentum_leader: big.name, capital_leaving: l ? l.name : null, disclaimer: D };
+  }
+  if (sec === "fees" || sec === "revenue") {
+    const leaders = out.leaders || [];
+    const l = leaders[0];
+    if (!l) return { summary: "No fee data right now.", disclaimer: D };
+    const amtKey = sec === "revenue" ? "revenue_24h_usd" : "fees_24h_usd";
+    const summary = `${l.name} leads with ${tvlM(l[amtKey])} in 24h ${sec} — that's real usage paying real money.`;
+    return { summary, leader: l.name, disclaimer: D };
+  }
+  // stablecoins
+  const coins = out.stablecoins || [];
+  const s = coins[0];
+  if (!s) return { summary: "No stablecoin data right now.", disclaimer: D };
+  const inflow = coins
+    .filter((x) => (x.change_1d_pct || 0) > 0.5)
+    .sort((a, b) => b.change_1d_pct - a.change_1d_pct)[0];
+  const summary = inflow
+    ? `Fresh demand: ${inflow.symbol} supply up ${inflow.change_1d_pct}% in 24h — money moving on-chain.`
+    : `${s.symbol} still the dominant stablecoin at ${tvlB(s.circulating_usd)} circulating.`;
+  return { summary, disclaimer: D };
 }
