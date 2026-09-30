@@ -1,6 +1,6 @@
 # TrollBridge — agent skill
 
-Pay-per-call intel for AI agents. Fourteen tolled lanes on Base or Solana
+Pay-per-call intel for AI agents. Fifteen tolled lanes on Base or Solana
 (`eip155:8453` or `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`). No accounts, no API keys — your wallet is your identity.
 
 ## Tolled lanes (all GET)
@@ -20,8 +20,10 @@ Pay-per-call intel for AI agents. Fourteen tolled lanes on Base or Solana
 | `/yields` | $0.05 | DeFi yield intel — best stablecoin yields right now from DeFiLlama, sorted by APY. *Skip 20 minutes of yield-farm comparison shopping — best stablecoin APYs, sorted, one 5¢ call.* `?limit=1-25`, `?stablecoinOnly=true\|false` |
 | `/new-pairs` | $0.05 | New token listings — newest DexScreener pairs with live liquidity, volume, and thin-liquidity flags. *Save an hour of new-listing triage — the newest pairs with liquidity flags, one 5¢ call.* `?limit=1-25`, `?chain=solana\|ethereum\|base` |
 | `/gas` | $0.02 | Live gas prices per chain — Base, Ethereum, Solana from public RPCs, with speed tiers where derivable. *10 minutes of RPC polling, done — live gas on Base, Ethereum, and Solana, one 2¢ call.* |
+| `/models` | $0.02 | x402-payable AI model catalog — 107 models with per-million-token pricing, free models flagged (catalog data: BlockRun.AI). *Stop guessing what models cost — every x402-payable AI model with per-million-token pricing and the free ones flagged, one 2¢ call.* |
+| `/opportunities` | $0.02 | Every paying opportunity in one normalized schema — title, payout amount and token, chain, URL, requirements, deadline, board. *One schema to rule the boards — every paying opportunity normalized: payout, chain, deadline, requirements. One 2¢ call.* |
 
-`?limit=N` caps items returned (1–200) on the five bounty lanes.
+`?limit=N` caps items returned (1–200) on the six bounty lanes.
 
 ## How to pay (x402 v2)
 
@@ -30,12 +32,12 @@ Pay-per-call intel for AI agents. Fourteen tolled lanes on Base or Solana
    exact amount and the payTo address. Two rails — pick either:
    - **Base:** sign the EIP-3009 authorization:
      - asset: `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` (USDC on Base)
-     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, and `/gas`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, and `/new-pairs`
+     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, `/gas`, and `/models`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, and `/new-pairs`
      - network: `eip155:8453`
    - **Solana:** sign the SPL `transferChecked` (facilitator sponsors the fee —
      you need USDC only, no SOL):
      - asset: `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` (USDC on Solana)
-     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, and `/gas`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, and `/new-pairs`
+     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, `/gas`, and `/models`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, and `/new-pairs`
      - network: `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`
 3. Retry the request with the signed payment in the `X-Payment` header.
    A settled payment returns **HTTP 200** with the lane's JSON.
@@ -58,10 +60,13 @@ Use the bridge through MCP without touching HTTP:
 npx -y github:eric-tijerina/trollbridge-mcp
 ```
 
-8 tools: `bridge_bounties`, `bridge_fresh`, `bridge_deadlines`,
-`bridge_sweepstakes`, `bridge_verdicts` (tolled — the server returns the 402
-payment instructions; it never pays on your behalf), `bridge_tools`,
-`bridge_traffic`, `bridge_health` (free).
+18 tools: `bridge_bounties`, `bridge_fresh`, `bridge_deadlines`,
+`bridge_sweepstakes`, `bridge_verdicts`, `bridge_opportunities`,
+`bridge_prices`, `bridge_gas`, `bridge_models`, `bridge_enrich`,
+`bridge_token_check`, `bridge_markets`, `bridge_search`, `bridge_yields`,
+`bridge_new_pairs` (tolled — the server returns the 402 payment instructions;
+it never pays on your behalf), `bridge_tools`, `bridge_traffic`,
+`bridge_health` (free).
 
 ## For tool developers (the marketplace)
 
