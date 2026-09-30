@@ -1,4 +1,11 @@
-// TrollBridge lane #16: /file-pr — PR filing for AI agents.
+// TrollBridge builder lane (PARKED 2026-09-30): /file-pr — PR filing for AI agents.
+// Disabled after the 2026-09-30 self-audit: PRs were authored as the keeper's
+// personal GitHub account (eric-tijerina) with no throttle. Re-enable ONLY
+// under a neutral bot identity — separate GitHub account + PAT (Eric's hands).
+// Hardened 2026-09-30: abuse guards (per-wallet daily cap, repo blocklist,
+// keyword screen) run BEFORE any GitHub call, so a future re-enable is safe
+// by default.
+//
 // The exact pipeline proven on 2026-09-29 (xpaysh/awesome-x402 PR #1659):
 // fork the target public repo under the keeper's account, cut a branch via
 // the GitHub API, commit the file byte-precise, open the PR. No web editor,
@@ -17,6 +24,52 @@ const REPO_RE = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const BRANCH_RE = /^[A-Za-z0-9._/-]+$/;
 const FORK_POLL_MS = 60000;
 const FORK_POLL_STEP_MS = 3000;
+
+// ---- Abuse guards (added 2026-09-30, self-audit) ----
+// Run BEFORE any GitHub call. When the lane is re-enabled under a neutral bot
+// identity, these are already in place: no code path reaches the GitHub API
+// without passing them.
+const MAX_PRS_PER_WALLET_PER_DAY = 3;
+const REPO_BLOCKLIST = [
+  // High-profile targets a troll would love to spam in someone else's name.
+  // Compared case-insensitively against the full "owner/name".
+  "torvalds/linux", "microsoft/vscode", "facebook/react", "vuejs/vue",
+  "tensorflow/tensorflow", "bitcoin/bitcoin", "ethereum/go-ethereum",
+  "python/cpython", "nodejs/node", "denoland/deno", "apple/swift",
+  "rust-lang/rust", "golang/go", "kubernetes/kubernetes", "docker/docker",
+  "home-assistant/core", "ansible/ansible", "elastic/elasticsearch",
+  "neovim/neovim", "ohmyzsh/ohmyzsh",
+];
+const TITLE_BODY_BLOCKLIST = [
+  // Keyword screen on pr_title + pr_body (case-insensitive substring).
+  "viagra", "cialis", "crypto giveaway", "double your", "airdrop claim",
+  "free nft", "seed phrase", "private key", "wallet drainer", "send eth to",
+  "send sol to",
+];
+// payerWallet (lowercased) -> { day: "YYYY-MM-DD", n }. In-memory is fine:
+// a restart resets caps, which only errs toward strictness.
+const walletDayCount = new Map();
+
+function abuseGuards({ repo, prTitle, prBody }, payerWallet) {
+  // 1. Repo blocklist — checked before any network call.
+  if (REPO_BLOCKLIST.includes(repo.toLowerCase()))
+    throw ghError(400, "that repo is blocklisted for PR filing — pick another target");
+  // 2. Keyword screen on title + body.
+  const hay = `${prTitle}\n${prBody || ""}`.toLowerCase();
+  const hit = TITLE_BODY_BLOCKLIST.find((w) => hay.includes(w));
+  if (hit) throw ghError(400, "PR title/body tripped the abuse keyword screen");
+  // 3. Per-wallet daily cap. Unknown wallet = no cap accounting (fail open
+  // on identity, the blocklist + keyword screen still apply).
+  if (typeof payerWallet === "string" && payerWallet.trim()) {
+    if (walletDayCount.size > 10000) walletDayCount.clear(); // lazy bound
+    const day = new Date().toISOString().slice(0, 10);
+    const key = payerWallet.toLowerCase();
+    const rec = walletDayCount.get(key);
+    if (rec && rec.day === day && rec.n >= MAX_PRS_PER_WALLET_PER_DAY)
+      throw ghError(429, `daily PR cap reached (${MAX_PRS_PER_WALLET_PER_DAY} per wallet per day)`);
+    walletDayCount.set(key, rec && rec.day === day ? { day, n: rec.n + 1 } : { day, n: 1 });
+  }
+}
 
 function ghError(statusCode, message) {
   const e = new Error(message);
@@ -84,11 +137,13 @@ async function waitForFork(token, forkFullName) {
   }
 }
 
-// filePr(input, token) -> { pr_url, pr_number, branch, fork, repo }
-// Throws with .statusCode for HTTP mapping (400 caller error, 502 GitHub-side).
-async function filePr(input, token) {
+// filePr(input, token, payerWallet?) -> { pr_url, pr_number, branch, fork, repo }
+// Throws with .statusCode for HTTP mapping (400 caller error, 429 rate cap,
+// 502 GitHub-side). Abuse guards run before the first GitHub call.
+async function filePr(input, token, payerWallet) {
   if (!token) throw ghError(503, "file-pr lane not configured yet (GITHUB_TOKEN missing)");
   const { repo, filePath, content, branch, prTitle, prBody } = validateInput(input);
+  abuseGuards({ repo, prTitle, prBody }, payerWallet);
   const [owner, name] = repo.split("/");
 
   // 1. Target must exist and be public.

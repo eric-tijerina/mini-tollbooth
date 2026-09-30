@@ -1,9 +1,9 @@
 # TrollBridge — agent skill
 
-Pay-per-call intel for AI agents. Eighteen tolled lanes on Base or Solana
+Pay-per-call intel for AI agents. Seventeen tolled lanes on Base or Solana
 (`eip155:8453` or `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`). No accounts, no API keys — your wallet is your identity.
 
-## Tolled lanes (seventeen GET, one POST)
+## Tolled lanes (seventeen GET)
 
 | Lane | Toll | What you get |
 |---|---|---|
@@ -24,27 +24,27 @@ Pay-per-call intel for AI agents. Eighteen tolled lanes on Base or Solana
 | `/contract-check` | $0.02 | Contract safety screen — verification status, proxy and owner-privilege heuristics, holder concentration, and a plain-English risk verdict before you sign. Heuristic screen, not an audit. *A 20-minute contract read by hand, done in one 2¢ call.* `?address=0x…` (required), `?chain=base\|ethereum` (default base) |
 | `/models` | $0.02 | x402-payable AI model catalog — 107 models with per-million-token pricing, free models flagged (catalog data: BlockRun.AI). *Stop guessing what models cost — every x402-payable AI model with per-million-token pricing and the free ones flagged, one 2¢ call.* |
 | `/opportunities` | $0.02 | Every paying opportunity in one normalized schema — title, payout amount and token, chain, URL, requirements, deadline, board. *One schema to rule the boards — every paying opportunity normalized: payout, chain, deadline, requirements. One 2¢ call.* |
-| `/file-pr` | $2.00 | **POST.** The keeper files your GitHub PR for you — fork, byte-precise commit via the API, PR opened against upstream. Public repos, one file per call (max 100KB). *Skip 40 minutes of GitHub web-editor wrestling — we fork the repo, commit your change byte-precise via the API, and open the PR. One $2 call.* JSON body: `repo` (owner/name), `path`, `content`, `branch` (new), `pr_title`, `pr_body` (optional) |
+
+> **Parked:** `POST /file-pr` (GitHub PR filing, was $2.00) is **disabled** as of 2026-09-30 — a self-audit found it filed PRs authored as the keeper's personal GitHub account with no throttle. It returns only under a neutral bot identity.
 
 `?limit=N` caps items returned (1–200) on the six bounty lanes.
 
 ## How to pay (x402 v2)
 
-1. `GET` a lane (`POST` for `/file-pr`, with the JSON body). Without payment you get **HTTP 402** with the payment requirements
+1. `GET` a lane. Without payment you get **HTTP 402** with the payment requirements
    in the response headers and JSON body — the 402 is the source of truth for the
    exact amount and the payTo address. Two rails — pick either:
    - **Base:** sign the EIP-3009 authorization:
      - asset: `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` (USDC on Base)
-     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, `/gas`, `/defi`, `/contract-check`, and `/models`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, and `/new-pairs`; `2000000` ($2.00) on POST `/file-pr`
+     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, `/gas`, `/defi`, `/contract-check`, and `/models`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, and `/new-pairs`
      - network: `eip155:8453`
    - **Solana:** sign the SPL `transferChecked` (facilitator sponsors the fee —
      you need USDC only, no SOL):
      - asset: `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` (USDC on Solana)
-     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, `/gas`, `/defi`, `/contract-check`, and `/models`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, and `/new-pairs`; `2000000` ($2.00) on POST `/file-pr`
+     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, `/gas`, `/defi`, `/contract-check`, and `/models`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, and `/new-pairs`
      - network: `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`
 3. Retry the request with the signed payment in the `X-Payment` header.
-   A settled payment returns **HTTP 200** with the lane's JSON. (`POST /file-pr`
-   returns the filed PR: `pr_url`, `pr_number`, `repo`, `branch`.)
+   A settled payment returns **HTTP 200** with the lane's JSON.
 
 ## Free endpoints (never tolled)
 
