@@ -1,0 +1,102 @@
+# TrollBridge — llms.txt
+
+> Pay-per-call intel for AI agents. 51 tolled API lanes on Base/Solana, paid in
+> USDC via x402. No accounts, no API keys — your wallet is your identity.
+
+Base URL: https://mini-tollbooth.onrender.com
+Repo: https://github.com/eric-tijerina/mini-tollbooth
+Full agent skill (every lane, params, examples): https://github.com/eric-tijerina/mini-tollbooth/blob/main/skill.md
+Machine-readable OpenAPI: https://mini-tollbooth.onrender.com/openapi.json
+MCP server (same lanes as tools): `trollbridge-mcp` on Smithery and the official MCP registry.
+Free endpoints: GET / (menu), /health (liveness), /fuel (fuel contracts), /traffic (totals), /dashboard, /tools (marketplace directory).
+
+## How payment works (x402)
+
+1. GET any tolled lane. Without payment you get HTTP 402. The 402 response
+   body + headers are the source of truth: exact amount, asset, and payTo.
+2. Pay either rail:
+   - Base (eip155:8453): sign an EIP-3009 USDC authorization.
+     Asset: 0x833589fCD6eDb6E08f4c7c32D4f71b54bdA02913 (USDC on Base).
+   - Solana: sign an SPL transferChecked (the facilitator sponsors the fee).
+3. Retry the same request with the signed payload in the `X-Payment` header.
+Tolled lanes are pay-or-nothing: unpaid requests get no data.
+
+Raw amounts (micro-USDC): $0.02=20000, $0.05=50000, $0.10=100000,
+$1.00=1000000, $5.00=5000000, $30.00=30000000.
+
+## Lane catalog (51 tolled GET lanes)
+
+### $0.02 — bounty & money lanes
+- /bounties — every open bounty across aibtc, Taskmarket, Superteam Earn
+- /fresh — bounties posted in the last 24h
+- /verdicts — recently PAID bounties, with amounts and payout proof
+- /deadlines — class-action / settlement claim deadlines worth real money
+- /sweepstakes — free-to-enter sweepstakes with real prizes, verified live
+- /opportunities — every paying opportunity in one normalized schema
+- /models — x402-payable AI model catalog with per-token pricing
+- /prompt-cost — what a prompt costs across every model in /models
+- /model-picks — best model per dollar per task (coding/writing/reasoning/chat)
+
+### $0.02 — market & chain data
+- /prices — crypto spot prices (majors + Base/Solana staples) with momentum verdict
+- /gas — live gas prices on Base, Ethereum, Solana
+- /defi — DeFiLlama: top TVL movers, fee/revenue leaders, stablecoin flows
+- /rpc-speed — live latency ranking of public RPC endpoints per chain
+
+### $0.02 — safety screens
+- /honeypot — honeypot screen: simulated sells, transfer-tax and blacklist flags
+- /approval-risk — wallet approval audit: unlimited approvals flagged, revoke list
+- /rug-score — rug-pull risk score 0-100 with one-line verdict
+- /receipt-check — settlement verification: did the tx land?
+- /tx-dryrun — plain-words explanation of what a tx does to your wallet
+- /permit-scan — Permit2/Seaport exposure check + approval audit
+- /airdrop-verdict — is this airdrop claim page legit or a drainer?
+- /deployer-history — who made this token; clean, mixed, or serial-rugger
+- /wallet-watch — stateful wallet monitoring: baseline, then diff
+- /terms-tldr — extractive digest of any terms/rules page: deadlines, gotchas
+
+### $0.02 — agent utilities
+- /scrape — any public page as clean text; ?crawl=1 follows same-origin links (max 10)
+- /grants — live Grants.gov federal grant search by keyword
+- /quant — Black-Scholes + Greeks, parametric VaR, Sharpe, compound growth
+- /secret-scan — leaked-credential sweep (AWS/GitHub/Stripe/private keys); findings redacted
+
+### $0.05 — intel tier
+- /enrich — wallet intelligence: balances, holdings, risk flags (?address, ?network)
+- /token-check — token safety scan: liquidity, volume, holders, rug verdict (?mint, ?network)
+- /markets — live Polymarket odds, prices, volume (?q)
+- /search — web search as clean JSON (?q)
+- /yields — best stablecoin APYs right now, sorted
+- /new-pairs — newest DexScreener listings with liquidity flags
+- /preflight — honeypot + rug-score + contract-check + approval audit, one verdict
+- /road-pack — combo meal: gas, token prices, TVL movers, model shelf, trip brief
+- /site-watch — stateless page change detection via sha256 fingerprint
+- /wallet-check — wallet dossier: age, tx count, funding source, bot heuristics
+- /sec-facts — revenue/net income/assets/EPS for any US ticker, from SEC EDGAR
+- /code-run — sandboxed JS execution (isolated child process, no network/fs)
+- /sage — cited cross-checked brief: SEC filings, DeFiLlama consensus, Wikipedia
+- /regulatory-pack — FDA drug/food enforcement recalls (?agency=fda)
+
+### $0.10 — protection tier
+- /contract-check — contract safety screen: verification, proxy/owner heuristics
+- /honeypot-check — premium honeypot forensics: DEX flow + 0-100 score
+- /approval-audit — deep approval surface report with revoke priority list
+- /tx-simulate — precision tx dry-run: would-succeed vs would-revert, revert reason decoded
+- /tx-plain-english — raw signed tx decoded to plain English
+- /skill-scan — skill supply-chain scan for prompt-injection/exfiltration
+- /redteam — score a system prompt against 7 prompt-injection checks, with fixes
+
+### $1.00 — datasets
+- /datasets — curated snapshots: x402 pay-per-call registry, prompt-injection test corpus, MCP price index
+
+### $5.00 — scam defense
+- /scam-scan — 10-flag scam smell-test on any money-opportunity listing, with evidence quotes and prize-vs-cost math
+
+### $30.00 — subscription
+- /scam-scan-subscribe — one $30 USDC payment = 30 days of scam scans. Your payment tx hash is the pass: /scam-scan?url=...&sub=<txhash>. Nothing auto-renews.
+
+## Notes for agents
+- Heuristic screens are labeled as such; they are not audits, legal, medical, or financial advice.
+- ?limit=N caps items (1-200) on the bounty lanes.
+- Free GET /fuel shows the GAS fuel-token contracts and burn rates.
+- Marketplace: GET /tools lists third-party x402 tools; POST /tools/apply returns a pre-filled GitHub issue URL for listing applications.
