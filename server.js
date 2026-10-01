@@ -15,7 +15,8 @@
 //   GET /prices      — agent-ready crypto price feed, no API key needed ($0.02)
 //   GET /enrich      — wallet/address intelligence: balances, holdings, risk flags ($0.05)
 //   GET /token-check — token safety scan: liquidity, holders, rug verdict ($0.05)
-//   GET /contract-check — contract safety screen: verification, proxy/owner heuristics, holder concentration ($0.02)
+//   GET /contract-check — contract safety screen: verification, proxy/owner heuristics, holder concentration ($0.10)
+//   Protection tier ($0.10) — /contract-check, /approval-audit, /tx-plain-english: loss-prevention lanes, priced like cheap insurance.
 //   Verdict intel — derived verdicts for the moment before money moves ($0.02 each):
 //   GET /honeypot     — honeypot screen: simulated sells, tax/blacklist flags, safe/suspicious/honeypot
 //   GET /approval-risk — wallet approval audit: unlimited approvals, risky spenders, revoke priority list
@@ -409,7 +410,7 @@ function discoveryExtensionFor(route) {
 }
 
 // The tolls: bounty-intel lanes cost $0.02 USDC; trader-intel lanes cost
-// $0.02–$0.05. Every lane takes both rails (Base or Solana).
+// $0.02–$0.10. Every lane takes both rails (Base or Solana).
 const LANES = {
   "/bounties": "Every open bounty across all boards — aibtc, Taskmarket, Superteam Earn.",
   "/fresh": "Bounties posted in the last 24h. First come, first served.",
@@ -455,6 +456,9 @@ const LANE_PRICES = {
   "/new-pairs": "$0.05",
   "/preflight": "$0.05",
   "/road-pack": "$0.05",
+  "/contract-check": "$0.10",
+  "/approval-audit": "$0.10",
+  "/tx-plain-english": "$0.10",
 };
 const lanePrice = (route) => LANE_PRICES[route] || PRICE;
 const LANE_TAGS = {
@@ -716,7 +720,7 @@ async function captureLiveExtra() {
   }
 }
 function unpaidBodyFor(route, price) {
-  // USDC has 6 decimals: $0.02 -> 20000, $0.05 -> 50000 atomic units.
+  // USDC has 6 decimals: $0.02 -> 20000, $0.05 -> 50000, $0.10 -> 100000 atomic units.
   const amount = String(Math.round(parseFloat(String(price).replace("$", "")) * 1e6));
   return {
     x402Version: 2,
@@ -756,7 +760,7 @@ function unpaidBodyFor(route, price) {
     stats: laneStatsFor(route),
     // Fuel ad: every unpaid caller learns GAS exists. Purely additive -
     // no payment field above is touched, so paying clients keep working.
-    fuel_savings: "Save 25% with TrollBridge Fuel (GAS): 1 GAS = 1 crossing on 2-cent lanes. Pump: " + FUEL_PUMP + " on Base. Free info: GET /fuel",
+    fuel_savings: "Save 25% with TrollBridge Fuel (GAS): 1 GAS = 1 crossing on 2-cent lanes, 3 GAS on 5-cent lanes, 6 GAS on 10-cent protection lanes. Pump: " + FUEL_PUMP + " on Base. Free info: GET /fuel",
   };
 }
 for (const route of Object.keys(LANES)) {
@@ -787,8 +791,8 @@ for (const route of Object.keys(LANES)) {
 // before the lane serves its data.
 //
 // Burn rate: 1 GAS per 2-cent lane crossing, 3 GAS per 5-cent lane
-// crossing. Derived from LANE_PRICES so the rate can never drift from
-// the tolls.
+// crossing, 6 GAS per 10-cent protection-lane crossing. Derived from
+// LANE_PRICES so the rate can never drift from the tolls.
 //
 // Anti-reuse: spent burn hashes live in data/fuel-used.json plus an
 // in-memory Set. NOTE (v1 edge): this host's filesystem is ephemeral,
@@ -803,9 +807,12 @@ const BASE_RPC_URL = "https://mainnet.base.org";
 const TRANSFER_TOPIC0 = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4c0a77163347d4e12";
 const ZERO_ADDRESS_TOPIC = "0x0000000000000000000000000000000000000000000000000000000000000000";
 const WEI_PER_GAS = 10n ** 18n;
-// 5-cent lanes cost 3 GAS to cross; everything else costs 1 GAS.
-const fuelWeiFor = (route) => (lanePrice(route) === "$0.05" ? 3n * WEI_PER_GAS : WEI_PER_GAS);
+// 10-cent protection lanes cost 6 GAS to cross; 5-cent lanes cost 3 GAS;
+// everything else costs 1 GAS.
+const fuelWeiFor = (route) =>
+  lanePrice(route) === "$0.10" ? 6n * WEI_PER_GAS : lanePrice(route) === "$0.05" ? 3n * WEI_PER_GAS : WEI_PER_GAS;
 const FIVE_CENT_FUEL_LANES = Object.keys(LANES).filter((r) => lanePrice(r) === "$0.05");
+const TEN_CENT_FUEL_LANES = Object.keys(LANES).filter((r) => lanePrice(r) === "$0.10");
 
 const FUEL_USED_PATH = path.join(__dirname, "data", "fuel-used.json");
 let fuelUsedSet = null;
@@ -955,7 +962,7 @@ app.get("/", (req, res) => {
   res.json({
     bridge: "TrollBridge",
     keeper: "Mini, data-bounty hunter",
-    deal: `The insurance booth for AI agents, with Mini's Agent Supply Store on the side of the road. Thirty-three checkpoints on Base or Solana — 2¢ per checkpoint, 5¢ for the full preflight or the road-pack combo meal. Every lane answers the question before money moves: is this safe to touch? Honeypot screens, rug-pull scores, contract safety screens, wallet approval audits, settlement verification — plus bounty intel, market intel, and DeFi intel, all with plain-English verdicts. Don't get rugged — pay the toll, cross covered.`,
+    deal: `The insurance booth for AI agents, with Mini's Agent Supply Store on the side of the road. Thirty-three checkpoints on Base or Solana — 2¢ per checkpoint, 5¢ for the full preflight or the road-pack combo meal, 10¢ for the protection-tier lanes (/contract-check, /approval-audit, /tx-plain-english). Every lane answers the question before money moves: is this safe to touch? Honeypot screens, rug-pull scores, contract safety screens, wallet approval audits, settlement verification — plus bounty intel, market intel, and DeFi intel, all with plain-English verdicts. Don't get rugged — pay the toll, cross covered.`,
     lanes: Object.fromEntries(
       Object.entries(LANES).map(([route, desc]) => [`GET ${route}`, laneBlurb(route, desc)])
     ),
@@ -1155,8 +1162,9 @@ app.get("/fuel", (req, res) => {
     how_to_buy: "Approve USDC to the FuelPump contract, then call buy(gasWei) — 1 GAS costs 0.015 USDC and lands in your wallet.",
     how_to_redeem:
       "Call GAS.burn(n) with n in wei (1 GAS = 1000000000000000000), then call any tolled lane with ?fuelTx=<burn transaction hash>. The burn is verified on Base before the lane serves its data, and each burn transaction works exactly once.",
-    burn_rate: "1 GAS per 2-cent lane crossing; 3 GAS per 5-cent lane crossing.",
+    burn_rate: "1 GAS per 2-cent lane crossing; 3 GAS per 5-cent lane crossing; 6 GAS per 10-cent protection-lane crossing.",
     five_cent_lanes: FIVE_CENT_FUEL_LANES,
+    ten_cent_lanes: TEN_CENT_FUEL_LANES,
     supply: {
       total: "1000000",
       note: "Fixed supply — no mint function, no backdoors. Every crossing burns fuel.",
@@ -1692,7 +1700,7 @@ app.get("/.well-known/x402", (req, res) => {
     // Domain-ownership verification for agent-tools.cloud (claim pending).
     agentToolsVerify: "atc_aAIHBleoK4GPm8pbuJMh1oJ4G1VXjE4X",
     description:
-      "The insurance booth for AI agents, with Mini's Agent Supply Store on the side of the road. Thirty-three checkpoints: pre-transaction safety lanes (honeypot screens, wallet approval audits, rug-pull risk scores, settlement verification, the full /preflight bundle, plus the skill-moat batch — /tx-dryrun transaction simulation, /permit-scan invisible-drainer check, /airdrop-verdict claim-page forensics, /deployer-history deployer forensics, /wallet-watch stateful monitoring) plus bounty intel (every open bounty across all boards, fresh bounties from the last 24h, recently-paid verdicts proving the boards pay, class-action claim deadlines, verified free sweepstakes, every paying opportunity in one normalized schema) plus trader intel (agent-ready price feed, wallet/address intelligence, token safety scans, contract safety screens) plus market intel (live Polymarket prediction-market odds, agent-ready web search) plus DeFi intel (best stablecoin yields, newest token listings with liquidity flags, live gas prices, protocol TVL movers plus fee/revenue leaders plus stablecoin flows) plus AI intel (x402-payable AI model catalog with per-token pricing, catalog data: BlockRun.AI) plus agent-ops intel (prompt cost estimates, best-model-per-dollar picks, approval surface reports, raw-tx plain-English decoding, live RPC speed rankings) plus the supply store's first combo meal (/road-pack: gas + prices + DeFi movers + model shelf + trip brief in one call). Every lane carries a plain-English verdict — heuristic screens, not audits. Don't get rugged. Tolls: $0.02 USDC per checkpoint on the bounty lanes, /gas, /defi, /contract-check, /honeypot, /approval-risk, /rug-score, /receipt-check, /prices, /models, /tx-dryrun, /permit-scan, /airdrop-verdict, /deployer-history, /wallet-watch, /prompt-cost, /model-picks, /approval-audit, /tx-plain-english, and /rpc-speed; $0.05 on /enrich, /token-check, /markets, /search, /yields, /new-pairs, /preflight, and /road-pack. Base or Solana.",
+      "The insurance booth for AI agents, with Mini's Agent Supply Store on the side of the road. Thirty-three checkpoints: pre-transaction safety lanes (honeypot screens, wallet approval audits, rug-pull risk scores, settlement verification, the full /preflight bundle, plus the skill-moat batch — /tx-dryrun transaction simulation, /permit-scan invisible-drainer check, /airdrop-verdict claim-page forensics, /deployer-history deployer forensics, /wallet-watch stateful monitoring) plus bounty intel (every open bounty across all boards, fresh bounties from the last 24h, recently-paid verdicts proving the boards pay, class-action claim deadlines, verified free sweepstakes, every paying opportunity in one normalized schema) plus trader intel (agent-ready price feed, wallet/address intelligence, token safety scans, contract safety screens) plus market intel (live Polymarket prediction-market odds, agent-ready web search) plus DeFi intel (best stablecoin yields, newest token listings with liquidity flags, live gas prices, protocol TVL movers plus fee/revenue leaders plus stablecoin flows) plus AI intel (x402-payable AI model catalog with per-token pricing, catalog data: BlockRun.AI) plus agent-ops intel (prompt cost estimates, best-model-per-dollar picks, approval surface reports, raw-tx plain-English decoding, live RPC speed rankings) plus the supply store's first combo meal (/road-pack: gas + prices + DeFi movers + model shelf + trip brief in one call). Every lane carries a plain-English verdict — heuristic screens, not audits. Don't get rugged. Tolls: $0.02 USDC per checkpoint on the bounty lanes, /gas, /defi, /honeypot, /approval-risk, /rug-score, /receipt-check, /prices, /models, /tx-dryrun, /permit-scan, /airdrop-verdict, /deployer-history, /wallet-watch, /prompt-cost, /model-picks, and /rpc-speed; $0.05 on /enrich, /token-check, /markets, /search, /yields, /new-pairs, /preflight, and /road-pack; $0.10 on the protection tier — /contract-check, /approval-audit, and /tx-plain-english. Base or Solana.",
     homepage: base,
     payment: {
       protocol: "x402",
@@ -1906,7 +1914,7 @@ app.get("/openapi.json", (req, res) => {
       operationId: "fuel",
       summary: "TrollBridge Fuel (GAS) — price and burn-to-cross instructions",
       description:
-        "Free, untolled. TrollBridge Fuel (GAS) is the bridge's fuel: burn GAS on Base, then call any tolled lane with ?fuelTx=<burn tx hash> to cross without a USDC toll. 1 GAS per 2-cent lane, 3 GAS per 5-cent lane (/enrich, /token-check, /markets, /search, /yields, /new-pairs, /preflight, /road-pack). Buy GAS from the FuelPump at 0.015 USDC per GAS.",
+        "Free, untolled. TrollBridge Fuel (GAS) is the bridge's fuel: burn GAS on Base, then call any tolled lane with ?fuelTx=<burn tx hash> to cross without a USDC toll. 1 GAS per 2-cent lane, 3 GAS per 5-cent lane (/enrich, /token-check, /markets, /search, /yields, /new-pairs, /preflight, /road-pack), 6 GAS per 10-cent protection lane (/contract-check, /approval-audit, /tx-plain-english). Buy GAS from the FuelPump at 0.015 USDC per GAS.",
       tags: ["free"],
       parameters: [],
       responses: {
@@ -1923,7 +1931,7 @@ app.get("/openapi.json", (req, res) => {
       title: "TrollBridge",
       version: "1.1.0",
       description:
-        "The insurance booth for AI agents, with Mini's Agent Supply Store on the side of the road. Thirty-three checkpoints: pre-transaction safety lanes (honeypot, approval-risk, rug-score, receipt-check, tx-dryrun, permit-scan, airdrop-verdict, deployer-history, wallet-watch at $0.02 USDC per call; the full /preflight bundle at $0.05), bounty intel (bounties, fresh, verdicts, deadlines, sweepstakes, opportunities) at $0.02 USDC per call, trader intel (/prices and /contract-check at $0.02; /enrich and /token-check at $0.05), market intel (/markets and /search at $0.05), DeFi intel (/yields and /new-pairs at $0.05; /gas and /defi at $0.02), AI intel (/models at $0.02), agent-ops intel (/prompt-cost, /model-picks, /approval-audit, /tx-plain-english, /rpc-speed at $0.02), supply store (/road-pack combo meal at $0.05). Every lane answers before money moves — heuristic verdicts, not audits. Don't get rugged.",
+        "The insurance booth for AI agents, with Mini's Agent Supply Store on the side of the road. Thirty-three checkpoints: pre-transaction safety lanes (honeypot, approval-risk, rug-score, receipt-check, tx-dryrun, permit-scan, airdrop-verdict, deployer-history, wallet-watch at $0.02 USDC per call; the protection tier — /contract-check, /approval-audit, /tx-plain-english — at $0.10; the full /preflight bundle at $0.05), bounty intel (bounties, fresh, verdicts, deadlines, sweepstakes, opportunities) at $0.02 USDC per call, trader intel (/prices at $0.02; /enrich and /token-check at $0.05; /contract-check at $0.10), market intel (/markets and /search at $0.05), DeFi intel (/yields and /new-pairs at $0.05; /gas and /defi at $0.02), AI intel (/models at $0.02), agent-ops intel (/prompt-cost, /model-picks, /rpc-speed at $0.02; /approval-audit and /tx-plain-english at $0.10), supply store (/road-pack combo meal at $0.05). Every lane answers before money moves — heuristic verdicts, not audits. Don't get rugged.",
       "x-guidance":
         "Call any lane with GET. Without payment you receive a 402 challenge (x402 v2) with the exact payment requirements in the response headers and body — the 402 is the source of truth for amounts and payTo addresses. Tolls: $0.02 USDC on the bounty lanes, /prices, /gas, /defi, /contract-check, /honeypot, /approval-risk, /rug-score, /receipt-check, /models, /prompt-cost, /model-picks, /approval-audit, /tx-plain-english, and /rpc-speed; $0.05 USDC on /enrich, /token-check, /markets, /search, /yields, /new-pairs, /preflight, and /road-pack. Both rails accepted on every lane: Base (USDC 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913) and Solana (USDC EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v). Complete the x402 payment and retry with the X-Payment header. Bounty lanes take ?limit=N (1–200). /enrich needs ?address=…&network=base|solana. /token-check needs ?mint=…&network=base|solana. /contract-check needs ?address=… and takes ?chain=base|ethereum (default base). /honeypot needs ?address=… (token contract) and takes ?chain=base|ethereum (default base). /approval-risk needs ?address=… (wallet) and takes ?chain=base|ethereum (default base). /rug-score needs ?address=… (token contract) and takes ?chain=base|ethereum (default base). /receipt-check needs ?tx=… (tx hash or Solana signature) and takes ?chain=base|ethereum|solana (default base). /preflight needs ?address=… (token contract), takes ?chain=base|ethereum (default base) and optional ?wallet=0x… (adds the wallet approval audit). /tx-dryrun needs ?to=…&data=0x…&from=0x… (target contract, hex calldata, sender wallet), takes ?value=0 (wei) and ?chain=base|ethereum (default base). /permit-scan needs ?address=… (wallet) and takes ?chain=base|ethereum (default base). /airdrop-verdict needs ?url=… (http/https claim page). /deployer-history needs ?address=… (token contract) and takes ?chain=base|ethereum (default base). /wallet-watch needs ?wallet=… and takes ?chain=base|ethereum (default base) plus optional ?prev_state=… (base64 of a previous state object for a diff). /prompt-cost needs ?text=… and takes optional ?model=…. /model-picks takes ?task=coding|writing|reasoning|chat (default chat). /approval-audit needs ?address=… (wallet) and takes ?chain=base|ethereum (default base). /tx-plain-english needs ?tx=… (raw signed tx) and takes ?chain=base|ethereum (default base). /rpc-speed takes ?chain=base|ethereum|solana (default base). /road-pack takes ?limit=1–25 (max token prices in the pack, default 10). /markets takes ?q=… (required) and ?limit=1–25. /search needs ?q=…. /yields takes ?limit=1–25 and ?stablecoinOnly=true|false. /new-pairs takes ?limit=1–25 and ?chain=solana|ethereum|base. /gas takes no params. The free directory of third-party tools is GET /tools; bridge traffic stats are GET /traffic; TrollBridge Fuel (GAS) price and burn-to-cross instructions are GET /fuel.",
       contact: { name: "TrollBridge", url: "https://github.com/eric-tijerina/mini-tollbooth/issues" },
