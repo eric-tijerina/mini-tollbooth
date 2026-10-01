@@ -528,7 +528,7 @@ const LANES = {
   "/sage": "Specialist in all fields ($0.05) — ask anything: US tickers answered from SEC EDGAR filings, crypto tokens from DeFiLlama spot + DEX venue consensus, everything else from Wikipedia with references. Every fact cited, confidence tells you whether sources agree. Multi-source brief, not a guarantee.",
   "/code-run": "Sandboxed JS execution ($0.05) — run a JavaScript snippet in an isolated child process (64MB heap cap, no network, no filesystem) and get the result plus captured logs. Pragmatic sandbox, not a hardened enclave.",
   "/scam-scan": "Legit bounty? ($5.00) — our software scans the listing for scam signals so you don't waste money on a rushed decision. 10-flag checklist, prize-vs-cost math, verdict: clean, caution, or likely scam. Heuristic screen, not a fraud investigation.",
-  "/scam-scan-subscribe": "Scam-scan subscription ($5.00) — one $5 USDC payment on Base buys 30 days of /scam-scan. Your payment's tx hash is the pass (?sub=<txhash>). Cancel anytime: nothing auto-renews.",
+  "/scam-scan-subscribe": "Scam-scan subscription ($30.00) — one $30 USDC payment on Base buys 30 days of /scam-scan. Your payment's tx hash is the pass (?sub=<txhash>). Cancel anytime: nothing auto-renews.",
 };
 // Per-lane tolls. Anything not listed here costs PRICE (default $0.02).
 const LANE_PRICES = {
@@ -552,7 +552,7 @@ const LANE_PRICES = {
   "/code-run": "$0.05",
   "/sage": "$0.05",
   "/scam-scan": "$5.00",
-  "/scam-scan-subscribe": "$5.00",
+  "/scam-scan-subscribe": "$30.00",
 };
 const lanePrice = (route) => LANE_PRICES[route] || PRICE;
 const LANE_TAGS = {
@@ -644,7 +644,7 @@ const LANE_EXAMPLES = {
   "/sec-facts": { ticker: "AAPL", company: "Apple Inc.", cik: "0000320193", source: "SEC EDGAR companyfacts", facts: [{ label: "Total revenue", annual: [{ end: "2025-09-27", val: 416161000000 }] }] },
   "/sage": { query: "NVDA revenue", domain: "finance", confidence: "single-source", answer: "NVIDIA CORP (NVDA): FY revenue $215.94B, net income $120.07B, from the latest SEC 10-K filing.", facts: [{ label: "Total revenue", value: "$215.94B", source: "SEC EDGAR companyfacts" }] },
   "/scam-scan": { url: "https://example.com/bounty/123", verdict: "CAUTION", flags_hit: "3 of 10", math: "~$50 to enter for a shot at up to ~$500 in advertised prizes.", recommendation: "Only proceed if you can verify the sponsor's past payouts independently." },
-  "/scam-scan-subscribe": { price: "$5.00 USDC", duration_days: 30, pay_on: "Base", cancel: "Cancel anytime — nothing auto-renews." },
+  "/scam-scan-subscribe": { price: "$30.00 USDC", duration_days: 30, pay_on: "Base", cancel: "Cancel anytime — nothing auto-renews." },
   "/code-run": { lang: "js", verdict: "ok", result: "7", logs: "", execution_ms: 11, timeout_ms: 5000 },
 };
 const tollConfig = {};
@@ -707,7 +707,7 @@ const LANE_PITCH = {
   "/sage": "Make any agent the specialist — one 5¢ call answers any question with cited facts: SEC numbers, crypto spot + venue consensus, sourced briefs.",
   "/code-run": "Need a quick computation? Run JavaScript in an isolated sandbox — no network, no filesystem, result plus captured logs, one 5¢ call.",
   "/scam-scan": "Legit bounty? Our software scans the listing for scam signals so you don't waste money on a rushed decision — 10-flag checklist, prize-vs-cost math, clean/caution/likely-scam verdict.",
-  "/scam-scan-subscribe": "Subscribe once, scan for a month — one $5 USDC payment on Base unlocks 30 days of /scam-scan. Cancel anytime, nothing auto-renews.",
+  "/scam-scan-subscribe": "Subscribe once, scan for a month — one $30 USDC payment on Base unlocks 30 days of /scam-scan. Cancel anytime, nothing auto-renews.",
 };
 function readJsonSafe(rel) {
   try {
@@ -829,7 +829,7 @@ function laneStatsFor(route) {
     case "/scam-scan":
       return { note: "scam smell-test for money opportunities — 10-flag checklist, prize-vs-cost math, verdict; heuristic screen, not a fraud investigation" };
     case "/scam-scan-subscribe":
-      return { note: "$5 USDC on Base = 30 days of /scam-scan; payment tx hash is the pass (?sub=<txhash>); cancel anytime, nothing auto-renews" };
+      return { note: "$30 USDC on Base = 30 days of /scam-scan; payment tx hash is the pass (?sub=<txhash>); cancel anytime, nothing auto-renews" };
     default:
       return { note: LANE_PITCH[route] || "tolled lane" };
   }
@@ -957,12 +957,14 @@ const TRANSFER_TOPIC0 = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4c0a771633
 const ZERO_ADDRESS_TOPIC = "0x0000000000000000000000000000000000000000000000000000000000000000";
 const WEI_PER_GAS = 10n ** 18n;
 // 10-cent protection lanes cost 6 GAS to cross; 5-cent lanes cost 3 GAS;
+// $5 lanes cost 300 GAS; the $30 subscription costs 1,800 GAS;
 // everything else costs 1 GAS.
 const fuelWeiFor = (route) =>
-  lanePrice(route) === "$5.00" ? 300n * WEI_PER_GAS : lanePrice(route) === "$0.10" ? 6n * WEI_PER_GAS : lanePrice(route) === "$0.05" ? 3n * WEI_PER_GAS : WEI_PER_GAS;
+  lanePrice(route) === "$30.00" ? 1800n * WEI_PER_GAS : lanePrice(route) === "$5.00" ? 300n * WEI_PER_GAS : lanePrice(route) === "$0.10" ? 6n * WEI_PER_GAS : lanePrice(route) === "$0.05" ? 3n * WEI_PER_GAS : WEI_PER_GAS;
 const FIVE_CENT_FUEL_LANES = Object.keys(LANES).filter((r) => lanePrice(r) === "$0.05");
 const TEN_CENT_FUEL_LANES = Object.keys(LANES).filter((r) => lanePrice(r) === "$0.10");
 const FIVE_DOLLAR_FUEL_LANES = Object.keys(LANES).filter((r) => lanePrice(r) === "$5.00");
+const THIRTY_DOLLAR_FUEL_LANES = Object.keys(LANES).filter((r) => lanePrice(r) === "$30.00");
 
 const FUEL_USED_PATH = path.join(__dirname, "data", "fuel-used.json");
 let fuelUsedSet = null;
@@ -1024,7 +1026,7 @@ async function verifyFuelBurn(route, txHash) {
   return burnValueFromReceipt(receipt) >= fuelWeiFor(route);
 }
 
-// ---- /scam-scan subscriptions: $5 = 30 days, cancel anytime ----
+// ---- /scam-scan subscriptions: $30 = 30 days, cancel anytime ----
 // x402 has no recurring billing, so "cancel anytime" is structural: nothing
 // ever auto-renews. One $5 USDC payment to PAY_TO on Base buys 30 days of
 // /scam-scan crossings. The payment's Base tx hash is the pass: call
@@ -1032,7 +1034,7 @@ async function verifyFuelBurn(route, txHash) {
 // receipt + block timestamp), so passes survive redeploys with no secrets
 // to manage. Passes are bearer tokens — whoever holds the hash scans free
 // until it expires; that tradeoff is documented, not hidden.
-const SUB_PRICE_USDC = 5000000n; // $5.00 in 6-decimal USDC
+const SUB_PRICE_USDC = 30000000n; // $30.00 in 6-decimal USDC
 const SUB_PASS_DAYS = 30;
 const USDC_BASE_LC = "0x833589fCD6eDb6E08f4c7c32D4f71b54bdA02913".toLowerCase();
 const PAY_TO_PADDED_LC = ("0x000000000000000000000000" + PAY_TO.slice(2)).toLowerCase();
@@ -1100,7 +1102,7 @@ function subReject(res, subError) {
   const body = unpaidBodyFor("/scam-scan", price);
   body.sub_error = subError;
   body.subscription = {
-    how: "Pay $5 USDC on Base via GET /scam-scan-subscribe, then pass ?sub=<your payment tx hash> on /scam-scan for 30 days.",
+    how: "Pay $30 USDC on Base via GET /scam-scan-subscribe, then pass ?sub=<your payment tx hash> on /scam-scan for 30 days.",
     cancel: "Cancel anytime — nothing auto-renews. Just don't pay again.",
   };
   const headerPayload = {
@@ -1227,7 +1229,7 @@ app.get("/", (req, res) => {
   res.json({
     bridge: "TrollBridge",
     keeper: "Mini, data-bounty hunter",
-    deal: `The insurance booth for AI agents, with Mini's Agent Supply Store on the side of the road. Forty-four checkpoints on Base or Solana — 2¢ per checkpoint, 5¢ for the full preflight or the road-pack combo meal, 10¢ for the protection-tier lanes (/contract-check, /approval-audit, /tx-plain-english, /honeypot-check, /tx-simulate, /skill-scan), $5 for the /scam-scan deep scan or a 30-day subscription. Every lane answers the question before money moves: is this safe to touch? Honeypot screens, rug-pull scores, contract safety screens, wallet approval audits, settlement verification, skill supply-chain scans — plus bounty intel, market intel, and DeFi intel, all with plain-English verdicts. Don't get rugged — pay the toll, cross covered.`,
+    deal: `The insurance booth for AI agents, with Mini's Agent Supply Store on the side of the road. Forty-four checkpoints on Base or Solana — 2¢ per checkpoint, 5¢ for the full preflight or the road-pack combo meal, 10¢ for the protection-tier lanes (/contract-check, /approval-audit, /tx-plain-english, /honeypot-check, /tx-simulate, /skill-scan), $5 for the /scam-scan deep scan, $30 for the 30-day subscription. Every lane answers the question before money moves: is this safe to touch? Honeypot screens, rug-pull scores, contract safety screens, wallet approval audits, settlement verification, skill supply-chain scans — plus bounty intel, market intel, and DeFi intel, all with plain-English verdicts. Don't get rugged — pay the toll, cross covered.`,
     lanes: Object.fromEntries(
       Object.entries(LANES).map(([route, desc]) => [`GET ${route}`, laneBlurb(route, desc)])
     ),
@@ -1427,10 +1429,11 @@ app.get("/fuel", (req, res) => {
     how_to_buy: "Approve USDC to the FuelPump contract, then call buy(gasWei) — 1 GAS costs 0.015 USDC and lands in your wallet.",
     how_to_redeem:
       "Call GAS.burn(n) with n in wei (1 GAS = 1000000000000000000), then call any tolled lane with ?fuelTx=<burn transaction hash>. The burn is verified on Base before the lane serves its data, and each burn transaction works exactly once.",
-    burn_rate: "1 GAS per 2-cent lane crossing; 3 GAS per 5-cent lane crossing; 6 GAS per 10-cent protection-lane crossing; 300 GAS per $5 scam-scan crossing.",
+    burn_rate: "1 GAS per 2-cent lane crossing; 3 GAS per 5-cent lane crossing; 6 GAS per 10-cent protection-lane crossing; 300 GAS per $5 scam-scan crossing; 1,800 GAS per $30 scam-scan subscription.",
     five_cent_lanes: FIVE_CENT_FUEL_LANES,
     ten_cent_lanes: TEN_CENT_FUEL_LANES,
     five_dollar_lanes: FIVE_DOLLAR_FUEL_LANES,
+    thirty_dollar_lanes: THIRTY_DOLLAR_FUEL_LANES,
     supply: {
       total: "1000000",
       note: "Fixed supply — no mint function, no backdoors. Every crossing burns fuel.",
@@ -1957,8 +1960,8 @@ app.get("/scam-scan", async (req, res) => {
   }
 });
 
-// GET /scam-scan-subscribe — the $5 subscription on-ramp. The toll on THIS
-// lane is the subscription payment: pay $5 USDC on Base via the normal x402
+// GET /scam-scan-subscribe — the $30 subscription on-ramp. The toll on THIS
+// lane is the subscription payment: pay $30 USDC on Base via the normal x402
 // flow and the payment's tx hash becomes a 30-day /scam-scan pass
 // (?sub=<txhash>). Nothing auto-renews — cancel anytime by not paying again.
 app.get("/scam-scan-subscribe", async (req, res) => {
@@ -1967,17 +1970,17 @@ app.get("/scam-scan-subscribe", async (req, res) => {
     lane: "/scam-scan-subscribe",
     description: LANES["/scam-scan-subscribe"],
     subscription: {
-      price: "$5.00 USDC",
+      price: "$30.00 USDC",
       duration_days: SUB_PASS_DAYS,
       pay_on: "Base",
       pay_to: PAY_TO,
       usdc_base: USDC_BASE_LC,
       how_it_works: [
-        "Pay the $5.00 USDC toll on this lane over x402 (Base). That payment IS the subscription — no second step.",
+        "Pay the $30.00 USDC toll on this lane over x402 (Base). That payment IS the subscription — no second step.",
         "Take your payment's Base transaction hash and call /scam-scan?url=…&sub=<txhash>.",
         "The bridge verifies the $5 payment on-chain and serves every scan free for 30 days.",
       ],
-      find_your_tx_hash: "Look up your wallet's USDC transfers to the pay_to address above (e.g. Basescan token-tx list) — the $5 payment's hash is your pass.",
+      find_your_tx_hash: "Look up your wallet's USDC transfers to the pay_to address above (e.g. Basescan token-tx list) — the $30 payment's hash is your pass.",
       cancel: "Cancel anytime — nothing auto-renews. When 30 days pass, just don't pay again.",
       bearer_note: "The tx hash is a bearer pass: whoever holds it scans free until expiry. Keep it to yourself.",
       payer,
@@ -2126,7 +2129,7 @@ app.get("/.well-known/x402", (req, res) => {
     // Domain-ownership verification for agent-tools.cloud (claim pending).
     agentToolsVerify: "atc_aAIHBleoK4GPm8pbuJMh1oJ4G1VXjE4X",
     description:
-      "The insurance booth for AI agents, with Mini's Agent Supply Store on the side of the road. Forty-four checkpoints: pre-transaction safety lanes (honeypot screens, wallet approval audits, rug-pull risk scores, settlement verification, the full /preflight bundle, plus the skill-moat batch — /tx-dryrun transaction simulation, /permit-scan invisible-drainer check, /airdrop-verdict claim-page forensics, /deployer-history deployer forensics, /wallet-watch stateful monitoring, /skill-scan skill supply-chain scans) plus bounty intel (every open bounty across all boards, fresh bounties from the last 24h, recently-paid verdicts proving the boards pay, class-action claim deadlines, verified free sweepstakes, every paying opportunity in one normalized schema) plus trader intel (agent-ready price feed, wallet/address intelligence, token safety scans, contract safety screens, SEC company facts) plus market intel (live Polymarket prediction-market odds, agent-ready web search) plus DeFi intel (best stablecoin yields, newest token listings with liquidity flags, live gas prices, protocol TVL movers plus fee/revenue leaders plus stablecoin flows) plus AI intel (x402-payable AI model catalog with per-token pricing, catalog data: BlockRun.AI) plus agent-ops intel (prompt cost estimates, best-model-per-dollar picks, approval surface reports, raw-tx plain-English decoding, live RPC speed rankings, premium honeypot screens, live transaction dry-runs, stateless page change detection, wallet dossiers, extractive terms digests, sandboxed JS execution) plus the /sage knowledge lane (ask anything — SEC company facts, crypto spot + DEX venue consensus, cited Wikipedia briefs) plus the /scam-scan deep scan (legit bounty? 10-flag scam smell-test with prize-vs-cost math and a clean/caution/likely-scam verdict, or subscribe: $5 USDC on Base for 30 days, cancel anytime) plus the supply store's first combo meal (/road-pack: gas + prices + DeFi movers + model shelf + trip brief in one call). Every lane carries a plain-English verdict — heuristic screens, not audits. Don't get rugged. Tolls: $0.02 USDC per checkpoint on the bounty lanes, /gas, /defi, /honeypot, /approval-risk, /rug-score, /receipt-check, /prices, /models, /tx-dryrun, /permit-scan, /airdrop-verdict, /deployer-history, /wallet-watch, /prompt-cost, /model-picks, /terms-tldr, and /rpc-speed; $0.05 on /enrich, /token-check, /markets, /search, /yields, /new-pairs, /preflight, /road-pack, /site-watch, /wallet-check, /sec-facts, /code-run, and /sage; $0.10 on the protection tier — /contract-check, /approval-audit, /tx-plain-english, /honeypot-check, /tx-simulate, and /skill-scan; $5.00 on the /scam-scan deep scan and the /scam-scan-subscribe 30-day subscription. Base or Solana.",
+      "The insurance booth for AI agents, with Mini's Agent Supply Store on the side of the road. Forty-four checkpoints: pre-transaction safety lanes (honeypot screens, wallet approval audits, rug-pull risk scores, settlement verification, the full /preflight bundle, plus the skill-moat batch — /tx-dryrun transaction simulation, /permit-scan invisible-drainer check, /airdrop-verdict claim-page forensics, /deployer-history deployer forensics, /wallet-watch stateful monitoring, /skill-scan skill supply-chain scans) plus bounty intel (every open bounty across all boards, fresh bounties from the last 24h, recently-paid verdicts proving the boards pay, class-action claim deadlines, verified free sweepstakes, every paying opportunity in one normalized schema) plus trader intel (agent-ready price feed, wallet/address intelligence, token safety scans, contract safety screens, SEC company facts) plus market intel (live Polymarket prediction-market odds, agent-ready web search) plus DeFi intel (best stablecoin yields, newest token listings with liquidity flags, live gas prices, protocol TVL movers plus fee/revenue leaders plus stablecoin flows) plus AI intel (x402-payable AI model catalog with per-token pricing, catalog data: BlockRun.AI) plus agent-ops intel (prompt cost estimates, best-model-per-dollar picks, approval surface reports, raw-tx plain-English decoding, live RPC speed rankings, premium honeypot screens, live transaction dry-runs, stateless page change detection, wallet dossiers, extractive terms digests, sandboxed JS execution) plus the /sage knowledge lane (ask anything — SEC company facts, crypto spot + DEX venue consensus, cited Wikipedia briefs) plus the /scam-scan deep scan (legit bounty? 10-flag scam smell-test with prize-vs-cost math and a clean/caution/likely-scam verdict, or subscribe: $30 USDC on Base for 30 days, cancel anytime) plus the supply store's first combo meal (/road-pack: gas + prices + DeFi movers + model shelf + trip brief in one call). Every lane carries a plain-English verdict — heuristic screens, not audits. Don't get rugged. Tolls: $0.02 USDC per checkpoint on the bounty lanes, /gas, /defi, /honeypot, /approval-risk, /rug-score, /receipt-check, /prices, /models, /tx-dryrun, /permit-scan, /airdrop-verdict, /deployer-history, /wallet-watch, /prompt-cost, /model-picks, /terms-tldr, and /rpc-speed; $0.05 on /enrich, /token-check, /markets, /search, /yields, /new-pairs, /preflight, /road-pack, /site-watch, /wallet-check, /sec-facts, /code-run, and /sage; $0.10 on the protection tier — /contract-check, /approval-audit, /tx-plain-english, /honeypot-check, /tx-simulate, and /skill-scan; $5.00 on the /scam-scan deep scan; $30.00 on the /scam-scan-subscribe 30-day subscription. Base or Solana.",
     homepage: base,
     payment: {
       protocol: "x402",
@@ -2385,7 +2388,7 @@ app.get("/openapi.json", (req, res) => {
       title: "TrollBridge",
       version: "1.1.0",
       description:
-        "The insurance booth for AI agents, with Mini's Agent Supply Store on the side of the road. Forty-four checkpoints: pre-transaction safety lanes (honeypot, approval-risk, rug-score, receipt-check, tx-dryrun, permit-scan, airdrop-verdict, deployer-history, wallet-watch at $0.02 USDC per call; the protection tier — /contract-check, /approval-audit, /tx-plain-english, /honeypot-check, /tx-simulate, /skill-scan — at $0.10; the full /preflight bundle at $0.05), bounty intel (bounties, fresh, verdicts, deadlines, sweepstakes, opportunities) at $0.02 USDC per call, trader intel (/prices at $0.02; /enrich and /token-check at $0.05; /contract-check and /honeypot-check at $0.10; /sec-facts at $0.05), market intel (/markets and /search at $0.05), DeFi intel (/yields and /new-pairs at $0.05; /gas and /defi at $0.02), AI intel (/models at $0.02), agent-ops intel (/prompt-cost, /model-picks, /rpc-speed, /terms-tldr at $0.02; /site-watch, /wallet-check, /code-run, and /sage at $0.05; /approval-audit, /tx-plain-english, and /tx-simulate at $0.10; /scam-scan deep scan or 30-day subscription at $5.00), supply store (/road-pack combo meal at $0.05). Every lane answers before money moves — heuristic verdicts, not audits. Don't get rugged.",
+        "The insurance booth for AI agents, with Mini's Agent Supply Store on the side of the road. Forty-four checkpoints: pre-transaction safety lanes (honeypot, approval-risk, rug-score, receipt-check, tx-dryrun, permit-scan, airdrop-verdict, deployer-history, wallet-watch at $0.02 USDC per call; the protection tier — /contract-check, /approval-audit, /tx-plain-english, /honeypot-check, /tx-simulate, /skill-scan — at $0.10; the full /preflight bundle at $0.05), bounty intel (bounties, fresh, verdicts, deadlines, sweepstakes, opportunities) at $0.02 USDC per call, trader intel (/prices at $0.02; /enrich and /token-check at $0.05; /contract-check and /honeypot-check at $0.10; /sec-facts at $0.05), market intel (/markets and /search at $0.05), DeFi intel (/yields and /new-pairs at $0.05; /gas and /defi at $0.02), AI intel (/models at $0.02), agent-ops intel (/prompt-cost, /model-picks, /rpc-speed, /terms-tldr at $0.02; /site-watch, /wallet-check, /code-run, and /sage at $0.05; /approval-audit, /tx-plain-english, and /tx-simulate at $0.10; /scam-scan deep scan at $5.00 or 30-day subscription at $30.00), supply store (/road-pack combo meal at $0.05). Every lane answers before money moves — heuristic verdicts, not audits. Don't get rugged.",
       "x-guidance":
         "Call any lane with GET. Without payment you receive a 402 challenge (x402 v2) with the exact payment requirements in the response headers and body — the 402 is the source of truth for amounts and payTo addresses. Tolls: $0.02 USDC on the bounty lanes, /prices, /gas, /defi, /honeypot, /approval-risk, /rug-score, /receipt-check, /models, /prompt-cost, /model-picks, /terms-tldr, and /rpc-speed; $0.05 USDC on /enrich, /token-check, /markets, /search, /yields, /new-pairs, /preflight, /road-pack, /site-watch, and /wallet-check; $0.10 USDC on the protection tier — /contract-check, /approval-audit, /tx-plain-english, /honeypot-check, and /tx-simulate. Both rails accepted on every lane: Base (USDC 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913) and Solana (USDC EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v). Complete the x402 payment and retry with the X-Payment header. Bounty lanes take ?limit=N (1–200). /enrich needs ?address=…&network=base|solana. /token-check needs ?mint=…&network=base|solana. /contract-check needs ?address=… and takes ?chain=base|ethereum (default base). /honeypot-check needs ?address=… (token contract) and takes ?chain=base|ethereum (default base). /honeypot needs ?address=… (token contract) and takes ?chain=base|ethereum (default base). /approval-risk needs ?address=… (wallet) and takes ?chain=base|ethereum (default base). /rug-score needs ?address=… (token contract) and takes ?chain=base|ethereum (default base). /receipt-check needs ?tx=… (tx hash or Solana signature) and takes ?chain=base|ethereum|solana (default base). /preflight needs ?address=… (token contract), takes ?chain=base|ethereum (default base) and optional ?wallet=0x… (adds the wallet approval audit). /tx-dryrun needs ?to=…&data=0x…&from=0x… (target contract, hex calldata, sender wallet), takes ?value=0 (wei) and ?chain=base|ethereum (default base). /tx-simulate needs ?to=…&data=0x…&from=0x… (target contract, hex calldata, sender wallet), takes ?value=0 (wei) and ?chain=base|ethereum (default base). /permit-scan needs ?address=… (wallet) and takes ?chain=base|ethereum (default base). /airdrop-verdict needs ?url=… (http/https claim page). /deployer-history needs ?address=… (token contract) and takes ?chain=base|ethereum (default base). /wallet-watch needs ?wallet=… and takes ?chain=base|ethereum (default base) plus optional ?prev_state=… (base64 of a previous state object for a diff). /wallet-check needs ?address=… (wallet) and takes ?chain=base|ethereum (default base). /site-watch needs ?url=… (http/https), takes optional ?prev_hash=… (sha256 from a previous call) and optional ?prev_text=… or ?prev_text_b64=… (for a diff snippet). /terms-tldr needs ?url=… (http/https terms/bounty/rules page). /prompt-cost needs ?text=… and takes optional ?model=…. /model-picks takes ?task=coding|writing|reasoning|chat (default chat). /approval-audit needs ?address=… (wallet) and takes ?chain=base|ethereum (default base). /tx-plain-english needs ?tx=… (raw signed tx) and takes ?chain=base|ethereum (default base). /rpc-speed takes ?chain=base|ethereum|solana (default base). /road-pack takes ?limit=1–25 (max token prices in the pack, default 10). /markets takes ?q=… (required) and ?limit=1–25. /search needs ?q=…. /yields takes ?limit=1–25 and ?stablecoinOnly=true|false. /new-pairs takes ?limit=1–25 and ?chain=solana|ethereum|base. /gas takes no params. The free directory of third-party tools is GET /tools; bridge traffic stats are GET /traffic; TrollBridge Fuel (GAS) price and burn-to-cross instructions are GET /fuel.",
       contact: { name: "TrollBridge", url: "https://github.com/eric-tijerina/mini-tollbooth/issues" },
