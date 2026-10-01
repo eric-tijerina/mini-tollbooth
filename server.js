@@ -1,9 +1,9 @@
 // Mini's Tollbooth — the insurance booth for AI agents, plus Mini's Agent
 // Supply Store on the side of the road.
-// Forty-one checkpoints on one bridge. Every lane answers the question
+// Forty-two checkpoints on one bridge. Every lane answers the question
 // before money moves: is this safe to touch? 2¢ per checkpoint, 5¢ for the
 // full preflight or the road-pack combo meal. Don't get rugged — pay the toll, cross covered.
-// Forty-one tolled lanes on Base or Solana per call:
+// Forty-two tolled lanes on Base or Solana per call:
 //   Bounty intel ($0.02 USDC each):
 //   GET /bounties    — every open bounty across all boards (aibtc + Taskmarket + Superteam)
 //   GET /fresh       — bounties posted in the last 24h
@@ -102,6 +102,7 @@ const termsTldr = require("./terms-tldr");
 const { skillScan } = require("./skill-scan");
 const { secFacts } = require("./sec-facts");
 const { codeRun } = require("./code-run");
+const { sage } = require("./sage");
 // /file-pr PARKED (2026-09-30): github-pr.js ships hardened but dormant — no
 // route calls filePr. Re-enable only under a neutral bot identity (separate
 // GitHub account + PAT, Eric's hands), never the keeper's personal token.
@@ -426,6 +427,10 @@ const SKILLSCAN_SCHEMA = {
 const SECFACTS_SCHEMA = {
   ticker: { type: "string", description: "US stock ticker (e.g. AAPL) — resolved via the SEC company tickers list, facts from SEC EDGAR companyfacts." },
 };
+const SAGE_SCHEMA = {
+  q: { type: "string", description: "Question or topic (max 200 chars) — a US ticker, a crypto token, or any general topic. Also accepts topic=." },
+  topic: { type: "string", description: "Alias for q." },
+};
 const CODERUN_SCHEMA = {
   code: { type: "string", description: "JavaScript snippet to run (max 50KB). Synchronous JS only in v1." },
   lang: { type: "string", description: "Language — only \"js\" is supported in v1." },
@@ -462,6 +467,7 @@ function discoveryExtensionFor(route) {
   if (route === "/terms-tldr") return discoveryForParams(route, TERMSTLR_SCHEMA, ["url"], { url: "https://example.com/rules" }, LANE_EXAMPLES[route]);
   if (route === "/skill-scan") return discoveryForParams(route, SKILLSCAN_SCHEMA, ["url"], { url: "https://example.com/skill/SKILL.md" }, LANE_EXAMPLES[route]);
   if (route === "/sec-facts") return discoveryForParams(route, SECFACTS_SCHEMA, ["ticker"], { ticker: "AAPL" }, LANE_EXAMPLES[route]);
+  if (route === "/sage") return discoveryForParams(route, SAGE_SCHEMA, ["q"], { q: "NVDA revenue" }, LANE_EXAMPLES[route]);
   if (route === "/code-run") return discoveryForParams(route, CODERUN_SCHEMA, ["code"], { code: "Math.max(3, 7);" }, LANE_EXAMPLES[route]);
   if (route === "/gas") return discoveryForParams(route, {}, [], {}, LANE_EXAMPLES[route]);
   if (route === "/enrich") return discoveryForParams(route, ADDRESS_SCHEMA, ["address", "network"], { address: "0x8BE8D056d5F0bEF850eC9ed5C4a8d647cBE896C0", network: "base" }, LANE_EXAMPLES[route]);
@@ -513,6 +519,7 @@ const LANES = {
   "/terms-tldr": "Terms TL;DR ($0.02) — extractive digest of any terms/bounty/rules page: deadlines, prize amounts, requirements, and gotcha clauses, each with the source snippet. Keyword extraction, not legal advice.",
   "/skill-scan": "Skill supply-chain scan ($0.10) — fetch a skill's SKILL.md and screen it for prompt-injection, credential theft, and exfiltration patterns before you install it. Verdict: clean, suspicious, or dangerous, with findings. Heuristic screen, not an audit.",
   "/sec-facts": "Company facts from the source ($0.05) — revenue, net income, assets, and EPS for any US-listed ticker, 5 annual + 4 quarterly periods, straight from SEC EDGAR companyfacts. No estimates, no hallucination.",
+  "/sage": "Specialist in all fields ($0.05) — ask anything: US tickers answered from SEC EDGAR filings, crypto tokens from DeFiLlama spot + DEX venue consensus, everything else from Wikipedia with references. Every fact cited, confidence tells you whether sources agree. Multi-source brief, not a guarantee.",
   "/code-run": "Sandboxed JS execution ($0.05) — run a JavaScript snippet in an isolated child process (64MB heap cap, no network, no filesystem) and get the result plus captured logs. Pragmatic sandbox, not a hardened enclave.",
 };
 // Per-lane tolls. Anything not listed here costs PRICE (default $0.02).
@@ -535,6 +542,7 @@ const LANE_PRICES = {
   "/skill-scan": "$0.10",
   "/sec-facts": "$0.05",
   "/code-run": "$0.05",
+  "/sage": "$0.05",
 };
 const lanePrice = (route) => LANE_PRICES[route] || PRICE;
 const LANE_TAGS = {
@@ -579,6 +587,7 @@ const LANE_TAGS = {
   "/skill-scan": ["verdict-intel", "skills", "supply-chain", "security", "protection"],
   "/sec-facts": ["market-intel", "equities", "sec", "fundamentals"],
   "/code-run": ["agent-ops", "sandbox", "compute", "tools"],
+  "/sage": ["agent-ops", "knowledge", "research", "analyst", "crypto", "equities"],
 };
 const LANE_EXAMPLES = {
   "/bounties": { id: "aibtc-example", title: "Example bounty", reward: "10000 sats", board: "aibtc" },
@@ -621,6 +630,7 @@ const LANE_EXAMPLES = {
   "/terms-tldr": { url: "https://example.com/rules", deadlines: [{ date: "October 19, 2026", snippet: "…" }], prizes: [], requirements: [{ snippet: "…" }], gotchas: [{ flag: "binding terms", snippet: "…" }], disclaimer: "Keyword extraction, not legal advice." },
   "/skill-scan": { url: "https://example.com/skill/SKILL.md", verdict: "suspicious", score: 45, findings: [{ severity: "high", code: "shell-exec", title: "Shell execution", detail: "…" }], summary: "…" },
   "/sec-facts": { ticker: "AAPL", company: "Apple Inc.", cik: "0000320193", source: "SEC EDGAR companyfacts", facts: [{ label: "Total revenue", annual: [{ end: "2025-09-27", val: 416161000000 }] }] },
+  "/sage": { query: "NVDA revenue", domain: "finance", confidence: "single-source", answer: "NVIDIA CORP (NVDA): FY revenue $215.94B, net income $120.07B, from the latest SEC 10-K filing.", facts: [{ label: "Total revenue", value: "$215.94B", source: "SEC EDGAR companyfacts" }] },
   "/code-run": { lang: "js", verdict: "ok", result: "7", logs: "", execution_ms: 11, timeout_ms: 5000 },
 };
 const tollConfig = {};
@@ -680,6 +690,7 @@ const LANE_PITCH = {
   "/terms-tldr": "Skip reading the fine print — deadlines, prize amounts, requirements, and gotcha clauses pulled from any terms page in one 2¢ call. Keyword extraction, not legal advice.",
   "/skill-scan": "Don't install a malicious skill — scan its SKILL.md for injection, credential theft, and exfiltration patterns first, one 10¢ call. Clean, suspicious, or dangerous.",
   "/sec-facts": "Skip the earnings guesswork — real revenue, income, assets, and EPS for any US ticker, straight from SEC filings, one 5¢ call.",
+  "/sage": "Make any agent the specialist — one 5¢ call answers any question with cited facts: SEC numbers, crypto spot + venue consensus, sourced briefs.",
   "/code-run": "Need a quick computation? Run JavaScript in an isolated sandbox — no network, no filesystem, result plus captured logs, one 5¢ call.",
 };
 function readJsonSafe(rel) {
@@ -795,6 +806,8 @@ function laneStatsFor(route) {
       return { note: "prompt-injection and exfiltration screen for agent skills — heuristic screen, not an audit" };
     case "/sec-facts":
       return { note: "SEC EDGAR companyfacts — revenue, income, assets, EPS; 5 annual + 4 quarterly periods" };
+    case "/sage":
+      return { note: "multi-source knowledge brief — SEC filings, DeFiLlama spot + DEX consensus, Wikipedia; cited facts, confidence verdict" };
     case "/code-run":
       return { note: "isolated child process, 64MB heap cap, no network, no filesystem — pragmatic sandbox, not a hardened enclave" };
     default:
@@ -1078,7 +1091,7 @@ app.get("/", (req, res) => {
   res.json({
     bridge: "TrollBridge",
     keeper: "Mini, data-bounty hunter",
-    deal: `The insurance booth for AI agents, with Mini's Agent Supply Store on the side of the road. Forty-one checkpoints on Base or Solana — 2¢ per checkpoint, 5¢ for the full preflight or the road-pack combo meal, 10¢ for the protection-tier lanes (/contract-check, /approval-audit, /tx-plain-english, /honeypot-check, /tx-simulate, /skill-scan). Every lane answers the question before money moves: is this safe to touch? Honeypot screens, rug-pull scores, contract safety screens, wallet approval audits, settlement verification, skill supply-chain scans — plus bounty intel, market intel, and DeFi intel, all with plain-English verdicts. Don't get rugged — pay the toll, cross covered.`,
+    deal: `The insurance booth for AI agents, with Mini's Agent Supply Store on the side of the road. Forty-two checkpoints on Base or Solana — 2¢ per checkpoint, 5¢ for the full preflight or the road-pack combo meal, 10¢ for the protection-tier lanes (/contract-check, /approval-audit, /tx-plain-english, /honeypot-check, /tx-simulate, /skill-scan). Every lane answers the question before money moves: is this safe to touch? Honeypot screens, rug-pull scores, contract safety screens, wallet approval audits, settlement verification, skill supply-chain scans — plus bounty intel, market intel, and DeFi intel, all with plain-English verdicts. Don't get rugged — pay the toll, cross covered.`,
     lanes: Object.fromEntries(
       Object.entries(LANES).map(([route, desc]) => [`GET ${route}`, laneBlurb(route, desc)])
     ),
@@ -1760,6 +1773,16 @@ app.get("/skill-scan", async (req, res) => {
     res.status(502).json({ error: "upstream data source unreachable — try again shortly" });
   }
 });
+app.get("/sage", async (req, res) => {
+  try {
+    const out = await sage(req.query.q || req.query.topic);
+    res.json({ lane: "/sage", description: LANES["/sage"], ...out });
+  } catch (e) {
+    if (e.statusCode === 400) return res.status(400).json({ error: e.message, usage: "GET /sage?q=NVDA revenue (also accepts ?topic=)" });
+    console.error("route error GET /sage:", e.message);
+    res.status(502).json({ error: "upstream data source unreachable — try again shortly" });
+  }
+});
 app.get("/sec-facts", async (req, res) => {
   try {
     const out = await secFacts(req.query.ticker);
@@ -1922,7 +1945,7 @@ app.get("/.well-known/x402", (req, res) => {
     // Domain-ownership verification for agent-tools.cloud (claim pending).
     agentToolsVerify: "atc_aAIHBleoK4GPm8pbuJMh1oJ4G1VXjE4X",
     description:
-      "The insurance booth for AI agents, with Mini's Agent Supply Store on the side of the road. Forty-one checkpoints: pre-transaction safety lanes (honeypot screens, wallet approval audits, rug-pull risk scores, settlement verification, the full /preflight bundle, plus the skill-moat batch — /tx-dryrun transaction simulation, /permit-scan invisible-drainer check, /airdrop-verdict claim-page forensics, /deployer-history deployer forensics, /wallet-watch stateful monitoring, /skill-scan skill supply-chain scans) plus bounty intel (every open bounty across all boards, fresh bounties from the last 24h, recently-paid verdicts proving the boards pay, class-action claim deadlines, verified free sweepstakes, every paying opportunity in one normalized schema) plus trader intel (agent-ready price feed, wallet/address intelligence, token safety scans, contract safety screens, SEC company facts) plus market intel (live Polymarket prediction-market odds, agent-ready web search) plus DeFi intel (best stablecoin yields, newest token listings with liquidity flags, live gas prices, protocol TVL movers plus fee/revenue leaders plus stablecoin flows) plus AI intel (x402-payable AI model catalog with per-token pricing, catalog data: BlockRun.AI) plus agent-ops intel (prompt cost estimates, best-model-per-dollar picks, approval surface reports, raw-tx plain-English decoding, live RPC speed rankings, premium honeypot screens, live transaction dry-runs, stateless page change detection, wallet dossiers, extractive terms digests, sandboxed JS execution) plus the supply store's first combo meal (/road-pack: gas + prices + DeFi movers + model shelf + trip brief in one call). Every lane carries a plain-English verdict — heuristic screens, not audits. Don't get rugged. Tolls: $0.02 USDC per checkpoint on the bounty lanes, /gas, /defi, /honeypot, /approval-risk, /rug-score, /receipt-check, /prices, /models, /tx-dryrun, /permit-scan, /airdrop-verdict, /deployer-history, /wallet-watch, /prompt-cost, /model-picks, /terms-tldr, and /rpc-speed; $0.05 on /enrich, /token-check, /markets, /search, /yields, /new-pairs, /preflight, /road-pack, /site-watch, /wallet-check, /sec-facts, and /code-run; $0.10 on the protection tier — /contract-check, /approval-audit, /tx-plain-english, /honeypot-check, /tx-simulate, and /skill-scan. Base or Solana.",
+      "The insurance booth for AI agents, with Mini's Agent Supply Store on the side of the road. Forty-two checkpoints: pre-transaction safety lanes (honeypot screens, wallet approval audits, rug-pull risk scores, settlement verification, the full /preflight bundle, plus the skill-moat batch — /tx-dryrun transaction simulation, /permit-scan invisible-drainer check, /airdrop-verdict claim-page forensics, /deployer-history deployer forensics, /wallet-watch stateful monitoring, /skill-scan skill supply-chain scans) plus bounty intel (every open bounty across all boards, fresh bounties from the last 24h, recently-paid verdicts proving the boards pay, class-action claim deadlines, verified free sweepstakes, every paying opportunity in one normalized schema) plus trader intel (agent-ready price feed, wallet/address intelligence, token safety scans, contract safety screens, SEC company facts) plus market intel (live Polymarket prediction-market odds, agent-ready web search) plus DeFi intel (best stablecoin yields, newest token listings with liquidity flags, live gas prices, protocol TVL movers plus fee/revenue leaders plus stablecoin flows) plus AI intel (x402-payable AI model catalog with per-token pricing, catalog data: BlockRun.AI) plus agent-ops intel (prompt cost estimates, best-model-per-dollar picks, approval surface reports, raw-tx plain-English decoding, live RPC speed rankings, premium honeypot screens, live transaction dry-runs, stateless page change detection, wallet dossiers, extractive terms digests, sandboxed JS execution) plus the /sage knowledge lane (ask anything — SEC company facts, crypto spot + DEX venue consensus, cited Wikipedia briefs) plus the supply store's first combo meal (/road-pack: gas + prices + DeFi movers + model shelf + trip brief in one call). Every lane carries a plain-English verdict — heuristic screens, not audits. Don't get rugged. Tolls: $0.02 USDC per checkpoint on the bounty lanes, /gas, /defi, /honeypot, /approval-risk, /rug-score, /receipt-check, /prices, /models, /tx-dryrun, /permit-scan, /airdrop-verdict, /deployer-history, /wallet-watch, /prompt-cost, /model-picks, /terms-tldr, and /rpc-speed; $0.05 on /enrich, /token-check, /markets, /search, /yields, /new-pairs, /preflight, /road-pack, /site-watch, /wallet-check, /sec-facts, /code-run, and /sage; $0.10 on the protection tier — /contract-check, /approval-audit, /tx-plain-english, /honeypot-check, /tx-simulate, and /skill-scan. Base or Solana.",
     homepage: base,
     payment: {
       protocol: "x402",
@@ -2137,6 +2160,10 @@ app.get("/openapi.json", (req, res) => {
     if (route === "/terms-tldr") return [
       { name: "url", in: "query", required: true, description: "Terms / bounty / rules page URL to digest (http/https only).", schema: { type: "string" } },
     ];
+    if (route === "/sage") return [
+      { name: "q", in: "query", required: false, description: "Question or topic (max 200 chars) — a US stock ticker, a crypto token, or any general topic. One of q or topic is required.", schema: { type: "string" } },
+      { name: "topic", in: "query", required: false, description: "Alias for q.", schema: { type: "string" } },
+    ];
     return [laneParam];
   };
   const paths = {};
@@ -2160,7 +2187,7 @@ app.get("/openapi.json", (req, res) => {
       operationId: "fuel",
       summary: "TrollBridge Fuel (GAS) — price and burn-to-cross instructions",
       description:
-        "Free, untolled. TrollBridge Fuel (GAS) is the bridge's fuel: burn GAS on Base, then call any tolled lane with ?fuelTx=<burn tx hash> to cross without a USDC toll. 1 GAS per 2-cent lane, 3 GAS per 5-cent lane (/enrich, /token-check, /markets, /search, /yields, /new-pairs, /preflight, /road-pack, /site-watch, /wallet-check, /sec-facts, /code-run), 6 GAS per 10-cent protection lane (/contract-check, /approval-audit, /tx-plain-english, /honeypot-check, /tx-simulate, /skill-scan). Buy GAS from the FuelPump at 0.015 USDC per GAS.",
+        "Free, untolled. TrollBridge Fuel (GAS) is the bridge's fuel: burn GAS on Base, then call any tolled lane with ?fuelTx=<burn tx hash> to cross without a USDC toll. 1 GAS per 2-cent lane, 3 GAS per 5-cent lane (/enrich, /token-check, /markets, /search, /yields, /new-pairs, /preflight, /road-pack, /site-watch, /wallet-check, /sec-facts, /code-run, /sage), 6 GAS per 10-cent protection lane (/contract-check, /approval-audit, /tx-plain-english, /honeypot-check, /tx-simulate, /skill-scan). Buy GAS from the FuelPump at 0.015 USDC per GAS.",
       tags: ["free"],
       parameters: [],
       responses: {
@@ -2177,7 +2204,7 @@ app.get("/openapi.json", (req, res) => {
       title: "TrollBridge",
       version: "1.1.0",
       description:
-        "The insurance booth for AI agents, with Mini's Agent Supply Store on the side of the road. Forty-one checkpoints: pre-transaction safety lanes (honeypot, approval-risk, rug-score, receipt-check, tx-dryrun, permit-scan, airdrop-verdict, deployer-history, wallet-watch at $0.02 USDC per call; the protection tier — /contract-check, /approval-audit, /tx-plain-english, /honeypot-check, /tx-simulate, /skill-scan — at $0.10; the full /preflight bundle at $0.05), bounty intel (bounties, fresh, verdicts, deadlines, sweepstakes, opportunities) at $0.02 USDC per call, trader intel (/prices at $0.02; /enrich and /token-check at $0.05; /contract-check and /honeypot-check at $0.10; /sec-facts at $0.05), market intel (/markets and /search at $0.05), DeFi intel (/yields and /new-pairs at $0.05; /gas and /defi at $0.02), AI intel (/models at $0.02), agent-ops intel (/prompt-cost, /model-picks, /rpc-speed, /terms-tldr at $0.02; /site-watch, /wallet-check, and /code-run at $0.05; /approval-audit, /tx-plain-english, and /tx-simulate at $0.10), supply store (/road-pack combo meal at $0.05). Every lane answers before money moves — heuristic verdicts, not audits. Don't get rugged.",
+        "The insurance booth for AI agents, with Mini's Agent Supply Store on the side of the road. Forty-two checkpoints: pre-transaction safety lanes (honeypot, approval-risk, rug-score, receipt-check, tx-dryrun, permit-scan, airdrop-verdict, deployer-history, wallet-watch at $0.02 USDC per call; the protection tier — /contract-check, /approval-audit, /tx-plain-english, /honeypot-check, /tx-simulate, /skill-scan — at $0.10; the full /preflight bundle at $0.05), bounty intel (bounties, fresh, verdicts, deadlines, sweepstakes, opportunities) at $0.02 USDC per call, trader intel (/prices at $0.02; /enrich and /token-check at $0.05; /contract-check and /honeypot-check at $0.10; /sec-facts at $0.05), market intel (/markets and /search at $0.05), DeFi intel (/yields and /new-pairs at $0.05; /gas and /defi at $0.02), AI intel (/models at $0.02), agent-ops intel (/prompt-cost, /model-picks, /rpc-speed, /terms-tldr at $0.02; /site-watch, /wallet-check, /code-run, and /sage at $0.05; /approval-audit, /tx-plain-english, and /tx-simulate at $0.10), supply store (/road-pack combo meal at $0.05). Every lane answers before money moves — heuristic verdicts, not audits. Don't get rugged.",
       "x-guidance":
         "Call any lane with GET. Without payment you receive a 402 challenge (x402 v2) with the exact payment requirements in the response headers and body — the 402 is the source of truth for amounts and payTo addresses. Tolls: $0.02 USDC on the bounty lanes, /prices, /gas, /defi, /honeypot, /approval-risk, /rug-score, /receipt-check, /models, /prompt-cost, /model-picks, /terms-tldr, and /rpc-speed; $0.05 USDC on /enrich, /token-check, /markets, /search, /yields, /new-pairs, /preflight, /road-pack, /site-watch, and /wallet-check; $0.10 USDC on the protection tier — /contract-check, /approval-audit, /tx-plain-english, /honeypot-check, and /tx-simulate. Both rails accepted on every lane: Base (USDC 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913) and Solana (USDC EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v). Complete the x402 payment and retry with the X-Payment header. Bounty lanes take ?limit=N (1–200). /enrich needs ?address=…&network=base|solana. /token-check needs ?mint=…&network=base|solana. /contract-check needs ?address=… and takes ?chain=base|ethereum (default base). /honeypot-check needs ?address=… (token contract) and takes ?chain=base|ethereum (default base). /honeypot needs ?address=… (token contract) and takes ?chain=base|ethereum (default base). /approval-risk needs ?address=… (wallet) and takes ?chain=base|ethereum (default base). /rug-score needs ?address=… (token contract) and takes ?chain=base|ethereum (default base). /receipt-check needs ?tx=… (tx hash or Solana signature) and takes ?chain=base|ethereum|solana (default base). /preflight needs ?address=… (token contract), takes ?chain=base|ethereum (default base) and optional ?wallet=0x… (adds the wallet approval audit). /tx-dryrun needs ?to=…&data=0x…&from=0x… (target contract, hex calldata, sender wallet), takes ?value=0 (wei) and ?chain=base|ethereum (default base). /tx-simulate needs ?to=…&data=0x…&from=0x… (target contract, hex calldata, sender wallet), takes ?value=0 (wei) and ?chain=base|ethereum (default base). /permit-scan needs ?address=… (wallet) and takes ?chain=base|ethereum (default base). /airdrop-verdict needs ?url=… (http/https claim page). /deployer-history needs ?address=… (token contract) and takes ?chain=base|ethereum (default base). /wallet-watch needs ?wallet=… and takes ?chain=base|ethereum (default base) plus optional ?prev_state=… (base64 of a previous state object for a diff). /wallet-check needs ?address=… (wallet) and takes ?chain=base|ethereum (default base). /site-watch needs ?url=… (http/https), takes optional ?prev_hash=… (sha256 from a previous call) and optional ?prev_text=… or ?prev_text_b64=… (for a diff snippet). /terms-tldr needs ?url=… (http/https terms/bounty/rules page). /prompt-cost needs ?text=… and takes optional ?model=…. /model-picks takes ?task=coding|writing|reasoning|chat (default chat). /approval-audit needs ?address=… (wallet) and takes ?chain=base|ethereum (default base). /tx-plain-english needs ?tx=… (raw signed tx) and takes ?chain=base|ethereum (default base). /rpc-speed takes ?chain=base|ethereum|solana (default base). /road-pack takes ?limit=1–25 (max token prices in the pack, default 10). /markets takes ?q=… (required) and ?limit=1–25. /search needs ?q=…. /yields takes ?limit=1–25 and ?stablecoinOnly=true|false. /new-pairs takes ?limit=1–25 and ?chain=solana|ethereum|base. /gas takes no params. The free directory of third-party tools is GET /tools; bridge traffic stats are GET /traffic; TrollBridge Fuel (GAS) price and burn-to-cross instructions are GET /fuel.",
       contact: { name: "TrollBridge", url: "https://github.com/eric-tijerina/mini-tollbooth/issues" },
