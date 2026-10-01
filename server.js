@@ -525,6 +525,19 @@ function discoveryExtensionFor(route) {
 
 // The tolls: bounty-intel lanes cost $0.02 USDC; trader-intel lanes cost
 // $0.02–$0.10. Every lane takes both rails (Base or Solana).
+// Screen-lane safety framing (Holocene's cognitive-tunneling point, 2026-10-01):
+// every heuristic screen lane LEADS with the warning — description, 402 pitch,
+// and a `warning` key stamped as the first field of every 200 JSON body — so a
+// fast-moving agent cannot skim past it. The warning is data about the
+// verdict's limits, not marketing copy.
+const SCREEN_WARNING = "NOT AN AUDIT \u2014 heuristic screen only: a cheap triage filter, not a security review. A clean screen never means safe. Verify independently before money moves.";
+const SCREEN_LANES = new Set([
+  "/contract-check", "/approval-screen", "/approval-risk", "/honeypot",
+  "/honeypot-check", "/rug-score", "/redteam", "/skill-scan", "/secret-scan",
+  "/permit-scan", "/preflight", "/tx-dryrun", "/tx-simulate",
+  "/tx-plain-english", "/airdrop-verdict", "/deployer-history", "/scam-scan",
+]);
+
 const LANES = {
   "/bounties": "Every open bounty across all boards — aibtc, Taskmarket, Superteam Earn.",
   "/fresh": "Bounties posted in the last 24h. First come, first served.",
@@ -541,40 +554,40 @@ const LANES = {
   "/new-pairs": "New token listings — the newest DexScreener pairs with live liquidity, volume, thin-liquidity flags, and a pass/flag batch verdict.",
   "/gas": "Live gas prices per chain — Base, Ethereum, and Solana from public RPCs, with speed tiers where derivable, plus a cheapest-chain recommendation.",
   "/defi": "DeFi protocol intel — top TVL movers, daily fee and revenue leaders, and stablecoin supply flows, each with a plain-English verdict. From DeFiLlama's free API, agent-ready JSON.",
-  "/contract-check": "Contract safety screen — verification status, proxy and owner-privilege heuristics, holder concentration, and a plain-English risk verdict before you sign. Heuristic screen, not an audit.",
-  "/honeypot": "Honeypot screen — simulated sells from real holders, transfer-tax and blacklist flags, and a safe/suspicious/honeypot verdict before you buy. Heuristic screen, not an audit.",
-  "/approval-risk": "Wallet approval screen — unlimited token approvals and risky spender contracts flagged, with a revoke priority list. Verdict: clean, review, or urgent.",
-  "/rug-score": "Rug-pull risk score 0-100 — LP burn status, holder concentration, mint authority, ownership, sell pressure, one-line verdict. Heuristic score, not an audit.",
+  "/contract-check": "NOT AN AUDIT — heuristic screen: contract safety screen — verification status, proxy and owner-privilege heuristics, holder concentration, and a plain-English risk verdict before you sign.",
+  "/honeypot": "NOT AN AUDIT — heuristic screen: honeypot screen — simulated sells from real holders, transfer-tax and blacklist flags, and a safe/suspicious/honeypot verdict before you buy.",
+  "/approval-risk": "NOT AN AUDIT — heuristic screen: wallet approval screen — unlimited token approvals and risky spender contracts flagged, with a revoke priority list. Verdict: clean, review, or urgent.",
+  "/rug-score": "NOT AN AUDIT — heuristic screen: rug-pull risk score 0-100 — LP burn status, holder concentration, mint authority, ownership, sell pressure, one-line verdict.",
   "/receipt-check": "\"Did it land?\" settlement verification — transaction status, confirmations, value moved, and decoded token transfers on Base, Ethereum, or Solana.",
-  "/preflight": "Full preflight inspection — honeypot screen, rug-pull score, and contract safety screen in one 5¢ call, plus the wallet approval screen when you pass ?wallet=. One overall verdict: cleared for takeoff, proceed with caution, or do not touch. Heuristic bundle, not an audit.",
-  "/tx-dryrun": "The crystal ball — simulate any transaction before signing and get a plain-words explanation of what it does to your wallet (approvals, transfers, swaps decoded). Verdict: safe, review-carefully, or do-not-sign. Simulation, not a guarantee.",
-  "/permit-scan": "The invisible drainer check — Permit2/Seaport interaction exposure plus the standard approval screen, with a revoke priority list. Signature-based permits don't show in normal scans; this flags the exposure. Verdict: clean, exposed, or urgent.",
-  "/airdrop-verdict": "Legit or drainer — static page forensics on an airdrop claim URL: lookalike-domain detection, pressure-language flags, and the page's contracts run through our own contract screen. Heavily heuristic. Verdict: likely-legit, suspicious, or likely-drainer.",
-  "/deployer-history": "Who made this token — trace the deployer and investigate what else they launched: verification, scam flags, dead-contract patterns. Verdict: clean, mixed, or serial-rugger.",
+  "/preflight": "NOT AN AUDIT — heuristic screen bundle: full preflight inspection — honeypot screen, rug-pull score, and contract safety screen in one 5¢ call, plus the wallet approval screen when you pass ?wallet=. One overall verdict: cleared for takeoff, proceed with caution, or do not touch.",
+  "/tx-dryrun": "NOT AN AUDIT — simulation, not a guarantee: the crystal ball — simulate any transaction before signing and get a plain-words explanation of what it does to your wallet (approvals, transfers, swaps decoded). Verdict: safe, review-carefully, or do-not-sign.",
+  "/permit-scan": "NOT AN AUDIT — heuristic screen: the invisible drainer check — Permit2/Seaport interaction exposure plus the standard approval screen, with a revoke priority list. Signature-based permits don't show in normal scans; this flags the exposure. Verdict: clean, exposed, or urgent.",
+  "/airdrop-verdict": "NOT AN AUDIT — heavily heuristic screen: legit or drainer — static page forensics on an airdrop claim URL: lookalike-domain detection, pressure-language flags, and the page's contracts run through our own contract screen. Verdict: likely-legit, suspicious, or likely-drainer.",
+  "/deployer-history": "NOT AN AUDIT — heuristic forensics: who made this token — trace the deployer and investigate what else they launched: verification, scam flags, dead-contract patterns. Verdict: clean, mixed, or serial-rugger.",
   "/wallet-watch": "Has anything changed — stateful wallet monitoring. Set a baseline, pass it back later, get a plain-words diff of approvals, balances, and exposure. Verdict: baseline, no-changes, or changed.",
   "/models": "x402-payable AI model catalog — every model agents can call over x402 with per-million-token pricing, free models flagged. Catalog data: BlockRun.AI, bridged by TrollBridge.",
   "/road-pack": "The combo meal from Mini's Agent Supply Store — cheapest gas, top token prices with momentum verdicts, DeFi TVL movers, and the AI model shelf, plus a plain-English trip brief, in one 5¢ call. 8¢ of intel, one toll.",
   "/prompt-cost": "Prompt cost estimator — paste a prompt, get a heuristic token estimate and what it would cost across every model in the /models catalog, cheapest first. Heuristic estimate, not an exact tokenizer count.",
   "/model-picks": "Best model per dollar — curated quality scores per task (coding, writing, reasoning, chat) joined with live per-token pricing, ranked by value. Quality is a curated benchmark snapshot, not a live measurement.",
-  "/approval-screen": "Wallet approval surface report — live token allowances against known spender contracts, unlimited approvals flagged with a revoke priority list. Heuristic screen, not an audit.",
-  "/tx-plain-english": "Raw transaction decoder — paste a raw signed tx, get a plain-English explanation of what it moves and where, with common contract calls decoded. Decodes intent, does not simulate.",
+  "/approval-screen": "NOT AN AUDIT — heuristic screen: wallet approval surface report — live token allowances against known spender contracts, unlimited approvals flagged with a revoke priority list.",
+  "/tx-plain-english": "NOT AN AUDIT — decoder, not a simulator: raw transaction decoder — paste a raw signed tx, get a plain-English explanation of what it moves and where, with common contract calls decoded. Decodes intent, does not simulate.",
   "/rpc-speed": "RPC speed test — live latency ranking of public keyless RPC endpoints per chain, fastest first, measured from the bridge.",
-  "/honeypot-check": "Premium honeypot screen ($0.10) — DEX buy/sell flow (sells≈0 + buys high = red flag), holder concentration, and the contract safety screen combined into one 0-100 honeypot score. Heuristic screen, not an audit.",
-  "/tx-simulate": "Transaction dry-run ($0.10) — simulate any call against live public RPCs before you send it: would-succeed vs would-revert verdict, revert reason decoded, gas estimate in native + USD. Simulation, not a guarantee.",
+  "/honeypot-check": "NOT AN AUDIT — heuristic screen: premium honeypot screen ($0.10) — DEX buy/sell flow (sells≈0 + buys high = red flag), holder concentration, and the contract safety screen combined into one 0-100 honeypot score.",
+  "/tx-simulate": "NOT AN AUDIT — simulation, not a guarantee: transaction dry-run ($0.10) — simulate any call against live public RPCs before you send it: would-succeed vs would-revert verdict, revert reason decoded, gas estimate in native + USD.",
   "/site-watch": "Change detection ($0.05) — sha256 fingerprint of any URL with a compact diff when it changes. Pass the hash back on the next call; stateless, nothing stored.",
   "/wallet-check": "Wallet dossier ($0.05) — wallet age (first tx), transaction count, balance, first funding source, and bot-likelihood heuristics. Heuristic dossier, not a verdict on intent.",
   "/terms-tldr": "Terms TL;DR ($0.02) — extractive digest of any terms/bounty/rules page: deadlines, prize amounts, requirements, and gotcha clauses, each with the source snippet. Keyword extraction, not legal advice.",
-  "/skill-scan": "Skill supply-chain scan ($0.10) — fetch a skill's SKILL.md and screen it for prompt-injection, credential theft, and exfiltration patterns before you install it. Verdict: clean, suspicious, or dangerous, with findings. Heuristic screen, not an audit.",
+  "/skill-scan": "NOT AN AUDIT — heuristic screen: skill supply-chain scan ($0.10) — fetch a skill's SKILL.md and screen it for prompt-injection, credential theft, and exfiltration patterns before you install it. Verdict: clean, suspicious, or dangerous, with findings.",
   "/sec-facts": "Company facts from the source ($0.05) — revenue, net income, assets, and EPS for any US-listed ticker, 5 annual + 4 quarterly periods, straight from SEC EDGAR companyfacts. No estimates, no hallucination.",
   "/sage": "Specialist in all fields ($0.05) — ask anything: US tickers answered from SEC EDGAR filings, crypto tokens from DeFiLlama spot + DEX venue consensus, everything else from Wikipedia with references. Every fact cited, confidence tells you whether sources agree. Multi-source brief, not a guarantee.",
   "/code-run": "Sandboxed JS execution ($0.05) — run a JavaScript snippet in an isolated child process (64MB heap cap, no network, no filesystem) and get the result plus captured logs. Pragmatic sandbox, not a hardened enclave.",
-  "/scam-scan": "Legit bounty? ($5.00) — our software scans the listing for scam signals so you don't waste money on a rushed decision. 10-flag checklist, prize-vs-cost math, verdict: clean, caution, or likely scam. Heuristic screen, not a fraud investigation.",
+  "/scam-scan": "NOT AN AUDIT — heuristic screen, not a fraud investigation: legit bounty? ($5.00) — our software scans the listing for scam signals so you don't waste money on a rushed decision. 10-flag checklist, prize-vs-cost math, verdict: clean, caution, or likely scam.",
   "/scam-scan-subscribe": "Scam-scan subscription ($30.00) — one $30 USDC payment on Base buys 30 days of /scam-scan. Your payment's tx hash is the pass (?sub=<txhash>). Cancel anytime: nothing auto-renews.",
   "/scrape": "Page-to-text scraper ($0.02) — fetch any public page and get clean readable text, title, and links as JSON. Optional ?crawl=1 follows same-origin links (up to 10 pages). Honest fetch, not a JS renderer.",
   "/grants": "Federal grant finder ($0.02) — search live Grants.gov opportunities by keyword: title, agency, close date, award ceiling. Live federal data, not a guarantee of eligibility.",
   "/quant": "Quant math in one call ($0.02) — Black-Scholes pricing with Greeks, parametric VaR, Sharpe ratio, compound growth. Textbook math, not financial advice.",
-  "/secret-scan": "Leaked-secret sweep ($0.02) — scan a URL or pasted text for exposed AWS keys, GitHub tokens, private keys, and other credentials. Findings redacted, never echoed. Heuristic pattern sweep, not a security audit.",
-  "/redteam": "Prompt red-team screen ($0.10) — score a system prompt against 7 prompt-injection weakness checks, each with a concrete fix. Heuristic checklist, not a penetration test.",
+  "/secret-scan": "NOT AN AUDIT — heuristic pattern sweep, not a security audit: leaked-secret sweep ($0.02) — scan a URL or pasted text for exposed AWS keys, GitHub tokens, private keys, and other credentials. Findings redacted, never echoed.",
+  "/redteam": "NOT AN AUDIT — heuristic checklist, not a penetration test: prompt red-team screen ($0.10) — score a system prompt against 7 prompt-injection weakness checks, each with a concrete fix.",
   "/datasets": "Curated agent datasets ($1.00) — downloadable snapshots: x402 pay-per-call registry, prompt-injection test corpus, MCP price index. Curated snapshot, not live — verify prices before quoting.",
   "/regulatory-pack": "Regulatory recall lookup ($0.05) — FDA drug and food enforcement recalls by product or firm, straight from openFDA. Unvalidated public data, not medical or legal advice.",
 };
@@ -748,40 +761,40 @@ const LANE_PITCH = {
   "/new-pairs": "Save an hour of new-listing triage — the newest pairs with liquidity flags and a pass/flag batch verdict, one 5¢ call.",
   "/gas": "10 minutes of RPC polling, done — live gas on Base, Ethereum, and Solana with a cheapest-chain recommendation, one 2¢ call.",
   "/defi": "Skip an hour of DeFiLlama tab-hopping — top TVL movers, fee and revenue leaders, stablecoin flows, each with a plain-English verdict, one 2¢ call.",
-  "/contract-check": "A 20-minute contract read by hand, done in one 10¢ call — verification, proxy and owner heuristics, holder concentration, plain-English verdict. Heuristic screen, not an audit.",
-  "/honeypot": "Don't buy the honeypot — simulated sells from real holder wallets plus blacklist and tax flags, one 2¢ call. Safe, suspicious, or honeypot.",
-  "/approval-risk": "A 15-minute approval review by hand, done in one 2¢ call — every unlimited approval and risky spender flagged, revoke list prioritized.",
-  "/rug-score": "A 20-minute rug-check by hand, done in one 2¢ call — LP burn, holder concentration, mint authority, one-line verdict.",
+  "/contract-check": "NOT AN AUDIT — heuristic screen. A 20-minute contract read by hand, done in one 10¢ call — verification, proxy and owner heuristics, holder concentration, plain-English verdict.",
+  "/honeypot": "NOT AN AUDIT — heuristic screen. Don't buy the honeypot — simulated sells from real holder wallets plus blacklist and tax flags, one 2¢ call. Safe, suspicious, or honeypot.",
+  "/approval-risk": "NOT AN AUDIT — heuristic screen. A 15-minute approval review by hand, done in one 2¢ call — every unlimited approval and risky spender flagged, revoke list prioritized.",
+  "/rug-score": "NOT AN AUDIT — heuristic screen. A 20-minute rug-check by hand, done in one 2¢ call — LP burn, holder concentration, mint authority, one-line verdict.",
   "/receipt-check": "Stop wondering if it landed — transaction status, confirmations, and decoded token transfers, one 2¢ call.",
-  "/preflight": "The full policy in one 5¢ call — honeypot, rug, and contract screens plus the wallet approval screen, with a single verdict: cleared for takeoff, proceed with caution, or do not touch. Don't get rugged.",
-  "/tx-dryrun": "Don't sign blind — simulate the transaction and get a plain-words reading of what it does to your wallet, one 2¢ call. Safe, review carefully, or do not sign.",
-  "/permit-scan": "The approvals you can't see — Permit2/Seaport exposure plus every risky approval flagged, one 2¢ call. Clean, exposed, or urgent.",
-  "/airdrop-verdict": "Claim or drainer? Static forensics on the claim page — lookalike domains, pressure language, risky contracts — one 2¢ call.",
-  "/deployer-history": "Know who you're trusting — the deployer's full track record: every contract they launched, scam flags, dead patterns, one 2¢ call.",
+  "/preflight": "NOT AN AUDIT — heuristic screen bundle. The full policy in one 5¢ call — honeypot, rug, and contract screens plus the wallet approval screen, with a single verdict: cleared for takeoff, proceed with caution, or do not touch. Don't get rugged.",
+  "/tx-dryrun": "NOT AN AUDIT — simulation, not a guarantee. Don't sign blind — simulate the transaction and get a plain-words reading of what it does to your wallet, one 2¢ call. Safe, review carefully, or do not sign.",
+  "/permit-scan": "NOT AN AUDIT — heuristic screen. The approvals you can't see — Permit2/Seaport exposure plus every risky approval flagged, one 2¢ call. Clean, exposed, or urgent.",
+  "/airdrop-verdict": "NOT AN AUDIT — heavily heuristic screen. Claim or drainer? Static forensics on the claim page — lookalike domains, pressure language, risky contracts — one 2¢ call.",
+  "/deployer-history": "NOT AN AUDIT — heuristic forensics. Know who you're trusting — the deployer's full track record: every contract they launched, scam flags, dead patterns, one 2¢ call.",
   "/wallet-watch": "Your wallet, watched — set a baseline, get a plain-words diff of everything that changed since, one 2¢ call.",
   "/models": "Stop guessing what models cost — every x402-payable AI model with per-million-token pricing and the free ones flagged, one 2¢ call.",
   "/road-pack": "The combo meal from Mini's Agent Supply Store — gas, prices, DeFi movers, and the AI model shelf plus a plain-English trip brief, one 5¢ call. 8¢ of intel, one toll.",
   "/prompt-cost": "Know the price before you prompt — token estimate plus what it costs on every model, cheapest first, one 2¢ call.",
   "/model-picks": "Stop overpaying for brains — best model per dollar for coding, writing, reasoning, or chat, one 2¢ call.",
-  "/approval-screen": "See what your wallet lets contracts do — every live approval against known spenders, revoke list prioritized, one 10¢ call. A heuristic screen, not an audit.",
-  "/tx-plain-english": "Read the tx before you sign it — a raw transaction decoded to plain English, one 10¢ call.",
+  "/approval-screen": "NOT AN AUDIT — heuristic screen. See what your wallet lets contracts do — every live approval against known spenders, revoke list prioritized, one 10¢ call.",
+  "/tx-plain-english": "NOT AN AUDIT — decoder, not a simulator. Read the tx before you sign it — a raw transaction decoded to plain English, one 10¢ call.",
   "/rpc-speed": "Stop guessing which RPC is fast — live latency ranking per chain, measured from the bridge, one 2¢ call.",
-  "/honeypot-check": "A full honeypot forensics job in one 10¢ call — DEX buy/sell flow, holder concentration, and the contract safety screen rolled into one 0-100 score. Heuristic screen, not an audit.",
-  "/tx-simulate": "Don't send a transaction you haven't rehearsed — dry-run it against live RPCs, get the would-revert verdict with the reason and the gas cost, one 10¢ call.",
+  "/honeypot-check": "NOT AN AUDIT — heuristic screen. A full honeypot forensics job in one 10¢ call — DEX buy/sell flow, holder concentration, and the contract safety screen rolled into one 0-100 score.",
+  "/tx-simulate": "NOT AN AUDIT — simulation, not a guarantee. Don't send a transaction you haven't rehearsed — dry-run it against live RPCs, get the would-revert verdict with the reason and the gas cost, one 10¢ call.",
   "/site-watch": "Watch any page for changes without storing a thing — one 5¢ call returns the hash; pass it back next time and get the changed/not-changed verdict with a diff snippet.",
   "/wallet-check": "Know the wallet before you trust it — age, activity, first funding source, and bot-likelihood flags in one 5¢ call. Heuristic dossier, not a verdict on intent.",
   "/terms-tldr": "Skip reading the fine print — deadlines, prize amounts, requirements, and gotcha clauses pulled from any terms page in one 2¢ call. Keyword extraction, not legal advice.",
-  "/skill-scan": "Don't install a malicious skill — scan its SKILL.md for injection, credential theft, and exfiltration patterns first, one 10¢ call. Clean, suspicious, or dangerous.",
+  "/skill-scan": "NOT AN AUDIT — heuristic screen. Don't install a malicious skill — scan its SKILL.md for injection, credential theft, and exfiltration patterns first, one 10¢ call. Clean, suspicious, or dangerous.",
   "/sec-facts": "Skip the earnings guesswork — real revenue, income, assets, and EPS for any US ticker, straight from SEC filings, one 5¢ call.",
   "/sage": "Make any agent the specialist — one 5¢ call answers any question with cited facts: SEC numbers, crypto spot + venue consensus, sourced briefs.",
   "/code-run": "Need a quick computation? Run JavaScript in an isolated sandbox — no network, no filesystem, result plus captured logs, one 5¢ call.",
-  "/scam-scan": "Legit bounty? Our software scans the listing for scam signals so you don't waste money on a rushed decision — 10-flag checklist, prize-vs-cost math, clean/caution/likely-scam verdict.",
+  "/scam-scan": "NOT AN AUDIT — heuristic screen, not a fraud investigation. Legit bounty? Our software scans the listing for scam signals so you don't waste money on a rushed decision — 10-flag checklist, prize-vs-cost math, clean/caution/likely-scam verdict.",
   "/scam-scan-subscribe": "Subscribe once, scan for a month — one $30 USDC payment on Base unlocks 30 days of /scam-scan. Cancel anytime, nothing auto-renews.",
   "/scrape": "Skip the HTML wrestling — any public page as clean text, title, and links in one 2¢ call, or crawl up to 10 pages.",
   "/grants": "Free money has a search box — live federal grant opportunities by keyword, with close dates and award ceilings, one 2¢ call.",
   "/quant": "Quant-desk math without the spreadsheet — Black-Scholes with Greeks, VaR, Sharpe, compounding, one 2¢ call. Textbook math, not advice.",
-  "/secret-scan": "Don't ship a leaked key — sweep a URL or pasted text for exposed credentials, findings redacted, one 2¢ call.",
-  "/redteam": "Harden the prompt before attackers do — a 7-check injection screen with concrete fixes, one 10¢ call.",
+  "/secret-scan": "NOT AN AUDIT — heuristic pattern sweep, not a security audit. Don't ship a leaked key — sweep a URL or pasted text for exposed credentials, findings redacted, one 2¢ call.",
+  "/redteam": "NOT AN AUDIT — heuristic checklist, not a penetration test. Harden the prompt before attackers do — a 7-check injection screen with concrete fixes, one 10¢ call.",
   "/datasets": "Training data without the subscription — curated x402 registry, injection-test corpus, and MCP price index snapshots, $1 a pop.",
   "/regulatory-pack": "Know the recall before you buy — FDA drug and food enforcement records by product or firm, one 5¢ call.",
 };
@@ -1343,6 +1356,22 @@ app.use(async (req, res, next) => {
   req.fuelCrossing = true;
   usageDirty = true;
   return next(); // past the toll collector: the lane handler serves data
+});
+
+// Screen-lane warning stamp (2026-10-01): on every heuristic screen lane,
+// `warning` goes in as the FIRST key of the 200 JSON body — after the toll
+// (or tester pass) but before the verdict — so no parser can read the score
+// without reading the warning. 402 bodies already carry the pitch-led warning.
+app.use((req, res, next) => {
+  if (req.method !== "GET" || !SCREEN_LANES.has(req.path)) return next();
+  const origJson = res.json.bind(res);
+  res.json = (body) => {
+    if (body && typeof body === "object" && !Array.isArray(body) && !body.warning) {
+      body = { warning: SCREEN_WARNING, ...body };
+    }
+    return origJson(body);
+  };
+  next();
 });
 
 // Routes the traffic ledger watches: the tolled lanes, the free directory,
