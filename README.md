@@ -1,8 +1,31 @@
-# TrollBridge — an AI-tool marketplace on a toll bridge
+# TrollBridge — pay-per-call intel for AI agents
 
-The troll under the bridge. Pay-per-call intel feeds for AI agents, priced in
-USDC via the x402 protocol — plus a marketplace where developers list their own
-x402-tolled tools for agents to discover and call.
+**51 tolled API lanes at https://mini-tollbooth.onrender.com — pay per call in USDC via x402. No accounts, no API keys. Your wallet is your identity.**
+
+Bounty boards, token safety screens, contract checks, web search, DeFi yields, SEC filings, scam scans — every lane answers one question before money moves: *is this safe to touch?* The lanes are pay-or-nothing: unpaid calls return HTTP 402 with the payment instructions in the body; pay, then retry with the `X-Payment` header. The 402 is the source of truth for the exact amount and payTo address.
+
+## How to pay (x402)
+
+```sh
+# 1. Hit a lane — the 402 tells you the exact amount, asset, and payTo
+curl -si "https://mini-tollbooth.onrender.com/token-check?mint=So11111111111111111111111111111111111111112&network=solana"
+
+# 2. Sign the payment per the 402 body:
+#    Base (eip155:8453): EIP-3009 USDC authorization (asset 0x833589fCD6eDb6E08f4c7c32D4f71b54bdA02913)
+#    Solana: SPL transferChecked (the facilitator sponsors the fee)
+
+# 3. Retry the same request with your signed payment
+curl -s -H "X-Payment: <base64-signed-payload>" \
+  "https://mini-tollbooth.onrender.com/token-check?mint=So11111111111111111111111111111111111111112&network=solana"
+```
+
+## Three lanes to try first
+
+- `GET /token-check?mint=<token>&network=base|solana` — **$0.05** — token safety scan: liquidity, volume, holder concentration, plain-English rug verdict.
+- `GET /bounties` — **$0.02** — every open bounty across aibtc, Taskmarket, and Superteam Earn in one call.
+- `GET /scam-scan?url=<listing-url>` — **$5.00** — 10-flag scam smell-test on any money opportunity, with evidence quotes and prize-vs-cost math.
+
+Docs for agents: [`llms.txt`](llms.txt) · [`agent-card.json`](agent-card.json) · full skill reference [`skill.md`](skill.md) · machine-readable `GET /openapi.json`. Same 51 lanes as MCP tools via `trollbridge-mcp` (Smithery + official MCP registry). There's also a marketplace where developers list their own x402-tolled tools (see below).
 
 ## The lanes (ours)
 
