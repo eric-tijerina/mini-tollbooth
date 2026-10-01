@@ -1,14 +1,14 @@
 # TrollBridge — agent skill
 
 The insurance booth for AI agents, with Mini's Agent Supply Store on the side
-of the road. Forty-one checkpoints on Base or Solana
+of the road. Forty-two checkpoints on Base or Solana
 (`eip155:8453` or `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`) — 2¢ per checkpoint,
 5¢ for the value tier, 10¢ for the protection-tier lanes
 (/contract-check, /approval-audit, /tx-plain-english, /honeypot-check, /tx-simulate, /skill-scan).
 Every lane answers the question before money moves: is this safe to touch? No
 accounts, no API keys — your wallet is your identity. Don't get rugged.
 
-## Tolled lanes (thirty-eight GET)
+## Tolled lanes (forty-two GET)
 
 | Lane | Toll | What you get |
 |---|---|---|
@@ -48,6 +48,7 @@ accounts, no API keys — your wallet is your identity. Don't get rugged.
 | `/skill-scan` | $0.10 | Skill supply-chain scan — fetch a skill's SKILL.md and screen it for prompt-injection, credential theft, and exfiltration patterns before you install it. Verdict: **clean**, **suspicious**, or **dangerous**, with findings. Heuristic screen, not an audit. *Don't install a malicious skill — one 10¢ call.* `?url=https://…/SKILL.md` or `?text=…` |
 | `/sec-facts` | $0.05 | Company facts from the source — revenue, net income, assets, and EPS for any US-listed ticker, 5 annual + 4 quarterly periods, straight from SEC EDGAR companyfacts. No estimates, no hallucination. *Skip the earnings guesswork — one 5¢ call.* `?ticker=AAPL` (required) |
 | `/code-run` | $0.05 | Sandboxed JS execution — run a JavaScript snippet in an isolated child process (64MB heap cap, no network, no filesystem) and get the result plus captured logs. Pragmatic sandbox, not a hardened enclave. *Need a quick computation? One 5¢ call.* `?code=…` (required, max 50KB), `?timeout_ms=…` (optional, 1000–10000), `?max_output_chars=…` (optional) |
+| `/sage` | $0.05 | Specialist in all fields — ask anything and get a cited, cross-checked brief: US tickers answered from SEC EDGAR filings, crypto tokens from DeFiLlama spot + DEX venue consensus (price, liquidity, volume, momentum), everything else from Wikipedia with references. Confidence verdict: **consensus**, **single-source**, or **conflicting**. Multi-source brief, not a guarantee. *Make any agent the specialist — one 5¢ call.* `?q=…` (required, also accepts `?topic=`, max 200 chars) |
 | `/road-pack` | $0.05 | The combo meal from Mini's Agent Supply Store — cheapest gas, top token prices with momentum verdicts, DeFi TVL movers, and the AI model shelf, plus a plain-English trip brief, in one call. 8¢ of intel, one 5¢ toll. *Gas, tools, and everything you forgot to pack — one 5¢ call.* `?limit=1–25` (optional, max token prices, default 10) |
 | `/models` | $0.02 | x402-payable AI model catalog — every model with per-million-token pricing, free models flagged (catalog data: BlockRun.AI). *Stop guessing what models cost — every x402-payable AI model with per-million-token pricing and the free ones flagged, one 2¢ call.* |
 | `/prompt-cost` | $0.02 | Prompt cost estimator — paste a prompt, get a heuristic token estimate and what it would cost across every model in the `/models` catalog, cheapest first. Heuristic estimate, not an exact tokenizer count. *Know the price before you prompt — one 2¢ call.* `?text=…` (required), `?model=…` (optional) |
@@ -65,12 +66,12 @@ accounts, no API keys — your wallet is your identity. Don't get rugged.
    exact amount and the payTo address. Two rails — pick either:
    - **Base:** sign the EIP-3009 authorization:
      - asset: `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` (USDC on Base)
-     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, `/gas`, `/defi`, `/honeypot`, `/approval-risk`, `/rug-score`, `/receipt-check`, `/tx-dryrun`, `/permit-scan`, `/airdrop-verdict`, `/deployer-history`, `/wallet-watch`, `/prompt-cost`, `/model-picks`, `/rpc-speed`, `/terms-tldr`, and `/models`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, `/new-pairs`, `/preflight`, `/road-pack`, `/site-watch`, `/wallet-check`, `/sec-facts`, and `/code-run`; `100000` ($0.10) on `/contract-check`, `/approval-audit`, `/tx-plain-english`, `/honeypot-check`, `/tx-simulate`, and `/skill-scan`
+     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, `/gas`, `/defi`, `/honeypot`, `/approval-risk`, `/rug-score`, `/receipt-check`, `/tx-dryrun`, `/permit-scan`, `/airdrop-verdict`, `/deployer-history`, `/wallet-watch`, `/prompt-cost`, `/model-picks`, `/rpc-speed`, `/terms-tldr`, and `/models`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, `/new-pairs`, `/preflight`, `/road-pack`, `/site-watch`, `/wallet-check`, `/sec-facts`, `/code-run`, and `/sage`; `100000` ($0.10) on `/contract-check`, `/approval-audit`, `/tx-plain-english`, `/honeypot-check`, `/tx-simulate`, and `/skill-scan`
      - network: `eip155:8453`
    - **Solana:** sign the SPL `transferChecked` (facilitator sponsors the fee —
      you need USDC only, no SOL):
      - asset: `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` (USDC on Solana)
-     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, `/gas`, `/defi`, `/honeypot`, `/approval-risk`, `/rug-score`, `/receipt-check`, `/tx-dryrun`, `/permit-scan`, `/airdrop-verdict`, `/deployer-history`, `/wallet-watch`, `/prompt-cost`, `/model-picks`, `/rpc-speed`, `/terms-tldr`, and `/models`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, `/new-pairs`, `/preflight`, `/road-pack`, `/site-watch`, `/wallet-check`, `/sec-facts`, and `/code-run`; `100000` ($0.10) on `/contract-check`, `/approval-audit`, `/tx-plain-english`, `/honeypot-check`, `/tx-simulate`, and `/skill-scan`
+     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, `/gas`, `/defi`, `/honeypot`, `/approval-risk`, `/rug-score`, `/receipt-check`, `/tx-dryrun`, `/permit-scan`, `/airdrop-verdict`, `/deployer-history`, `/wallet-watch`, `/prompt-cost`, `/model-picks`, `/rpc-speed`, `/terms-tldr`, and `/models`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, `/new-pairs`, `/preflight`, `/road-pack`, `/site-watch`, `/wallet-check`, `/sec-facts`, `/code-run`, and `/sage`; `100000` ($0.10) on `/contract-check`, `/approval-audit`, `/tx-plain-english`, `/honeypot-check`, `/tx-simulate`, and `/skill-scan`
      - network: `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`
 3. Retry the request with the signed payment in the `X-Payment` header.
    A settled payment returns **HTTP 200** with the lane's JSON.
