@@ -1227,6 +1227,43 @@ function fuelReject(res, route, fuelError) {
 }
 
 const x402collector = paymentMiddleware(tollConfig, server);
+// Tester pass: a time-boxed key for friendly adversarial testers.
+// ?tester=<key> or x-tester-key header skips the USDC toll on whitelisted
+// screen lanes only, and only until TESTER_EXPIRES_AT (unix seconds).
+// Counted as tester_crossings, never as paid. Touches no money: no lane
+// disburses funds, and the money-adjacent lanes (/scam-scan-subscribe,
+// which mints passes, and /search, which spends our paid Brave credits)
+// are excluded from the whitelist. Without TESTER_KEY set, inert.
+const TESTER_KEY = process.env.TESTER_KEY || "";
+const TESTER_EXPIRES_AT = Number(process.env.TESTER_EXPIRES_AT || "0");
+const TESTER_MAX_USES = 500;
+const TESTER_USE_PATH = path.join(__dirname, "data", "tester-use.json");
+const TESTER_LANES = new Set([
+  "/contract-check", "/approval-screen", "/approval-risk", "/honeypot-check",
+  "/rug-score", "/tx-plain-english", "/redteam", "/skill-scan", "/secret-scan",
+  "/permit-scan", "/tx-simulate", "/tx-dryrun", "/wallet-check",
+  "/deployer-history", "/airdrop-verdict", "/receipt-check", "/site-watch",
+  "/scam-scan", "/token-check", "/models", "/bounties", "/opportunities",
+]);
+function testerUses() {
+  try {
+    return JSON.parse(fs.readFileSync(TESTER_USE_PATH, "utf8")).uses || 0;
+  } catch {
+    return 0;
+  }
+}
+function bumpTesterUses() {
+  try {
+    fs.writeFileSync(TESTER_USE_PATH, JSON.stringify({ uses: testerUses() + 1 }));
+  } catch { /* best-effort */ }
+}
+function testerReject(res, msg) {
+  return res.status(402).json({
+    lane: "tester-pass",
+    note: msg,
+    honest: "Tester passes are time-boxed and lane-limited. This one is done — the regular toll applies from here.",
+  });
+}
 // Burn-to-cross wraps the toll collector: a tolled lane called with a
 // valid ?fuelTx= skips the USDC toll and serves its data like a paid
 // crossing. Anything else falls through to the normal x402 flow, so
@@ -1237,6 +1274,26 @@ app.use(async (req, res, next) => {
   const hasPaymentHeader = !!(req.headers["payment-signature"] || req.headers["x-payment"]);
   if (req.method !== "GET" || !LANES[route] || hasPaymentHeader) {
     return x402collector(req, res, next);
+  }
+  // Tester pass: key + expiry + lane whitelist + use cap. A correct key
+  // past expiry (or past the cap) gets an explicit "done" 402; a wrong
+  // key falls through to the normal toll without revealing anything.
+  const testerKey = req.query.tester || req.headers["x-tester-key"];
+  if (TESTER_KEY && testerKey !== undefined) {
+    if (String(testerKey) === TESTER_KEY) {
+      const nowS = Math.floor(Date.now() / 1000);
+      if (nowS >= TESTER_EXPIRES_AT || testerUses() >= TESTER_MAX_USES) {
+        return testerReject(res, "tester pass expired — the regular toll applies from here");
+      }
+      if (!TESTER_LANES.has(route)) {
+        return testerReject(res, "tester pass does not cover this lane — the regular toll applies");
+      }
+      bumpTesterUses();
+      req.testerCrossing = true;
+      usageDirty = true;
+      return next(); // past the toll collector: the lane handler serves data
+    }
+    // Wrong key: fall through to the normal toll below.
   }
   // Subscription pass: only /scam-scan honors ?sub=. A valid pass skips the
   // toll entirely; a bad one gets a 402 with a hint, not a silent toll.
@@ -1342,13 +1399,14 @@ app.get("/", (req, res) => {
 
 function trafficSummary() {
   const lanes = {};
-  let totalChallenged = 0, totalPaid = 0, totalFuel = 0, totalUnpaid2xx = 0, totalDirVisits = 0, totalDiscovery = 0;
+  let totalChallenged = 0, totalPaid = 0, totalFuel = 0, totalTester = 0, totalUnpaid2xx = 0, totalDirVisits = 0, totalDiscovery = 0;
   const allPayers = new Set();
   for (const [route, st] of Object.entries(usage.lanes)) {
     lanes[route] = {
       challenged: st.challenged,
       paid: st.paid,
       fuel_crossings: st.fuel_crossings || 0,
+      tester_crossings: st.tester_crossings || 0,
       failed: st.failed || 0,
       unpaid_2xx: st.unpaid_2xx || 0,
       visits: st.visits || 0,
@@ -1359,6 +1417,7 @@ function trafficSummary() {
     totalChallenged += st.challenged;
     totalPaid += st.paid;
     totalFuel += st.fuel_crossings || 0;
+    totalTester += st.tester_crossings || 0;
     totalUnpaid2xx += st.unpaid_2xx || 0;
     if (route === "/tools") totalDirVisits += st.visits || 0;
     else if (DISCOVERY_ROUTES[route]) totalDiscovery += st.visits || 0;
@@ -1379,6 +1438,7 @@ function trafficSummary() {
       challenged: totalChallenged,
       paid_crossings: totalPaid,
       fuel_crossings: totalFuel,
+      tester_crossings: totalTester,
       unpaid_2xx: totalUnpaid2xx,
       directory_visits: totalDirVisits,
       discovery_views: totalDiscovery,
