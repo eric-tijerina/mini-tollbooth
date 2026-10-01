@@ -999,7 +999,8 @@ app.get("/traffic/full", (req, res) => {
   res.json(full);
 });
 
-// The troll's tally, drawn pretty: a live visual dashboard of bridge traffic.
+// The troll's tally, drawn pretty: totals-only cards (toll knocks, paid
+// crossings, fuel crossings, directory/discovery views, unique payers).
 // Untracked (like /traffic) so the troll's own lookers don't pollute the count.
 app.get("/dashboard", (req, res) => {
   res.type("html").send(`<!doctype html>
@@ -1032,93 +1033,29 @@ canvas{width:100%;background:#11141c;border:1px solid #232a3a;border-radius:12px
 <div class="cards">
 <div class="card"><div class="num gray" id="c-challenged">–</div><div class="lbl">Toll knocks (402s)</div></div>
 <div class="card"><div class="num green" id="c-paid">–</div><div class="lbl">Paid crossings</div></div>
+<div class="card"><div class="num blue" id="c-fuel">–</div><div class="lbl">Fuel crossings (GAS)</div></div>
+<div class="card"><div class="num amber" id="c-unpaid">–</div><div class="lbl">Unpaid 2xx</div></div>
+<div class="card"><div class="num blue" id="c-directory">–</div><div class="lbl">Directory visits</div></div>
 <div class="card"><div class="num blue" id="c-discovery">–</div><div class="lbl">Discovery views</div></div>
 <div class="card"><div class="num amber" id="c-payers">–</div><div class="lbl">Unique payers</div></div>
-<div class="card"><div class="num red" id="c-failed">–</div><div class="lbl">Tried &amp; failed to pay</div></div>
 </div>
-<h2>Circling the register</h2>
-<p class="sub" id="funnel-line">Agents that knocked more than once, or sent a payment that got rejected — hashed IDs only, no IPs stored.</p>
-<div class="cards" id="funnel-cards"></div>
-<table id="repeaters" style="display:none"><thead><tr><th>Visitor</th><th>Knocks</th><th>Failed pays</th><th>Lanes</th><th>Stage</th><th>Last seen</th></tr></thead><tbody id="repeaters-body"></tbody></table>
-<div class="empty" id="repeaters-empty">No repeat visitors yet — every knock so far is a first-timer.</div>
-<h2>Per lane</h2>
-<div class="legend"><span><span class="dot" style="background:#f5a623"></span>knocks</span><span><span class="dot" style="background:#3ddc84"></span>paid</span><span><span class="dot" style="background:#5aa9ff"></span>views</span></div>
-<canvas id="lanes" height="300"></canvas>
-<h2>Over time</h2>
-<div class="legend"><span><span class="dot" style="background:#f5a623"></span>knocks</span><span><span class="dot" style="background:#3ddc84"></span>paid</span><span><span class="dot" style="background:#5aa9ff"></span>discovery + directory</span></div>
-<canvas id="trend" height="300"></canvas>
-<div class="empty" id="trend-empty" style="display:none">Gathering data — the graph fills in as traffic arrives.</div>
 <p class="foot">Auto-refreshes every 60s · The chain is the money record — this is just the troll's tally.</p>
 <script>
-var C = {knock:"#f5a623", paid:"#3ddc84", view:"#5aa9ff", grid:"#232a3a", text:"#8b93a7"};
-function fit(cv){var r=cv.getBoundingClientRect(),d=window.devicePixelRatio||1;cv.width=r.width*d;cv.height=300*d;var x=cv.getContext("2d");x.setTransform(d,0,0,d,0,0);return [x,r.width,300];}
-function short(r){return r.replace(/^\\//,"")||"home";}
-function drawBars(lanes){
-  var cv=document.getElementById("lanes"),f=fit(cv),x=f[0],W=f[1],H=f[2];
-  var routes=Object.keys(lanes);if(!routes.length)return;
-  var pad={l:36,r:10,t:14,b:34},iw=W-pad.l-pad.r,ih=H-pad.t-pad.b;
-  var max=1;routes.forEach(function(r){var s=lanes[r];max=Math.max(max,s.challenged,s.paid,s.visits||0);});
-  var gw=iw/routes.length,bw=Math.min(26,(gw-16)/3);
-  routes.forEach(function(r,i){
-    var s=lanes[r],cx=pad.l+gw*i+gw/2;
-    var bars=[[s.challenged,C.knock],[s.paid,C.paid],[s.visits||0,C.view]];
-    bars.forEach(function(b,j){
-      var v=b[0];if(!v)return;var h=ih*v/max,bx=cx-(bars.length*bw)/2+j*bw;
-      x.fillStyle=b[1];x.fillRect(bx,pad.t+ih-h,bw-3,h);
-      x.fillStyle="#e8ecf4";x.font="11px system-ui";x.textAlign="center";x.fillText(v,bx+(bw-3)/2,pad.t+ih-h-5);
-    });
-    x.fillStyle=C.text;x.font="11px system-ui";x.textAlign="center";x.fillText(short(r),cx,H-12);
-  });
-  x.strokeStyle=C.grid;x.beginPath();x.moveTo(pad.l,pad.t+ih);x.lineTo(W-pad.r,pad.t+ih);x.stroke();
-}
-function drawTrend(hist){
-  var cv=document.getElementById("trend"),empty=document.getElementById("trend-empty");
-  if(!hist||hist.length<2){cv.style.display="none";empty.style.display="block";return;}
-  cv.style.display="block";empty.style.display="none";
-  var f=fit(cv),x=f[0],W=f[1],H=f[2],pad={l:36,r:10,t:14,b:34},iw=W-pad.l-pad.r,ih=H-pad.t-pad.b;
-  var series=[["challenged",C.knock],["paid",C.paid],["disc",C.view]];
-  var max=1;hist.forEach(function(p){max=Math.max(max,p.challenged,p.paid,p.discovery+p.directory);});
-  var t0=new Date(hist[0].t).getTime(),t1=new Date(hist[hist.length-1].t).getTime()||t0+1;
-  series.forEach(function(s){
-    x.strokeStyle=s[1];x.lineWidth=2;x.beginPath();
-    hist.forEach(function(p,i){
-      var v=s[0]==="disc"?p.discovery+p.directory:p[s[0]];
-      var px=pad.l+iw*(new Date(p.t).getTime()-t0)/(t1-t0),py=pad.t+ih-ih*v/max;
-      if(i===0)x.moveTo(px,py);else x.lineTo(px,py);
-    });
-    x.stroke();
-  });
-  x.strokeStyle=C.grid;x.beginPath();x.moveTo(pad.l,pad.t+ih);x.lineTo(W-pad.r,pad.t+ih);x.stroke();
-  x.fillStyle=C.text;x.font="11px system-ui";x.textAlign="left";
-  x.fillText(new Date(hist[0].t).toLocaleString(),pad.l,H-12);
-  x.textAlign="right";x.fillText(new Date(hist[hist.length-1].t).toLocaleString(),W-pad.r,H-12);
-}
-function drawAlmostPaid(ap){
-  document.getElementById("c-failed").textContent=ap.failed_payments;
-  var fl=ap.funnel,fc=document.getElementById("funnel-cards");
-  var stages=[["Just looking","discovery_only","blue"],["Knocked","challenged","gray"],["Tried & failed","tried_and_failed","red"],["Paid","paid","green"]];
-  fc.innerHTML=stages.map(function(s){
-    return '<div class="card"><div class="num '+s[2]+'">'+fl[s[1]]+'</div><div class="lbl">'+s[0]+'</div></div>';
-  }).join("");
-  var reps=ap.repeat_challengers,tb=document.getElementById("repeaters-body");
-  document.getElementById("repeaters").style.display=reps.length?"table":"none";
-  document.getElementById("repeaters-empty").style.display=reps.length?"none":"block";
-  tb.innerHTML=reps.map(function(r){
-    var hot=r.failed>0?' class="tag hot"':' class="tag"';
-    return "<tr><td class='mono'>"+r.visitor+"</td><td>"+r.challenges+"</td><td>"+r.failed+"</td><td class='mono'>"+r.lanes.map(short).join(", ")+"</td><td><span"+hot+">"+r.funnel.replace(/_/g," ")+"</span></td><td>"+new Date(r.last_seen).toLocaleString()+"</td></tr>";
-  }).join("");
-}
 function load(){
   fetch("/traffic").then(function(r){return r.json();}).then(function(d){
-    document.getElementById("c-challenged").textContent=d.totals.challenged;
-    document.getElementById("c-paid").textContent=d.totals.paid_crossings;
-    document.getElementById("c-discovery").textContent=d.totals.discovery_views+d.totals.directory_visits;
-    document.getElementById("c-payers").textContent=d.totals.unique_payers;
-    document.getElementById("since").textContent="Counting since "+new Date(d.since).toLocaleString()+".";
-    drawBars(d.lanes);drawTrend(d.history);drawAlmostPaid(d.almost_paid);
+    var t=d.totals||{};
+    function n(k){return (t[k]==null)?"–":t[k];}
+    document.getElementById("c-challenged").textContent=n("challenged");
+    document.getElementById("c-paid").textContent=n("paid_crossings");
+    document.getElementById("c-fuel").textContent=n("fuel_crossings");
+    document.getElementById("c-unpaid").textContent=n("unpaid_2xx");
+    document.getElementById("c-directory").textContent=n("directory_visits");
+    document.getElementById("c-discovery").textContent=n("discovery_views");
+    document.getElementById("c-payers").textContent=n("unique_payers");
+    if(d.since)document.getElementById("since").textContent="Counting since "+new Date(d.since).toLocaleString()+".";
   });
 }
-load();setInterval(load,60000);window.addEventListener("resize",load);
+load();setInterval(load,60000);
 </script></body></html>`);
 });
 
