@@ -184,6 +184,12 @@ function createTracker({ usage, isTracked, isTolled, isDiscovery, laneStats, pay
               // count it distinctly from per-call USDC tolls.
               st.sub_crossings = (st.sub_crossings || 0) + 1;
               v.paid = true;
+            } else if (req.testerCrossing) {
+              // Tester crossing: a time-boxed tester key skipped the toll
+              // on a whitelisted lane. No money moved — count it distinctly
+              // so the paid count stays honest.
+              st.tester_crossings = (st.tester_crossings || 0) + 1;
+              v.paid = true;
             } else {
               // 2xx on a tolled lane with NO payment header (e.g. HEAD
               // requests: Express serves them via the GET handler, but the
