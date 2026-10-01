@@ -178,6 +178,12 @@ function createTracker({ usage, isTracked, isTolled, isDiscovery, laneStats, pay
               // unpaid 2xx (where nothing moved at all).
               st.fuel_crossings = (st.fuel_crossings || 0) + 1;
               v.paid = true;
+            } else if (req.subCrossing) {
+              // Subscription crossing: the agent holds a valid $5/30-day
+              // /scam-scan pass (?sub=). The $5 moved at subscribe time —
+              // count it distinctly from per-call USDC tolls.
+              st.sub_crossings = (st.sub_crossings || 0) + 1;
+              v.paid = true;
             } else {
               // 2xx on a tolled lane with NO payment header (e.g. HEAD
               // requests: Express serves them via the GET handler, but the
