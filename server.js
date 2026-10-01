@@ -689,6 +689,9 @@ function unpaidBodyFor(route, price) {
     // same amounts, rails, payTos, and now the same per-rail `extra`.
     pitch: LANE_PITCH[route],
     stats: laneStatsFor(route),
+    // Fuel ad: every unpaid caller learns GAS exists. Purely additive -
+    // no payment field above is touched, so paying clients keep working.
+    fuel_savings: "Save 25% with TrollBridge Fuel (GAS): 1 GAS = 1 crossing on 2-cent lanes. Pump: " + FUEL_PUMP + " on Base. Free info: GET /fuel",
   };
 }
 for (const route of Object.keys(LANES)) {
