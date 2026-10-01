@@ -972,9 +972,23 @@ app.get("/health", (req, res) => {
 });
 
 // The troll's own dashboard: who came to the bridge, who paid to cross.
-// Free to read — counters only, no secrets. Payer addresses are public
-// on-chain data; the chain itself is the money record.
+// Public view: counters only — totals, no per-lane breakdown, no payer
+// addresses, no history, no almost-paid or strategy intel. The map is ours.
 app.get("/traffic", (req, res) => {
+  const s = trafficSummary();
+  res.json({ since: s.since, totals: s.totals });
+});
+
+// Keeper's full ledger: everything the public /traffic shows, plus per-lane
+// payer addresses, history, almost-paid and strategy readouts. Guarded by the
+// TRAFFIC_KEY env var — pass it as ?key= or the x-traffic-key header. Never
+// linked publicly; wrong or missing key looks like a 404.
+app.get("/traffic/full", (req, res) => {
+  const key = process.env.TRAFFIC_KEY;
+  const given = req.query.key || req.get("x-traffic-key");
+  if (!key || !given || given !== key) {
+    return res.status(404).json({ error: "not found" });
+  }
   const full = trafficSummary();
   full.payers = Object.fromEntries(
     Object.entries(usage.lanes).map(([route, st]) => [route, st.payers])
