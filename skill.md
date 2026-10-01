@@ -1,14 +1,14 @@
 # TrollBridge — agent skill
 
 The insurance booth for AI agents, with Mini's Agent Supply Store on the side
-of the road. Twenty-eight checkpoints on Base or Solana
+of the road. Thirty-eight checkpoints on Base or Solana
 (`eip155:8453` or `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`) — 2¢ per checkpoint,
-5¢ for the full preflight or the road-pack combo meal, 10¢ for the protection-tier
-lanes (/contract-check, /approval-audit, /tx-plain-english). Every lane answers the
-question before money moves: is this safe to touch? No accounts, no API keys —
-your wallet is your identity. Don't get rugged.
+5¢ for the value tier, 10¢ for the protection-tier lanes
+(/contract-check, /approval-audit, /tx-plain-english, /honeypot-check, /tx-simulate).
+Every lane answers the question before money moves: is this safe to touch? No
+accounts, no API keys — your wallet is your identity. Don't get rugged.
 
-## Tolled lanes (twenty-eight GET)
+## Tolled lanes (thirty-eight GET)
 
 | Lane | Toll | What you get |
 |---|---|---|
@@ -17,7 +17,8 @@ your wallet is your identity. Don't get rugged.
 | `/verdicts` | $0.02 | Recently **paid** bounties — proof the boards actually pay, with amounts and payout proof (Stacks tx / escrow tx). *Skip hours of payout-rumor digging — see which boards actually pay, in one 2¢ call.* |
 | `/deadlines` | $0.02 | Class-action and settlement claim deadlines worth real money. *Hours of legal-page digging, done for you — every real-money claim deadline in one 2¢ call.* |
 | `/sweepstakes` | $0.02 | Free-to-enter sweepstakes with real prizes, verified live. *Skip an hour of sweepstakes hunting — every free-to-enter prize worth your time, in one 2¢ call.* |
-| `/prices` | $0.02 | Agent-ready crypto price feed — spot prices for majors plus Base/Solana staples, no API key needed. *Save 20 minutes of price-API wrangling — majors plus Base/Solana staples in clean JSON, one 2¢ call.* |
+| `/opportunities` | $0.02 | Every paying opportunity in one normalized schema — title, payout amount and token, chain, URL, requirements, deadline, board. *One schema to rule the boards — every paying opportunity normalized: payout, chain, deadline, requirements. One 2¢ call.* |
+| `/prices` | $0.02 | Agent-ready crypto price feed — spot prices for majors plus Base/Solana staples, no API key needed. *Save 20 minutes of price-API wrangling — majors plus Base/Solana staples in clean JSON with a momentum verdict, one 2¢ call.* |
 | `/enrich` | $0.05 | Wallet/address intelligence — balances, holdings, heuristic risk flags. *Save 20 minutes of RPC wrangling — balances, holdings, risk flags on any wallet, one 5¢ call.* `?address=<wallet>&network=base\|solana` (both required) |
 | `/token-check` | $0.05 | Token safety scan — liquidity, volume, holder concentration, plain-English rug verdict. *A 20-minute rug-check by hand, done in one 5¢ call — liquidity, volume, holder concentration, plain verdict.* `?mint=<token>&network=base\|solana` (both required) |
 | `/markets` | $0.05 | Prediction-market intel — live Polymarket odds, prices, and volume as agent-ready JSON. *Save 15 minutes of odds-scraping — live Polymarket odds and volume, one 5¢ call.* `?q=<search terms>` (required), `?limit=1-25` |
@@ -28,22 +29,31 @@ your wallet is your identity. Don't get rugged.
 | `/defi` | $0.02 | DeFi protocol intel — top TVL movers, daily fee and revenue leaders, and stablecoin supply flows. From DeFiLlama's free API, agent-ready JSON. *Skip an hour of DeFiLlama tab-hopping — top TVL movers, fee and revenue leaders, stablecoin flows, one 2¢ call.* `?section=movers\|fees\|revenue\|stablecoins`, `?limit=1-25` |
 | `/contract-check` | $0.10 | Contract safety screen — verification status, proxy and owner-privilege heuristics, holder concentration, and a plain-English risk verdict before you sign. Heuristic screen, not an audit. *A 20-minute contract read by hand, done in one 10¢ call.* `?address=0x…` (required), `?chain=base\|ethereum` (default base) |
 | `/honeypot` | $0.02 | Honeypot screen — simulated sells from real holder wallets, transfer-tax and blacklist flags. Verdict: safe, suspicious, or honeypot. Heuristic screen, not an audit. *Don't buy the honeypot — one 2¢ call.* `?address=0x…` (required, token contract), `?chain=base\|ethereum` (default base) |
+| `/honeypot-check` | $0.10 | **Premium** honeypot screen — DEX buy/sell flow (sells≈0 with high buys = red flag), holder concentration, and the full contract safety screen combined into one 0-100 honeypot score. Heuristic screen, not an audit. *Full honeypot forensics in one 10¢ call.* `?address=0x…` (required, token contract), `?chain=base\|ethereum` (default base) |
 | `/approval-risk` | $0.02 | Wallet approval audit — unlimited token approvals and risky spender contracts flagged, revoke priority list included. Verdict: clean, review, or urgent. *A 15-minute approval audit by hand, done in one 2¢ call.* `?address=0x…` (required, wallet), `?chain=base\|ethereum` (default base) |
+| `/approval-audit` | $0.10 | **Deep** approval surface report — live token allowances against known spender contracts, unlimited approvals flagged with a revoke priority list. Heuristic surface report, not an audit. *See what your wallet lets contracts do — one 10¢ call.* `?address=0x…` (required, wallet), `?chain=base\|ethereum` (default base) |
 | `/rug-score` | $0.02 | Rug-pull risk score 0-100 — LP burn status, holder concentration, mint authority, ownership, sell pressure, one-line verdict. Heuristic score, not an audit. *A 20-minute rug-check by hand, done in one 2¢ call.* `?address=0x…` (required, token contract), `?chain=base\|ethereum` (default base) |
 | `/receipt-check` | $0.02 | "Did it land?" settlement verification — transaction status, confirmations, value moved, decoded token transfers. Verdict: settled, pending, failed, or not-found. *Stop wondering if it landed — one 2¢ call.* `?tx=0x…` (required, tx hash or Solana signature), `?chain=base\|ethereum\|solana` (default base) |
 | `/preflight` | $0.05 | The full policy in one call — honeypot screen, rug-pull score, and contract safety screen, plus the wallet approval audit when you pass `?wallet=`. One overall verdict: **cleared for takeoff**, **proceed with caution**, or **do not touch**. Heuristic bundle, not an audit. *Every check that matters, one 5¢ call — don't get rugged.* `?address=0x…` (required, token contract), `?chain=base\|ethereum` (default base), `?wallet=0x…` (optional) |
 | `/tx-dryrun` | $0.02 | The crystal ball — simulate any transaction before signing and get a plain-words explanation of what it does to your wallet. Verdict: **safe**, **review-carefully**, or **do-not-sign**. *Don't sign blind — one 2¢ call.* `?to=0x…` (required), `?data=0x…` (required), `?from=0x…` (required), `?value=0` (optional, wei), `?chain=base\|ethereum` (default base) |
+| `/tx-simulate` | $0.10 | **Precision** transaction dry-run — `eth_call` + `estimateGas` against live public RPCs: would-succeed vs would-revert verdict, the revert reason decoded from the chain, gas estimate in native currency and USD. Simulation, not a guarantee. *Rehearse the transaction before you send it — one 10¢ call.* `?to=0x…` (required), `?data=0x…` (required), `?from=0x…` (required), `?value=0` (optional, wei), `?chain=base\|ethereum` (default base) |
+| `/tx-plain-english` | $0.10 | Raw transaction decoder — paste a raw signed tx, get a plain-English explanation of what it moves and where, with common contract calls decoded. Decodes intent, does not simulate. *Read the tx before you sign it — one 10¢ call.* `?tx=0x…` (required, raw signed tx), `?chain=base\|ethereum` (default base) |
 | `/permit-scan` | $0.02 | The invisible drainer check — Permit2/Seaport interaction exposure plus the standard approval audit, revoke priority list included. Verdict: **clean**, **exposed**, or **urgent**. *The approvals you can't see — one 2¢ call.* `?address=0x…` (required, wallet), `?chain=base\|ethereum` (default base) |
 | `/airdrop-verdict` | $0.02 | Legit or drainer — static page forensics on an airdrop claim URL: lookalike-domain detection, pressure-language flags, the page's contracts run through our own contract screen. Heavily heuristic. Verdict: **likely-legit**, **suspicious**, or **likely-drainer**. *Claim or drainer? One 2¢ call.* `?url=https://…` (required) |
 | `/deployer-history` | $0.02 | Who made this token — trace the deployer and investigate what else they launched: verification, scam flags, dead-contract patterns. Verdict: **clean**, **mixed**, or **serial-rugger**. *Know who you're trusting — one 2¢ call.* `?address=0x…` (required, token contract), `?chain=base\|ethereum` (default base) |
+| `/wallet-check` | $0.05 | Wallet dossier — wallet age (first transaction), transaction count, native balance, first funding source, and bot-likelihood heuristics (young age, high velocity, zero balance, contract funding). Heuristic dossier, not a verdict on intent. *Know the wallet before you trust it — one 5¢ call.* `?address=0x…` (required, wallet), `?chain=base\|ethereum` (default base) |
 | `/wallet-watch` | $0.02 | Has anything changed — stateful wallet monitoring. Set a baseline, pass it back later, get a plain-words diff of approvals, balances, and exposure. Verdict: **baseline**, **no-changes**, or **changed**. *Your wallet, watched — one 2¢ call.* `?wallet=0x…` (required), `?chain=base\|ethereum` (default base), `?prev_state=…` (optional — the ready-to-paste `prev_state` value from a previous response) |
+| `/site-watch` | $0.05 | Stateless page change detection — sha256 fingerprint of any URL with a compact diff when it changes. Nothing stored on the bridge: pass the hash back on the next call. *Watch any page for changes — one 5¢ call.* `?url=https://…` (required), `?prev_hash=abc123` (optional), `?prev_text=…` or `?prev_text_b64=…` (optional, for a diff snippet) |
+| `/terms-tldr` | $0.02 | Terms TL;DR — extractive digest of any terms/bounty/rules page: deadlines, prize amounts, requirements, and gotcha clauses (arbitration, auto-renewal, non-refundable), each with the source snippet. Keyword extraction, not legal advice. *Skip reading the fine print — one 2¢ call.* `?url=https://…` (required) |
 | `/road-pack` | $0.05 | The combo meal from Mini's Agent Supply Store — cheapest gas, top token prices with momentum verdicts, DeFi TVL movers, and the AI model shelf, plus a plain-English trip brief, in one call. 8¢ of intel, one 5¢ toll. *Gas, tools, and everything you forgot to pack — one 5¢ call.* `?limit=1–25` (optional, max token prices, default 10) |
-| `/models` | $0.02 | x402-payable AI model catalog — 107 models with per-million-token pricing, free models flagged (catalog data: BlockRun.AI). *Stop guessing what models cost — every x402-payable AI model with per-million-token pricing and the free ones flagged, one 2¢ call.* |
-| `/opportunities` | $0.02 | Every paying opportunity in one normalized schema — title, payout amount and token, chain, URL, requirements, deadline, board. *One schema to rule the boards — every paying opportunity normalized: payout, chain, deadline, requirements. One 2¢ call.* |
+| `/models` | $0.02 | x402-payable AI model catalog — every model with per-million-token pricing, free models flagged (catalog data: BlockRun.AI). *Stop guessing what models cost — every x402-payable AI model with per-million-token pricing and the free ones flagged, one 2¢ call.* |
+| `/prompt-cost` | $0.02 | Prompt cost estimator — paste a prompt, get a heuristic token estimate and what it would cost across every model in the `/models` catalog, cheapest first. Heuristic estimate, not an exact tokenizer count. *Know the price before you prompt — one 2¢ call.* `?text=…` (required), `?model=…` (optional) |
+| `/model-picks` | $0.02 | Best model per dollar — curated quality scores per task (coding, writing, reasoning, chat) joined with live per-token pricing, ranked by value. Quality is a curated benchmark snapshot, not a live measurement. `?task=coding\|writing\|reasoning\|chat` (default chat) |
+| `/rpc-speed` | $0.02 | RPC speed test — live latency ranking of public keyless RPC endpoints per chain, fastest first, measured from the bridge. *Stop guessing which RPC is fast — one 2¢ call.* `?chain=base\|ethereum\|solana` (default base) |
 
 > **Parked:** `POST /file-pr` (GitHub PR filing, was $2.00) is **disabled** as of 2026-09-30 — a self-audit found it filed PRs authored as the keeper's personal GitHub account with no throttle. It returns only under a neutral bot identity.
 
-`?limit=N` caps items returned (1–200) on the six bounty lanes.
+`?limit=N` caps items returned (1–200) on the bounty lanes.
 
 ## How to pay (x402 v2)
 
@@ -52,15 +62,19 @@ your wallet is your identity. Don't get rugged.
    exact amount and the payTo address. Two rails — pick either:
    - **Base:** sign the EIP-3009 authorization:
      - asset: `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` (USDC on Base)
-     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, `/gas`, `/defi`, `/honeypot`, `/approval-risk`, `/rug-score`, `/receipt-check`, `/tx-dryrun`, `/permit-scan`, `/airdrop-verdict`, `/deployer-history`, `/wallet-watch`, and `/models`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, `/new-pairs`, `/preflight`, and `/road-pack`; `100000` ($0.10) on `/contract-check`, `/approval-audit`, and `/tx-plain-english`
+     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, `/gas`, `/defi`, `/honeypot`, `/approval-risk`, `/rug-score`, `/receipt-check`, `/tx-dryrun`, `/permit-scan`, `/airdrop-verdict`, `/deployer-history`, `/wallet-watch`, `/prompt-cost`, `/model-picks`, `/rpc-speed`, `/terms-tldr`, and `/models`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, `/new-pairs`, `/preflight`, `/road-pack`, `/site-watch`, and `/wallet-check`; `100000` ($0.10) on `/contract-check`, `/approval-audit`, `/tx-plain-english`, `/honeypot-check`, and `/tx-simulate`
      - network: `eip155:8453`
    - **Solana:** sign the SPL `transferChecked` (facilitator sponsors the fee —
      you need USDC only, no SOL):
      - asset: `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` (USDC on Solana)
-     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, `/gas`, `/defi`, `/honeypot`, `/approval-risk`, `/rug-score`, `/receipt-check`, `/tx-dryrun`, `/permit-scan`, `/airdrop-verdict`, `/deployer-history`, `/wallet-watch`, and `/models`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, `/new-pairs`, `/preflight`, and `/road-pack`; `100000` ($0.10) on `/contract-check`, `/approval-audit`, and `/tx-plain-english`
+     - amount: `20000` ($0.02) on the bounty lanes, `/prices`, `/gas`, `/defi`, `/honeypot`, `/approval-risk`, `/rug-score`, `/receipt-check`, `/tx-dryrun`, `/permit-scan`, `/airdrop-verdict`, `/deployer-history`, `/wallet-watch`, `/prompt-cost`, `/model-picks`, `/rpc-speed`, `/terms-tldr`, and `/models`; `50000` ($0.05) on `/enrich`, `/token-check`, `/markets`, `/search`, `/yields`, `/new-pairs`, `/preflight`, `/road-pack`, `/site-watch`, and `/wallet-check`; `100000` ($0.10) on `/contract-check`, `/approval-audit`, `/tx-plain-english`, `/honeypot-check`, and `/tx-simulate`
      - network: `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`
 3. Retry the request with the signed payment in the `X-Payment` header.
    A settled payment returns **HTTP 200** with the lane's JSON.
+
+Burn TrollBridge Fuel (GAS) instead of USDC: 1 GAS per 2¢ lane, 3 GAS per 5¢
+lane, 6 GAS per 10¢ protection lane — `GET /fuel` for the price, the contracts,
+and how to burn-to-cross.
 
 ## Free endpoints (never tolled)
 
@@ -69,6 +83,7 @@ your wallet is your identity. Don't get rugged.
   plus an `almost_paid` section: failed payment attempts, repeat challengers,
   and per-visitor funnel stages (discovery → challenged → tried & failed → paid)
 - `GET /health` — status, lane count, traffic totals
+- `GET /fuel` — TrollBridge Fuel (GAS) price, burn-to-cross instructions, fuel tiers
 - `GET /openapi.json` — OpenAPI 3.1 spec for all lanes
 - `GET /.well-known/x402` — machine-readable discovery manifest
 
@@ -108,5 +123,7 @@ forensics, deployer forensics, wallet monitoring, and the full /preflight bundle
 paid verdicts, deadlines), trader intel (prices, wallet enrichment, token
 safety scans) with plain-English verdicts, market intel (live prediction-market
 odds, agent-ready web search), and DeFi intel (yields, new listings, gas,
-protocol flows). 2¢ per checkpoint, 5¢ for the full preflight. Honest ledger:
-traffic is public at `GET /traffic`. Don't get rugged.
+protocol flows), plus agent-ops intel (prompt costs, model picks, RPC speed,
+terms digests). 2¢ per checkpoint, 5¢ for the value tier, 10¢ for the
+protection tier. Honest ledger: traffic is public at `GET /traffic`.
+Don't get rugged.
