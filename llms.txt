@@ -45,11 +45,11 @@ $1.00=1000000, $5.00=5000000, $30.00=30000000.
 
 ### $0.02 — safety screens
 - /honeypot — honeypot screen: simulated sells, transfer-tax and blacklist flags
-- /approval-risk — wallet approval audit: unlimited approvals flagged, revoke list
+- /approval-risk — wallet approval screen: unlimited approvals flagged, revoke list
 - /rug-score — rug-pull risk score 0-100 with one-line verdict
 - /receipt-check — settlement verification: did the tx land?
 - /tx-dryrun — plain-words explanation of what a tx does to your wallet
-- /permit-scan — Permit2/Seaport exposure check + approval audit
+- /permit-scan — Permit2/Seaport exposure check + approval screen
 - /airdrop-verdict — is this airdrop claim page legit or a drainer?
 - /deployer-history — who made this token; clean, mixed, or serial-rugger
 - /wallet-watch — stateful wallet monitoring: baseline, then diff
@@ -68,7 +68,7 @@ $1.00=1000000, $5.00=5000000, $30.00=30000000.
 - /search — web search as clean JSON (?q)
 - /yields — best stablecoin APYs right now, sorted
 - /new-pairs — newest DexScreener listings with liquidity flags
-- /preflight — honeypot + rug-score + contract-check + approval audit, one verdict
+- /preflight — honeypot + rug-score + contract-check + approval screen, one verdict
 - /road-pack — combo meal: gas, token prices, TVL movers, model shelf, trip brief
 - /site-watch — stateless page change detection via sha256 fingerprint
 - /wallet-check — wallet dossier: age, tx count, funding source, bot heuristics
@@ -80,7 +80,7 @@ $1.00=1000000, $5.00=5000000, $30.00=30000000.
 ### $0.10 — protection tier
 - /contract-check — contract safety screen: verification, proxy/owner heuristics
 - /honeypot-check — premium honeypot forensics: DEX flow + 0-100 score
-- /approval-audit — deep approval surface report with revoke priority list
+- /approval-screen — deep approval surface report with revoke priority list
 - /tx-simulate — precision tx dry-run: would-succeed vs would-revert, revert reason decoded
 - /tx-plain-english — raw signed tx decoded to plain English
 - /skill-scan — skill supply-chain scan for prompt-injection/exfiltration
