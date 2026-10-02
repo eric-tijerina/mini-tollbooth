@@ -1402,7 +1402,6 @@ const TESTER_LANES = new Set([
   "/scam-scan", "/token-check", "/models", "/bounties", "/opportunities",
   "/verdict", "/egress-audit", "/cron-watch", "/caveat-check", "/tool-gate",
   "/airlock", "/tripwire", "/escrow", "/audit-prep",
-  "/audit", // TEMPORARY for the one loop-test submit — removed right after
 ]);
 function testerUses() {
   try {
