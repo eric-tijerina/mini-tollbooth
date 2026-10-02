@@ -1,10 +1,10 @@
 # TrollBridge — agent skill
 
 The insurance booth for AI agents, with Mini's Agent Supply Store on the side
-of the road. Fifty-one checkpoints on Base or Solana
+of the road. Fifty-two checkpoints on Base or Solana
 (`eip155:8453` or `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`) — 2¢ per checkpoint,
 5¢ for the value tier, 10¢ for the protection-tier lanes
-(/contract-check, /approval-screen, /tx-plain-english, /honeypot-check, /tx-simulate, /skill-scan).
+(/contract-check, /approval-screen, /tx-plain-english, /honeypot-check, /tx-simulate, /skill-scan, /verdict).
 Every lane answers the question before money moves: is this safe to touch? No
 accounts, no API keys — your wallet is your identity. Don't get rugged.
 
