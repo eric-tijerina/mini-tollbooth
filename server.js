@@ -624,7 +624,7 @@ const LANES = {
   "/caveat-check": "NOT AN AUDIT — heuristic screen: paste a finding plus its source text (text only, no URL fetching) and get the dropped caveats flagged — numbers missing a baseline, claims missing a measurer, results missing conditions or versions — quoting the exact claim text ($0.05).",
   "/tool-gate": "Policy decision API for pre-execution tool gating — submit a tool name + args + your policy and get a structured ALLOW / DENY / MODIFY (with rewritten args) decision, structured reasons, and audit metadata. Heuristic policy decision, not a security guarantee ($0.10).",
   "/airlock": "NOT AN AUDIT — heuristic screen: re-entry decontamination scan — paste inbound content your agent is about to ingest (web page, tool output, file) and get prompt-injection, hidden-instruction, encoded-payload, and exfiltration patterns flagged before it touches your context. Verdict: CLEAN, REVIEW, or CONTAMINATED ($0.10).",
-  "/escrow": "TESTNET ONLY (Base Sepolia) — agent-to-agent escrow coordination: mint a deal (job id + sign-ready approve/create calldata), read escrow state on-chain. Buyer locks USDC, seller delivers, buyer releases (1% fee) or refunds after the timeout. Non-custodial — this lane never touches funds. Contract not yet deployed; no real funds ($0.05).",
+  "/escrow": "LIVE on Base mainnet — agent-to-agent escrow: mint a deal (job id + sign-ready approve/create calldata), read escrow state on-chain. Buyer locks real USDC in the escrow contract (0x6b290f88b49eC73d954f05423a7F17020C5fDB70), seller delivers, buyer releases (99% seller, 1% fee) or refunds after the timeout. Non-custodial — this lane never touches funds. Minimal contract, not audited ($0.05).",
   "/tripwire": "Watch-and-ping for agents — plant a tripwire on a wallet's USDC balance, a token's USD price, or a wallet's activity, and your webhook gets woken up the moment it crosses your threshold. $0.05 plants one tripwire: armed 7 days, fires once. Status is a free GET on /tripwire/status ($0.05).",
   "/tx-dryrun": "NOT AN AUDIT — simulation, not a guarantee: the crystal ball — simulate any transaction before signing and get a plain-words explanation of what it does to your wallet (approvals, transfers, swaps decoded). Verdict: safe, review-carefully, or do-not-sign.",
   "/permit-scan": "NOT AN AUDIT — heuristic screen: the invisible drainer check — Permit2/Seaport interaction exposure plus the standard approval screen, with a revoke priority list. Signature-based permits don't show in normal scans; this flags the exposure. Verdict: clean, exposed, or urgent.",
@@ -725,7 +725,7 @@ const LANE_TAGS = {
   "/caveat-check": ["research-intel", "caveats", "summaries", "verification"],
   "/tool-gate": ["verdict-intel", "policy", "tool-gating", "pre-execution", "insurance"],
   "/airlock": ["verdict-intel", "prompt-injection", "decontamination", "pre-ingest", "insurance"],
-  "/escrow": ["agent-commerce", "escrow", "trust", "testnet", "payments"],
+  "/escrow": ["agent-commerce", "escrow", "trust", "mainnet", "payments"],
   "/tripwire": ["agent-ops", "webhooks", "monitoring", "triggers", "alerts"],
   "/tx-dryrun": ["verdict-intel", "simulation", "transaction-safety", "insurance", "defi"],
   "/permit-scan": ["verdict-intel", "approvals", "permit2", "wallet-safety", "insurance"],
@@ -785,7 +785,7 @@ const LANE_EXAMPLES = {
   "/cron-watch": { jobs_analyzed: 2, jobs: [{ name: "daily-brief", cadence: "daily", status: "stale", staleness_multiple: 3.1, missed_windows: 2, silent_death_risk: 75, next_expected_run: "2026-10-02T08:00:00Z", recommended_checks: ["…"] }], summary: "…" },
   "/caveat-check": { claims_analyzed: 3, caveats_dropped: 2, verdict: "caveats-dropped", missing_caveats: [{ claim: "Model X is 30x faster.", type: "missing-baseline", what_to_ask: "Ask: compared to what baseline?" }], summary: "…" },
   "/airlock": { verdict: "CONTAMINATED", score: 75, findings: [{ check: "instruction-override", severity: "high", match: "…", detail: "…" }], scanned_chars: 120, checks_run: 6, summary: "…" },
-  "/escrow": { warning: "TESTNET ONLY — Base Sepolia. No real funds.", testnet: true, action: "create", job_id: "0x…", contract_status: "NOT YET DEPLOYED", amount_usdc: "1.5", fee_usdc: "0.015", summary: "…" },
+  "/escrow": { live: true, network: "base", action: "create", job_id: "0x…", contract_address: "0x6b290f88b49eC73d954f05423a7F17020C5fDB70", contract_status: "deployed on Base mainnet", amount_usdc: "1.5", fee_usdc: "0.015", summary: "…" },
   "/tripwire": { lane: "/tripwire", watch_id: "tw_9f2c4a1b7e30", state: "armed", watch_type: "wallet_balance", target: "0x8b…96c0", condition: "below", threshold: 0.01, threshold_units: "USDC", expires_at: "2026-10-09T20:00:00.000Z", status_url: "/tripwire/status?id=tw_9f2c4a1b7e30", summary: "…" },
   "/tool-gate": { decision: "MODIFY", tool: "send_payment", rewritten_args: { amount_usd: 100, to: "0x..." }, reasons: [{ rule: "amount-cap", detail: "…" }], audit: { decided_at: "2026-10-02T08:00:00Z", policy_rules_applied: 2, args_keys: ["amount_usd", "to"] }, summary: "…" },
   "/tx-dryrun": { chain: "base", from: "0x...", to: "0x...", verdict: "review-carefully", explanation: "This grants 0x… unlimited rights to move your USDC.", simulation: { reverted: false } },
@@ -862,7 +862,7 @@ const LANE_PITCH = {
   "/cron-watch": "Catch the job that died Tuesday before someone asks where the report is — gap analysis, stale flags, and silent-death risk scores from your submitted job history, one 5¢ call. Stateless: it analyzes, it doesn't watch.",
   "/caveat-check": "NOT AN AUDIT — heuristic screen. Agent summaries drop ~1.4 caveats per paper — paste the finding and its source text, get the missing baselines, measurers, and conditions quoted back, one 5¢ call.",
   "/airlock": "NOT AN AUDIT — heuristic screen. Body armor for your agent's context — paste inbound content before ingesting it and get prompt-injection, hidden-instruction, encoded-payload, and exfiltration patterns flagged, one 10¢ call. Verdict: clean, review, or contaminated.",
-  "/escrow": "TESTNET ONLY. Stop trusting strangers with handshake deals — lock the USDC in escrow: buyer locks, seller delivers, buyer releases (1% fee) or refunds after the timeout. Non-custodial, no admin keys. One 5¢ call mints the deal.",
+  "/escrow": "Stop trusting strangers with handshake deals — lock real USDC in escrow on Base: buyer locks, seller delivers, buyer releases (99% seller, 1% fee) or refunds after the timeout. Non-custodial, no admin keys, minimal contract (not audited). One 5¢ call mints the deal.",
   "/tripwire": "Stop polling — plant a tripwire on a wallet's USDC balance, a token's price, or a wallet's activity and get woken up at your webhook the second it crosses your line. One 5¢ call arms it for 7 days.",
   "/tool-gate": "A decision point between agent intent and tool execution — allow, deny, or rewrite the args before the tool fires, with structured reasons and audit metadata, one 10¢ call. Heuristic policy decision, not a security guarantee.",
   "/tx-dryrun": "NOT AN AUDIT — simulation, not a guarantee. Don't sign blind — simulate the transaction and get a plain-words reading of what it does to your wallet, one 2¢ call. Safe, review carefully, or do not sign.",
@@ -986,7 +986,7 @@ function laneStatsFor(route) {
     case "/airlock":
       return { chains: ["base"], note: "inbound content → prompt-injection / hidden-instruction / encoded-payload / exfiltration flags — heuristic screen, not an audit; a determined attacker can encode around any pattern list" };
     case "/escrow":
-      return { chains: ["base-sepolia"], note: "TESTNET ONLY — agent-to-agent escrow coordination; contract not yet deployed, no real funds; non-custodial deal minting + on-chain state reads" };
+      return { chains: ["base"], note: "agent-to-agent escrow on Base mainnet — live contract, non-custodial deal minting + on-chain state reads; minimal contract, not audited" };
     case "/tripwire":
       return { chains: ["base"], note: "wallet USDC balance / token USD price / wallet tx count → one webhook POST when your threshold crosses — 7-day life, fires once; watches live on this host's disk and are lost on a bridge restart (v1 limitation)" };
     case "/tx-dryrun":
@@ -1503,7 +1503,7 @@ const TRACKED_ROUTES = {
   ...LANES,
   "/tools": "Free directory of third-party tools on the bridge.",
   "/fuel": "Free fuel desk — TrollBridge Fuel (GAS) price and burn-to-cross instructions.",
-  "/escrow/terms": "Free escrow briefing — how the TESTNET agent-to-agent escrow works, the 1% fee, and the trust model. No real funds.",
+  "/escrow/terms": "Free escrow briefing — how the live Base-mainnet agent escrow works, the 1% fee, and the trust model. Real funds.",
   ...DISCOVERY_ROUTES,
 };
 
@@ -1523,7 +1523,7 @@ app.get("/", (req, res) => {
   res.json({
     bridge: "TrollBridge",
     keeper: "Mini, data-bounty hunter",
-    deal: `The insurance booth for AI agents, with Mini's Agent Supply Store on the side of the road. Fifty-nine checkpoints on Base or Solana — 2¢ per checkpoint, 5¢ for the full preflight or the road-pack combo meal, 10¢ for the protection-tier lanes (/contract-check, /approval-screen, /tx-plain-english, /honeypot-check, /tx-simulate, /skill-scan, /redteam, /verdict, /egress-audit, /tool-gate, /airlock), $1 for a curated dataset, $5 for the /scam-scan deep scan, $30 for the 30-day subscription. Every lane answers the question before money moves: is this safe to touch? Honeypot screens, rug-pull scores, contract safety screens, wallet approval screens, settlement verification, skill supply-chain scans, prompt red-team screens, leaked-secret sweeps, egress leak screens, pre-execution tool-gate decisions, inbound decontamination scans, watch-and-ping tripwires, TESTNET escrow coordination — plus bounty intel, market intel, and DeFi intel, all with plain-English verdicts. Don't get rugged — pay the toll, cross covered.`,
+    deal: `The insurance booth for AI agents, with Mini's Agent Supply Store on the side of the road. Fifty-nine checkpoints on Base or Solana — 2¢ per checkpoint, 5¢ for the full preflight or the road-pack combo meal, 10¢ for the protection-tier lanes (/contract-check, /approval-screen, /tx-plain-english, /honeypot-check, /tx-simulate, /skill-scan, /redteam, /verdict, /egress-audit, /tool-gate, /airlock), $1 for a curated dataset, $5 for the /scam-scan deep scan, $30 for the 30-day subscription. Every lane answers the question before money moves: is this safe to touch? Honeypot screens, rug-pull scores, contract safety screens, wallet approval screens, settlement verification, skill supply-chain scans, prompt red-team screens, leaked-secret sweeps, egress leak screens, pre-execution tool-gate decisions, inbound decontamination scans, watch-and-ping tripwires, live escrow coordination — plus bounty intel, market intel, and DeFi intel, all with plain-English verdicts. Don't get rugged — pay the toll, cross covered.`,
     lanes: Object.fromEntries(
       Object.entries(LANES).map(([route, desc]) => [`GET ${route}`, laneBlurb(route, desc)])
     ),
@@ -2158,9 +2158,9 @@ app.get("/tripwire/status", async (req, res) => {
     res.status(502).json({ error: "status check failed — try again shortly" });
   }
 });
-// GET /escrow?action=create|status — TESTNET agent-to-agent escrow coordination.
+// GET /escrow?action=create|status — agent-to-agent escrow, LIVE on Base mainnet.
 // Tolled ($0.05). create mints a deal + sign-ready calldata; status reads the
-// escrow on-chain (Base Sepolia). TESTNET ONLY — no real funds.
+// escrow on-chain. Real USDC.
 app.get("/escrow", async (req, res) => {
   try {
     const action = String(req.query.action || "").toLowerCase();
@@ -2180,7 +2180,7 @@ app.get("/escrow", async (req, res) => {
     res.status(502).json({ error: "escrow lane failed — try again shortly" });
   }
 });
-// GET /escrow/terms — free briefing: how the TESTNET escrow works, fee, trust model.
+// GET /escrow/terms — free briefing: how the live escrow works, fee, trust model.
 app.get("/escrow/terms", (req, res) => {
   try {
     res.json({ lane: "/escrow/terms", ...escrowTerms() });
