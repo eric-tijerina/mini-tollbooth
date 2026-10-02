@@ -1402,6 +1402,7 @@ const TESTER_LANES = new Set([
   "/scam-scan", "/token-check", "/models", "/bounties", "/opportunities",
   "/verdict", "/egress-audit", "/cron-watch", "/caveat-check", "/tool-gate",
   "/airlock", "/tripwire", "/escrow", "/audit-prep",
+  "/audit", // TEMPORARY for the one loop-test submit — removed right after
 ]);
 function testerUses() {
   try {
@@ -2577,7 +2578,8 @@ app.get("/audit", async (req, res) => {
 // GET /audit/terms — free briefing: what the AI audit is and isn't.
 app.get("/audit/terms", (req, res) => {
   try {
-    res.json({ lane: "/audit/terms", ...auditTerms() });
+    const t = auditTerms();
+    res.json({ warning: t.warning, lane: "/audit/terms", ...t });
   } catch (e) {
     console.error("route error GET /audit/terms:", e.message);
     res.status(502).json({ error: "terms failed — try again shortly" });
