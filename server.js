@@ -1,6 +1,6 @@
 // Mini's Tollbooth — the insurance booth for AI agents, plus Mini's Agent
 // Supply Store on the side of the road.
-// Fifty-one checkpoints on one bridge. Every lane answers the question
+// Fifty-two checkpoints on one bridge. Every lane answers the question
 // before money moves: is this safe to touch? 2¢ per checkpoint, 5¢ for the
 // full preflight or the road-pack combo meal. Don't get rugged — pay the toll, cross covered.
 // Forty-two tolled lanes on Base or Solana per call:
@@ -1422,7 +1422,7 @@ app.get("/", (req, res) => {
   res.json({
     bridge: "TrollBridge",
     keeper: "Mini, data-bounty hunter",
-    deal: `The insurance booth for AI agents, with Mini's Agent Supply Store on the side of the road. Fifty-one checkpoints on Base or Solana — 2¢ per checkpoint, 5¢ for the full preflight or the road-pack combo meal, 10¢ for the protection-tier lanes (/contract-check, /approval-screen, /tx-plain-english, /honeypot-check, /tx-simulate, /skill-scan, /redteam), $1 for a curated dataset, $5 for the /scam-scan deep scan, $30 for the 30-day subscription. Every lane answers the question before money moves: is this safe to touch? Honeypot screens, rug-pull scores, contract safety screens, wallet approval screens, settlement verification, skill supply-chain scans, prompt red-team screens, leaked-secret sweeps — plus bounty intel, market intel, and DeFi intel, all with plain-English verdicts. Don't get rugged — pay the toll, cross covered.`,
+    deal: `The insurance booth for AI agents, with Mini's Agent Supply Store on the side of the road. Fifty-two checkpoints on Base or Solana — 2¢ per checkpoint, 5¢ for the full preflight or the road-pack combo meal, 10¢ for the protection-tier lanes (/contract-check, /approval-screen, /tx-plain-english, /honeypot-check, /tx-simulate, /skill-scan, /redteam, /verdict), $1 for a curated dataset, $5 for the /scam-scan deep scan, $30 for the 30-day subscription. Every lane answers the question before money moves: is this safe to touch? Honeypot screens, rug-pull scores, contract safety screens, wallet approval screens, settlement verification, skill supply-chain scans, prompt red-team screens, leaked-secret sweeps — plus bounty intel, market intel, and DeFi intel, all with plain-English verdicts. Don't get rugged — pay the toll, cross covered.`,
     lanes: Object.fromEntries(
       Object.entries(LANES).map(([route, desc]) => [`GET ${route}`, laneBlurb(route, desc)])
     ),
