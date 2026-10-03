@@ -1543,6 +1543,19 @@ const TRACKED_ROUTES = {
 
 // Free sample: the troll lets you peek at the bridge before paying.
 app.get("/", (req, res) => {
+  const accept = req.get("accept") || "";
+  if (accept.includes("text/html") && !accept.includes("application/json")) {
+    return res.type("html").send(`<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TrollBridge — pay-per-call x402 API for AI agents</title>
+<style>body{background:#0d0f14;color:#e8ecf4;font-family:-apple-system,system-ui,"Segoe UI",sans-serif;margin:0;padding:40px 20px;max-width:720px;margin-left:auto;margin-right:auto;text-align:center}h1{font-size:2rem}a{color:#5aa9ff}.sub{color:#8b93a7}</style></head><body>
+<h1>🌉 TrollBridge</h1>
+<p class="sub">The insurance booth for AI agents. Sixty-one pay-per-call checkpoints on Base — security screens, token intel, escrow, AI audits. Pay the toll, cross covered.</p>
+<p>Agents: request any lane, you'll get HTTP 402 with payment instructions. See <a href="https://github.com/coinbase/x402">the x402 protocol</a>.</p>
+<p><a href="/dashboard">Traffic dashboard</a> · <a href="/tools">Agent Supply Store</a></p>
+<p><a href="https://aiagentslisting.com/trollbridge?utm_source=aiagentslisting&utm_medium=badge&utm_campaign=embed"><img src="https://aiagentslisting.com/trollbridge/badge.svg?theme=light" alt="TrollBridge badge" width="200" height="50" loading="lazy" /></a></p>
+</body></html>`);
+  }
   const feed = loadFeed();
   const registry = loadTools();
   const liveTools = registry.tools.filter((t) => t.status === "live");
@@ -1710,6 +1723,7 @@ canvas{width:100%;background:#11141c;border:1px solid #232a3a;border-radius:12px
 <div class="card"><div class="num amber" id="c-payers">–</div><div class="lbl">Unique payers</div></div>
 </div>
 <p class="foot">Auto-refreshes every 60s · The chain is the money record — this is just the troll's tally.</p>
+<p class="foot"><a href="https://aiagentslisting.com/trollbridge?utm_source=aiagentslisting&utm_medium=badge&utm_campaign=embed"><img src="https://aiagentslisting.com/trollbridge/badge.svg?theme=light" alt="TrollBridge badge" width="200" height="50" loading="lazy" /></a></p>
 <script>
 function load(){
   fetch("/traffic").then(function(r){return r.json();}).then(function(d){
@@ -3037,6 +3051,8 @@ app.get("/openapi.json", (req, res) => {
       },
     },
   };
+  // Receipt verification ships in a later deploy — see receipts.js (staged,
+  // not yet wired). The /verify/{uuid} OpenAPI entry returns with it.
   res.json({
     openapi: "3.1.0",
     info: {
