@@ -1739,6 +1739,13 @@ app.get("/receipts", (req, res) => {
       returned: items.length,
       receipts: items,
       note: "Full receipt + independent verification steps at /verify/:uuid for any id listed.",
+      coverage_note: "Receipts minted from 2026-10-02 onward; paid crossings before that have no receipts.",
+      durability: {
+        backup: "hourly",
+        max_loss_window: "1h",
+        seed: "repo data/receipts.json (server boots from it; Render deploys from GitHub)",
+        mechanism: "Hourly job merges the live ledger into the repo seed append-only — a wiped disk can never shrink history. Worst case: receipts minted between the last backup and a deploy can be lost.",
+      },
     });
   } catch (e) {
     res.status(500).json({ error: "receipts_failed" });
