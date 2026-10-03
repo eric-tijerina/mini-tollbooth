@@ -3,9 +3,9 @@
   "seq": 1,
   "receipts": [
     {
-      "id": "d56bd459-7078-4fca-9eeb-e2fe81e49e75",
+      "id": "d179eb7f-cc0f-4d2f-bc22-e1f82372039e",
       "receipt_schema_version": "0.3",
-      "created_at": "2026-10-03T23:30:41.805Z",
+      "created_at": "2026-10-03T23:36:34.174Z",
       "tool": {
         "name": "canary",
         "version": "1.0.0",
@@ -19,11 +19,11 @@
       "job_id": "trollbridge-main",
       "prev_digest": "0000000000000000000000000000000000000000000000000000000000000000",
       "close": false,
-      "entry_digest": "c726d5c5680024fff34872686baedecdb50d0caddc9731dc82ca35f2416083c5",
-      "receipt_id": "d56bd459-7078-4fca-9eeb-e2fe81e49e75",
+      "entry_digest": "e699c9662fe10b9a3e6aa2b443e38c8cfe2c9ad9d274dfa94f3fddcbc8f3d7d0",
+      "receipt_id": "d179eb7f-cc0f-4d2f-bc22-e1f82372039e",
       "bridge": "TrollBridge",
       "lane": "canary",
-      "timestamp": "2026-10-03T23:30:41.805Z",
+      "timestamp": "2026-10-03T23:36:34.174Z",
       "toll": {
         "amount": "0.00",
         "method": "canary"
@@ -31,7 +31,7 @@
       "network": null,
       "payment_ref": "canary-no-payment",
       "input_hash": "e100fbce008c04ec40637af0af91fb2f05aeedc23f856a2d3c0b1580625d755e",
-      "signature": "66ffebcee95fe11365e5c7ebdd075cccfee10c0dbc53da695a6d53d6532eb9e9"
+      "signature": "db2f5a21e63fa25a889c4df7c52863b1bbe444d31c7ed950a54e1c7e0efa397a"
     }
   ]
 }
