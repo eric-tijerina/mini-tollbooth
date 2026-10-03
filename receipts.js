@@ -452,6 +452,32 @@ function count() {
   return receipts.length;
 }
 
+// Public receipts index (stranger-discoverable): newest first, capped.
+// Only fields that are already caller-visible or commitments — no payer
+// wallets, no raw inputs, no payment refs, no HMAC. Full detail lives at
+// /verify/:uuid. This is what makes the honesty ledger enumerable: anyone
+// can list recent receipts and blind-check them without asking us.
+function list(limit) {
+  const n = Math.max(1, Math.min(100, Number(limit) || 25));
+  const out = [];
+  for (let i = receipts.length - 1; i >= 0 && out.length < n; i--) {
+    const r = receipts[i];
+    if (!r || !r.id) continue;
+    out.push({
+      id: r.id,
+      seq: r.seq,
+      created_at: r.created_at,
+      lane: r.tool && r.tool.name ? r.tool.name : r.lane,
+      provenance_class: r.provenance_class,
+      toll: r.toll ? { amount: r.toll.amount, method: r.toll.method } : null,
+      output_hash: r.output_hash,
+      entry_digest: r.entry_digest,
+      verify_url: "/verify/" + r.id,
+    });
+  }
+  return out;
+}
+
 // Express middleware factory: mint a receipt for every paid crossing, and
 // for tester-key crossings (stamped TESTER_PROVENANCE_CLASS so the free
 // trial entries can never be mistaken for paid executions).
@@ -528,6 +554,7 @@ module.exports = {
   get,
   verify,
   count,
+  list,
   chainTimeline,
   canonicalJson,
   entryDigest,
