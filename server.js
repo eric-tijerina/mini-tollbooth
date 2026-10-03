@@ -121,6 +121,16 @@ const { getDataset } = require("./datasets");
 const { regulatoryLookup } = require("./regulatory-pack");
 const { auditPrep } = require("./audit-prep");
 const { submitAudit, getJob, listPending, updateJob, auditTerms } = require("./audit");
+// AER-1 execution receipts + public /verify/:uuid. Defensive require: if
+// receipts.js ever ships without server.js (or vice versa), the bridge must
+// keep serving lanes — /verify just 404s. (Lesson 2026-10-02: a bare
+// require("./receipts") crashed boot when the module wasn't deployed.)
+let receipts = null;
+try {
+  receipts = require("./receipts");
+} catch {
+  receipts = null;
+}
 // /file-pr PARKED (2026-09-30): github-pr.js ships hardened but dormant — no
 // route calls filePr. Re-enable only under a neutral bot identity (separate
 // GitHub account + PAT, Eric's hands), never the keeper's personal token.
@@ -1508,6 +1518,21 @@ app.use(async (req, res, next) => {
   return next(); // past the toll collector: the lane handler serves data
 });
 
+// AER-1 execution receipts: mint a verifiable receipt for every paid crossing.
+// Mounted AFTER the toll collector (unpaid calls never reach here) and BEFORE
+// the warning stamp, so receipts commit the exact served bytes including the
+// warning. Only paid crossings (x402 header or fuel burn) get receipts —
+// tester and subscription crossings are not paid crossings.
+if (receipts) {
+  app.use(
+    receipts.createReceiptMiddleware({
+      isTolled: (route) => !!LANES[route],
+      lanePrice: (route) => lanePrice(route),
+      baseUrl: BRIDGE_BASE_URL,
+    })
+  );
+}
+
 // Screen-lane warning stamp (2026-10-01): on every heuristic screen lane,
 // `warning` goes in as the FIRST key of the 200 JSON body — after the toll
 // (or tester pass) but before the verdict — so no parser can read the score
@@ -1652,6 +1677,35 @@ app.get("/health", (req, res) => {
     tools_listed: registry.tools.filter((t) => t.status === "live").length,
     traffic: trafficSummary().totals,
   });
+});
+
+// AER-1 execution-receipt verification: public, no auth, stable URL.
+// Anyone can recompute the SHA-256 commitments from the receipt's
+// canonical_bytes — no trust in the bridge required. Unknown id → 404.
+app.get("/verify/:uuid", (req, res) => {
+  try {
+    if (!receipts) return res.status(404).json({ found: false, id: req.params.uuid });
+    const v = receipts.verify(req.params.uuid);
+    if (!v.found) return res.status(404).json({ found: false, id: req.params.uuid });
+    const r = receipts.get(req.params.uuid);
+    res.json({
+      receipt: r,
+      verification: {
+        valid: v.valid,
+        schema: v.schema,
+        reason: v.reason,
+        chain: v.chain,
+        checks: v.checks || null,
+        verified_at: new Date().toISOString(),
+        how_to_verify:
+          "Decode receipt.canonical_bytes (base64), SHA-256 the bytes, compare to receipt.output_hash. " +
+          "Recompute the §7.1 entry digest over {prev_digest,seq,job_id,close,id,tool,provenance_class,output_hash} " +
+          "(code-point-sorted JSON, no whitespace) and compare to receipt.entry_digest.",
+      },
+    });
+  } catch (e) {
+    res.status(500).json({ found: false, error: "verify_failed" });
+  }
 });
 
 // The troll's own dashboard: who came to the bridge, who paid to cross.
@@ -3051,8 +3105,36 @@ app.get("/openapi.json", (req, res) => {
       },
     },
   };
-  // Receipt verification ships in a later deploy — see receipts.js (staged,
-  // not yet wired). The /verify/{uuid} OpenAPI entry returns with it.
+  // AER-1 execution-receipt verification: public, no auth. Every paid
+  // crossing gets a receipt (X-TrollBridge-Receipt header); anyone can
+  // recompute the SHA-256 commitments from the receipt's canonical_bytes.
+  paths["/verify/{uuid}"] = {
+    get: {
+      operationId: "verifyReceipt",
+      summary: "Verify a paid-crossing execution receipt (AER-1)",
+      description:
+        "Public, no auth. Returns the full AER-1 receipt plus a live recomputation report. " +
+        "To verify independently: base64-decode receipt.canonical_bytes, SHA-256 the bytes, " +
+        "compare to receipt.output_hash. Unknown id → 404.",
+      tags: ["free"],
+      parameters: [
+        {
+          name: "uuid",
+          in: "path",
+          required: true,
+          schema: { type: "string", format: "uuid" },
+          description: "Receipt id from the X-TrollBridge-Receipt response header.",
+        },
+      ],
+      responses: {
+        200: {
+          description: "The receipt and its verification report.",
+          content: { "application/json": { schema: { type: "object" } } },
+        },
+        404: { description: "No receipt with that id." },
+      },
+    },
+  };
   res.json({
     openapi: "3.1.0",
     info: {
