@@ -1738,13 +1738,14 @@ app.get("/receipts", (req, res) => {
       count: receipts.count(),
       returned: items.length,
       receipts: items,
-      note: "Full receipt + independent verification steps at /verify/:uuid for any id listed.",
+      note: "Full receipt + independent verification steps at /verify/:uuid for any id listed. A CANARY row pinned at head is a self-issued liveness proof (not a crossing) — its presence proves the index serves rows.",
       coverage_note: "Receipts minted from 2026-10-02 onward; paid crossings before that have no receipts.",
       durability: {
         backup: "hourly",
         max_loss_window: "1h",
         seed: "repo data/receipts.json (server boots from it; Render deploys from GitHub)",
         mechanism: "Hourly job merges the live ledger into the repo seed append-only — a wiped disk can never shrink history. Worst case: receipts minted between the last backup and a deploy can be lost.",
+        terminal_state: "UNVERIFIABLE-BY-ABSENCE — if every holder goes silent with the producer, rows degrade to this; the ledger names it rather than leaving it implied.",
       },
     });
   } catch (e) {
