@@ -1,1 +1,83 @@
-{"deadlines":[{"claim_url":"https://www.aildatasettlement.com","deadline":"2026-10-19","eligibility":"Only people who got a breach notice letter about the Oct 2024 incident","name":"Globe Life / American Income Life data breach","payout":"$72 self-certified (+ up to $5,000 documented)"},{"claim_url":"https://www.sealstcpasettlement.com","deadline":"2026-10-19","eligibility":"Non-accountholders who got an artificial/prerecorded Concora call on their cell, May 2021–May 2026","name":"Concora Credit wrong-number robocall","payout":"est. $250–$650"},{"claim_url":"https://www.poolsettlementbw.com","deadline":"2026-10-30","eligibility":"Bought a Bestway-branded pool 48in+ from a retailer, 2008–2024","name":"Bestway above-ground pools","payout":"$40 flat, no receipt"},{"claim_url":"https://www.cvsdigitalprivacysettlement.com","deadline":"2026-11-16","eligibility":"Anyone who used CVS.com / CVS app in the US before Jul 27, 2026","name":"CVS Digital Privacy","payout":"$5 no proof ($10 with proof)"},{"claim_url":"https://www.personalcareproductssettlement.com","deadline":"2026-11-27","eligibility":"Bought Dr. Squatch products labeled natural, Nov 2018–Aug 2026","name":"Dr. Squatch natural labeling","payout":"$2.50 no proof (up to $12.50 w/ proof)"},{"claim_url":"https://www.smartphoneaisettlement.com","deadline":"2026-12-21","eligibility":"Bought iPhone 15 Pro/Pro Max or any iPhone 16 in the US, Jun 2024–Mar 2025","name":"Apple Intelligence (Siri)","payout":"est. $25/device (up to $95)"},{"claim_url":"https://claimdepot.com/settlements/equifax-fair-credit-reporting-settlement","deadline":"2026-12-28","eligibility":"US residents whose credit score/attribute Equifax misreported to a third party Mar 17–Apr 8, 2022 due to a coding error — needs claim ID + PIN from the settlement notice","name":"Equifax credit-reporting-error","payout":"$95–$280 pro rata"},{"claim_url":"https://NonbankATMSurchargeSettlement.com","deadline":"2027-02-10","eligibility":"Anyone who paid a surcharge at a nonbank (off-premises) ATM in the US","name":"Nonbank ATM surcharge (Burke v. Visa)","payout":"Pro rata share of $167.5M fund; no proof needed at filing"},{"claim_url":"https://buyalertstcpasettlement.com","deadline":"2027-02-16","eligibility":"US recipients of >1 BuyAlerts marketing text Jan 2022–Aug 2026 after texting 'stop' OR while on the National Do-Not-Call registry — needs notice unique ID + sworn attestation","name":"BuyAlerts TCPA marketing texts","payout":"up to $42.16"}],"generated_at":"2026-09-30","note":"Class-action / settlement claim deadlines, last updated 2026-09-30. Payouts are estimates; payment comes months after filing."}
+{
+  "deadlines": [
+    {
+      "claim_url": "https://www.sealstcpasettlement.com",
+      "deadline": "2026-10-19",
+      "eligibility": "Non-accountholders who got an artificial/prerecorded Concora call on their cell, May 2021–May 2026",
+      "name": "Concora Credit wrong-number robocall",
+      "payout": "est. $250–$650"
+    },
+    {
+      "claim_url": "https://www.aildatasettlement.com",
+      "deadline": "2026-10-19",
+      "eligibility": "Only people who got a breach notice letter about the Oct 2024 incident",
+      "name": "Globe Life / American Income Life data breach",
+      "payout": "$72 self-certified (+ up to $5,000 documented)"
+    },
+    {
+      "claim_url": "https://openclassactions.com/settlements/real-estate/homebuyer-antitrust-class-action-settlement.php",
+      "deadline": "2026-10-27",
+      "eligibility": "Buyers of MLS-listed US homes where a brokerage commission was paid; class period starts Dec 8 2017/2018/2019 depending on state/brokerage; needs closing/settlement/HUD statement",
+      "name": "NAR homebuyer commission antitrust",
+      "payout": "Pro-rata share of $120.3M based on commissions paid"
+    },
+    {
+      "claim_url": "https://www.poolsettlementbw.com",
+      "deadline": "2026-10-30",
+      "eligibility": "Bought a Bestway-branded pool 48in+ from a retailer, 2008–2024",
+      "name": "Bestway above-ground pools",
+      "payout": "$40 flat, no receipt"
+    },
+    {
+      "claim_url": "https://www.cvsdigitalprivacysettlement.com",
+      "deadline": "2026-11-16",
+      "eligibility": "Anyone who used CVS.com / CVS app in the US before Jul 27, 2026",
+      "name": "CVS Digital Privacy",
+      "payout": "$5 no proof ($10 with proof)"
+    },
+    {
+      "claim_url": "https://otpdataincident.com/",
+      "deadline": "2026-11-16",
+      "eligibility": "Only people confirmed impacted by the Apr 2022 OneTouchPoint breach (health-plan mailing vendor); needs Claim Number + PIN from the notice email/postcard",
+      "name": "OneTouchPoint data breach",
+      "payout": "$75 no-doc cash (or up to $500/$5,000 documented + $100 lost time)"
+    },
+    {
+      "claim_url": "https://www.personalcareproductssettlement.com",
+      "deadline": "2026-11-27",
+      "eligibility": "Bought Dr. Squatch products labeled natural, Nov 2018–Aug 2026",
+      "name": "Dr. Squatch natural labeling",
+      "payout": "$2.50 no proof (up to $12.50 w/ proof)"
+    },
+    {
+      "claim_url": "https://www.smartphoneaisettlement.com",
+      "deadline": "2026-12-21",
+      "eligibility": "Bought iPhone 15 Pro/Pro Max or any iPhone 16 in the US, Jun 2024–Mar 2025",
+      "name": "Apple Intelligence (Siri)",
+      "payout": "est. $25/device (up to $95)"
+    },
+    {
+      "claim_url": "https://claimdepot.com/settlements/equifax-fair-credit-reporting-settlement",
+      "deadline": "2026-12-28",
+      "eligibility": "US residents whose credit score/attribute Equifax misreported to a third party Mar 17–Apr 8, 2022 due to a coding error — needs claim ID + PIN from the settlement notice",
+      "name": "Equifax credit-reporting-error",
+      "payout": "$95–$280 pro rata"
+    },
+    {
+      "claim_url": "https://NonbankATMSurchargeSettlement.com",
+      "deadline": "2027-02-10",
+      "eligibility": "Anyone who paid a surcharge at a nonbank (off-premises) ATM in the US",
+      "name": "Nonbank ATM surcharge (Burke v. Visa)",
+      "payout": "Pro rata share of $167.5M fund; no proof needed at filing"
+    },
+    {
+      "claim_url": "https://buyalertstcpasettlement.com",
+      "deadline": "2027-02-16",
+      "eligibility": "US recipients of >1 BuyAlerts marketing text Jan 2022–Aug 2026 after texting 'stop' OR while on the National Do-Not-Call registry — needs notice unique ID + sworn attestation",
+      "name": "BuyAlerts TCPA marketing texts",
+      "payout": "up to $42.16"
+    }
+  ],
+  "generated_at": "2026-09-30",
+  "note": "Class-action / settlement claim deadlines, last updated 2026-09-30. Payouts are estimates; payment comes months after filing."
+}
