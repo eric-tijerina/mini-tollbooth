@@ -107,6 +107,11 @@ and how to burn-to-cross.
   and per-visitor funnel stages (discovery → challenged → tried & failed → paid)
 - `GET /health` — status, lane count, traffic totals
 - `GET /fuel` — TrollBridge Fuel (GAS) price, burn-to-cross instructions, fuel tiers
+- `GET /verify/:uuid` — verify a paid-crossing receipt (free, no auth, untracked).
+  Every paid lane call returns its receipt id in the `X-TrollBridge-Receipt`
+  response header (`X-TrollBridge-Verify` carries the check URL); the receipt
+  proves a paid call happened on a lane at a time with a result hash — it never
+  names the payer and never holds raw inputs
 - `GET /openapi.json` — OpenAPI 3.1 spec for all lanes
 - `GET /.well-known/x402` — machine-readable discovery manifest
 
