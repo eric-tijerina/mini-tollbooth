@@ -130,6 +130,9 @@ const CHECKS = [
       /requestbin\.(com|net)/i,
       /webhook\.site/i,
       /pipedream\.net/i,
+      // instruction to email/send/forward a secret somewhere — the verb plus
+      // the secret noun in one breath (e.g. "email the password to …")
+      /\b(e-?mail|send|forward|share|post)\b[^.\n]{0,80}\b(password|secret|api[\s_-]?key|private[\s_-]?key|mnemonic|seed\s+phrase)\b/i,
     ],
     pairs: [
       {
@@ -155,6 +158,44 @@ const CHECKS = [
         label: "urgency language next to an authority claim",
       },
     ],
+  },
+  {
+    id: "indirect-injection",
+    severity: "high",
+    detail: "polite indirect injection — task-preemption, authority, or sequencing framing paired with a directive to the agent",
+    pairs: [
+      {
+        a: /\bbefore you (can|do|continue|proceed|solve|complete|finish|go on)\b/i,
+        b: /\bplease (send|email|e-mail|delete|create|book|cancel|share|post|forward|transfer|wire|do|click|open|run|execute)\b/i,
+        label: "task-preemption framing ('before you…') paired with a polite imperative",
+      },
+      {
+        a: /\bdo (the following|this|that) first\b|\bas a first step\b|\bbefore anything else\b|\bfirst,\s*please\b/i,
+        b: /\b(send|email|e-mail|delete|create|book|cancel|share|post|forward|transfer|wire)\s+(the|this|all|a|an|my|your)\b/i,
+        label: "sequencing directive ('do … first') paired with an action verb",
+      },
+      {
+        a: /\b(important|urgent|crucial|critical)\s+(message|notice|announcement|update|alert)\b|\baction required\b|\bofficial\s+(notification|notice|announcement)\b/i,
+        b: /\bto you,?\s+the\s+(AI\s+)?assistant\b|\bdear\s+(AI\s+)?assistant\b|\bthe AI assistant\b/i,
+        label: "authority claim paired with direct address to the assistant",
+      },
+      {
+        a: /\b(important|urgent|crucial|critical)\s+(message|notice|announcement|update|alert)\b/i,
+        b: /\bbefore you (can|do|continue|proceed|solve|complete|finish|go on)\b/i,
+        label: "authority claim paired with task-preemption framing",
+      },
+      {
+        a: /\bto you,?\s+the\s+(AI\s+)?assistant\b|\bdear\s+(AI\s+)?assistant\b/i,
+        b: /\bplease (send|email|e-mail|delete|create|book|cancel|share|post|forward|transfer|wire|do|click|open|run|execute)\b/i,
+        label: "direct address to the assistant paired with a polite imperative",
+      },
+    ],
+  },
+  {
+    id: "injection-marker-tag",
+    severity: "medium",
+    detail: "known prompt-injection marker tag — AgentDojo-style INFORMATION/IMPORTANT block delimiters wrapping a directive",
+    patterns: [/<(INFORMATION|IMPORTANT)>/i],
   },
 ];
 
