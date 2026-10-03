@@ -1533,11 +1533,14 @@ app.use(async (req, res, next) => {
   return next(); // past the toll collector: the lane handler serves data
 });
 
-// AER-1 execution receipts: mint a verifiable receipt for every paid crossing.
+// AER-1 execution receipts: mint a verifiable receipt for every paid crossing,
+// plus tester-key crossings (stamped TESTER CROSSING — NO TOLL COLLECTED in
+// the chain-bound provenance class — so free trial entries can never be
+// mistaken for paid executions).
 // Mounted AFTER the toll collector (unpaid calls never reach here) and BEFORE
 // the warning stamp, so receipts commit the exact served bytes including the
-// warning. Only paid crossings (x402 header or fuel burn) get receipts —
-// tester and subscription crossings are not paid crossings.
+// warning. Paid crossings (x402 header or fuel burn) get paid receipts;
+// tester crossings get tester receipts. Subscription crossings get none.
 if (receipts) {
   app.use(
     receipts.createReceiptMiddleware({
