@@ -63,12 +63,21 @@ function sha256hex(s) {
   return crypto.createHash("sha256").update(String(s), "utf8").digest("hex");
 }
 
-// The signing key: generated once with real entropy and kept next to the
-// ledger. Not an env var, not committed, never logged. If the secret file is
-// lost (filesystem reset), old receipts' HMACs stop verifying — the AER-1
-// chain still verifies by public recomputation; the signature is only a
-// server-mint proof, never the trust anchor.
+// The signing key: derived from the operator's TRAFFIC_KEY when present, so
+// the server-mint proof survives deploys (the old per-boot file secret died
+// with Render's ephemeral disk, failing every old HMAC on every redeploy).
+// Derivation is one-way; TRAFFIC_KEY itself is never stored in receipts.
+// Without TRAFFIC_KEY (local dev), falls back to the file secret as before.
+// Either way the signature is only a server-mint proof, never the trust
+// anchor — the AER-1 chain verifies by public recomputation.
 function loadSecret() {
+  const tk = process.env.TRAFFIC_KEY;
+  if (tk && tk.length >= 16) {
+    return crypto
+      .createHmac("sha256", tk)
+      .update("trollbridge-receipt-hmac-v1", "utf8")
+      .digest("hex");
+  }
   try {
     const raw = JSON.parse(fs.readFileSync(SECRET_PATH, "utf8"));
     if (raw && typeof raw.key === "string" && raw.key.length >= 32) return raw.key;
