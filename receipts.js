@@ -2,6 +2,9 @@
 //
 // Every paid crossing (x402 USDC toll or GAS burn-to-cross) gets a receipt
 // conforming to AER-1 (IETF draft-zambo-aer1-09): a portable, independently
+// checkable record of one tool execution. Tester-key crossings get receipts
+// too — stamped TESTER CROSSING — NO TOLL COLLECTED in the chain-bound
+// provenance class, so trial entries can never be mistaken for paid ones.
 // checkable record of one tool execution. Any third party can recompute the
 // SHA-256 commitments from the stored canonical bytes — no trust in us needed.
 //
@@ -46,6 +49,11 @@ const MAX_RECEIPTS = 25000;
 
 const AER1_SCHEMA_VERSION = "0.3";
 const PROVENANCE_CLASS = "EXECUTED BY TROLLBRIDGE";
+// Tester crossings mint receipts too, but they carry a distinct provenance
+// class — stamped in the chain-bound fields, not just a label — so no one
+// can mistake a free trial crossing for a paid execution. The chain stays
+// one global append-only ledger; the class marks which entries cost nothing.
+const TESTER_PROVENANCE_CLASS = "TESTER CROSSING — NO TOLL COLLECTED";
 const JOB_ID = "trollbridge-main";
 const GENESIS_DIGEST = "0".repeat(64);
 const TOOL_SCOPE = "public";
@@ -229,7 +237,10 @@ function canonicalQuery(query) {
 //     already caller-visible, so persisting them changes nothing about
 //     exposure, and they are what make third-party verification possible.
 //   toolVersion (optional lane-tool version; defaults to TOOL_VERSION).
-function issue({ lane, amount, method, network, paymentRef, inputHash, output, toolVersion }) {
+//   provenanceClass (optional; defaults to PROVENANCE_CLASS). Tester crossings
+//   pass TESTER_PROVENANCE_CLASS — the class is bound into the §7 entry
+//   digest, so the stamp is tamper-evident, not cosmetic.
+function issue({ lane, amount, method, network, paymentRef, inputHash, output, toolVersion, provenanceClass }) {
   const outputBytes = typeof output === "string" ? output : canonicalJson(output);
   const canonicalB64 = Buffer.from(outputBytes, "utf8").toString("base64");
   const outputHashHex = sha256hex(Buffer.from(outputBytes, "utf8"));
@@ -240,6 +251,7 @@ function issue({ lane, amount, method, network, paymentRef, inputHash, output, t
   const id = crypto.randomUUID();
   const created_at = new Date().toISOString();
   const toolName = String(lane);
+  const provClass = String(provenanceClass || PROVENANCE_CLASS);
 
   const digest = entryDigest({
     prev_digest,
@@ -248,7 +260,7 @@ function issue({ lane, amount, method, network, paymentRef, inputHash, output, t
     close: false,
     id,
     tool: toolName,
-    provenance_class: PROVENANCE_CLASS,
+    provenance_class: provClass,
     outputHashHex,
   });
 
@@ -258,7 +270,7 @@ function issue({ lane, amount, method, network, paymentRef, inputHash, output, t
     receipt_schema_version: AER1_SCHEMA_VERSION,
     created_at,
     tool: { name: toolName, version: String(toolVersion || TOOL_VERSION), scope: TOOL_SCOPE },
-    provenance_class: PROVENANCE_CLASS,
+    provenance_class: provClass,
     canonical_bytes: canonicalB64,
     output_hash: "sha256:" + outputHashHex,
     verification_status: "verified",
@@ -440,12 +452,16 @@ function count() {
   return receipts.length;
 }
 
-// Express middleware factory: mint a receipt for every paid crossing.
+// Express middleware factory: mint a receipt for every paid crossing, and
+// for tester-key crossings (stamped TESTER_PROVENANCE_CLASS so the free
+// trial entries can never be mistaken for paid executions).
 // Mount AFTER the toll collector (or fuel gate). The collector 402s unpaid
 // calls without calling next(), so a tolled lane reaching this middleware is
 // paid by construction — the belt-and-braces hadPayment/fuelCrossing check
 // mirrors the traffic ledger's own paid-crossing definition so receipt
-// counts can never drift from /traffic's paid counts.
+// counts can never drift from /traffic's paid counts. Tester receipts are
+// the exception by design: they mint on req.testerCrossing and carry the
+// tester provenance class, clearly separable from paid receipts.
 // The receipt id travels back on the X-TrollBridge-Receipt response header
 // (X-TrollBridge-Verify carries the public check URL) — set before the body
 // is sent, inside the same res.send wrap the almost-paid tracker uses; the
@@ -467,24 +483,33 @@ function createReceiptMiddleware({ isTolled, lanePrice, baseUrl }) {
     if (req.method !== "GET" || !isTolled(req.path)) return next();
     const hadPayment = !!(req.headers["payment-signature"] || req.headers["x-payment"]);
     const fuel = !!req.fuelCrossing;
-    if (!hadPayment && !fuel) return next(); // not a paid crossing: no receipt
+    const tester = !!req.testerCrossing;
+    if (!hadPayment && !fuel && !tester) return next(); // not a crossing we receipt: skip
     const origSend = res.send.bind(res);
     res.send = function (body) {
       try {
         if (res.statusCode >= 200 && res.statusCode < 300) {
           const bodyStr = typeof body === "string" ? body : JSON.stringify(body);
-          const method = hadPayment ? "x402" : "fuel";
+          const method = hadPayment ? "x402" : fuel ? "fuel" : "tester-key";
           const rawRef = hadPayment
             ? String(req.headers["payment-signature"] || req.headers["x-payment"])
-            : String((req.query && req.query.fuelTx) || "").toLowerCase();
+            : fuel
+              ? String((req.query && req.query.fuelTx) || "").toLowerCase()
+              : "tester-key-crossing";
+          // Never commit the raw tester key into the input hash: strip it
+          // from the query copy before hashing. The hash stays opaque either
+          // way, but the key shouldn't even touch the ledger's inputs.
+          const queryForHash = { ...(req.query || {}) };
+          delete queryForHash.tester;
           const receipt = issue({
             lane: req.path,
-            amount: lanePrice(req.path),
+            amount: tester ? "0.00" : lanePrice(req.path),
             method,
-            network: hadPayment ? networkFromPaymentHeader(req.headers) : "eip155:8453", // GAS burns are Base-only
+            network: hadPayment ? networkFromPaymentHeader(req.headers) : fuel ? "eip155:8453" : null, // GAS burns are Base-only; tester has no rail
             paymentRef: sha256hex(rawRef),
-            inputHash: sha256hex(canonicalQuery(req.query)),
+            inputHash: sha256hex(canonicalQuery(queryForHash)),
             output: bodyStr, // exact served bytes — preserved for verification
+            provenanceClass: tester ? TESTER_PROVENANCE_CLASS : PROVENANCE_CLASS,
           });
           res.set("X-TrollBridge-Receipt", receipt.id);
           res.set("X-TrollBridge-Verify", `${baseUrl}/verify/${receipt.id}`);
@@ -513,6 +538,7 @@ module.exports = {
   createReceiptMiddleware,
   AER1_SCHEMA_VERSION,
   PROVENANCE_CLASS,
+  TESTER_PROVENANCE_CLASS,
   JOB_ID,
   GENESIS_DIGEST,
   MAX_RECEIPTS,
