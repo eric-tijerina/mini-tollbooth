@@ -1726,6 +1726,25 @@ app.get("/verify/:uuid", (req, res) => {
   }
 });
 
+// Public receipts index: the honesty ledger, enumerable. Anyone — stranger,
+// verifier, or wire-only checker that never read the spec — can list recent
+// crossing receipts and blind-check them at /verify/:uuid. No auth, no payer
+// wallets, no raw inputs: only the commitments a verifier needs.
+app.get("/receipts", (req, res) => {
+  try {
+    if (!receipts) return res.status(404).json({ error: "receipts_unavailable" });
+    const items = receipts.list(req.query.limit);
+    res.json({
+      count: receipts.count(),
+      returned: items.length,
+      receipts: items,
+      note: "Full receipt + independent verification steps at /verify/:uuid for any id listed.",
+    });
+  } catch (e) {
+    res.status(500).json({ error: "receipts_failed" });
+  }
+});
+
 // The troll's own dashboard: who came to the bridge, who paid to cross.
 // Public view: counters only — totals, no per-lane breakdown, no payer
 // addresses, no history, no almost-paid or strategy intel. The map is ours.
