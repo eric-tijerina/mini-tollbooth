@@ -296,7 +296,12 @@ function issue({ lane, amount, method, network, paymentRef, inputHash, output, t
   receipts.push(r);
   indexReceipt(r);
   while (receipts.length > MAX_RECEIPTS) {
-    const old = receipts.shift();
+    // The canary is never evicted: it is the ledger's liveness proof.
+    const idx = receipts.findIndex(
+      (r) => !(r && String(r.provenance_class || "").startsWith("CANARY"))
+    );
+    if (idx < 0) break;
+    const old = receipts.splice(idx, 1)[0];
     if (old) {
       byId.delete(old.id);
       if (old.receipt_id && old.receipt_id !== old.id) byId.delete(old.receipt_id);
@@ -460,20 +465,32 @@ function count() {
 function list(limit) {
   const n = Math.max(1, Math.min(100, Number(limit) || 25));
   const out = [];
+  const row = (r) => ({
+    id: r.id,
+    seq: r.seq,
+    created_at: r.created_at,
+    lane: r.tool && r.tool.name ? r.tool.name : r.lane,
+    provenance_class: r.provenance_class,
+    toll: r.toll ? { amount: r.toll.amount, method: r.toll.method } : null,
+    output_hash: r.output_hash,
+    entry_digest: r.entry_digest,
+    verify_url: "/verify/" + r.id,
+  });
+  const isCanary = (r) => String((r && r.provenance_class) || "").startsWith("CANARY");
+  // The canary is pinned at head: a self-issued liveness proof, never a
+  // crossing. Its presence proves the index serves rows — distinguishing
+  // "honest empty" from "index can't reach presence".
+  for (let i = 0; i < receipts.length; i++) {
+    const r = receipts[i];
+    if (r && r.id && isCanary(r)) {
+      out.push(row(r));
+      break;
+    }
+  }
   for (let i = receipts.length - 1; i >= 0 && out.length < n; i--) {
     const r = receipts[i];
-    if (!r || !r.id) continue;
-    out.push({
-      id: r.id,
-      seq: r.seq,
-      created_at: r.created_at,
-      lane: r.tool && r.tool.name ? r.tool.name : r.lane,
-      provenance_class: r.provenance_class,
-      toll: r.toll ? { amount: r.toll.amount, method: r.toll.method } : null,
-      output_hash: r.output_hash,
-      entry_digest: r.entry_digest,
-      verify_url: "/verify/" + r.id,
-    });
+    if (!r || !r.id || isCanary(r)) continue;
+    out.push(row(r));
   }
   return out;
 }
