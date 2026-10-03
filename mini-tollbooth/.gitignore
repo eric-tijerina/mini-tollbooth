@@ -1,0 +1,6 @@
+# Local runtime data — never commit.
+# data/ holds the receipt ledger (receipts.json), the receipt HMAC secret
+# (receipt-secret.json), and usage.json. All are host-local, regenerated
+# or rebuilt on fresh deploys. The secret in particular must never leave
+# the machine that minted it.
+data/
