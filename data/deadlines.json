@@ -29,6 +29,13 @@
       "payout": "$40 flat, no receipt"
     },
     {
+      "claim_url": "https://www.communicationsdatagroupsettlement.com",
+      "deadline": "2026-11-10",
+      "eligibility": "US residents whose info was potentially impacted by the Feb 2025 breach and got a notice from Communications Data Group / Duo / Cumberland / Home Wireless; needs login ID + PIN from the notice",
+      "name": "Communications Data Group data breach",
+      "payout": "$45 no-proof cash (or up to $5,000 documented)"
+    },
+    {
       "claim_url": "https://www.cvsdigitalprivacysettlement.com",
       "deadline": "2026-11-16",
       "eligibility": "Anyone who used CVS.com / CVS app in the US before Jul 27, 2026",
@@ -50,11 +57,39 @@
       "payout": "$2.50 no proof (up to $12.50 w/ proof)"
     },
     {
+      "claim_url": "https://www.finastradatasetlement.com",
+      "deadline": "2026-11-27",
+      "eligibility": "Living US residents who got a Finastra notice about the Oct 2024 breach; needs login ID + PIN from the notice",
+      "name": "Finastra data breach ($3.125M)",
+      "payout": "pro-rata cash, no proof (or up to $2,500 documented)"
+    },
+    {
+      "claim_url": "https://www.equifaxdisputeclassaction.com",
+      "deadline": "2026-11-29",
+      "eligibility": "US residents whose mailed hard-inquiry dispute Equifax coded \"not mine\"/\"unauthorized\", Oct 4 2016–Mar 27 2026; needs claim number + PIN from the settlement notice",
+      "name": "Equifax hard-inquiry dispute ($30M)",
+      "payout": "est. $100 (dispute group) / $300 (certified group)"
+    },
+    {
+      "claim_url": "https://www.holtgroupdatasettlement.com",
+      "deadline": "2026-12-01",
+      "eligibility": "US residents whose info was potentially accessed in the Dec 26–27, 2024 Holt Group breach and who got a letter; needs login ID + PIN from the notice",
+      "name": "Holt Group data breach",
+      "payout": "$50 alternate cash (or up to $5,000 documented + $80 lost time)"
+    },
+    {
       "claim_url": "https://www.smartphoneaisettlement.com",
       "deadline": "2026-12-21",
       "eligibility": "Bought iPhone 15 Pro/Pro Max or any iPhone 16 in the US, Jun 2024–Mar 2025",
       "name": "Apple Intelligence (Siri)",
       "payout": "est. $25/device (up to $95)"
+    },
+    {
+      "claim_url": "https://www.datasettlementecsi.com",
+      "deadline": "2026-12-21",
+      "eligibility": "Individuals who got an ECSI breach notice; notice-based, mail-watch",
+      "name": "ECSI data breach ($6.5M)",
+      "payout": "up to $5,000 documented losses"
     },
     {
       "claim_url": "https://claimdepot.com/settlements/equifax-fair-credit-reporting-settlement",
@@ -78,6 +113,6 @@
       "payout": "up to $42.16"
     }
   ],
-  "generated_at": "2026-09-30",
-  "note": "Class-action / settlement claim deadlines, last updated 2026-09-30. Payouts are estimates; payment comes months after filing."
+  "generated_at": "2026-10-03",
+  "note": "Class-action / settlement claim deadlines, last updated 2026-10-03. Payouts are estimates; payment comes months after filing."
 }
