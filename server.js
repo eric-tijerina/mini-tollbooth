@@ -1718,7 +1718,8 @@ app.get("/verify/:uuid", (req, res) => {
         how_to_verify:
           "Decode receipt.canonical_bytes (base64), SHA-256 the bytes, compare to receipt.output_hash. " +
           "Recompute the §7.1 entry digest over {prev_digest,seq,job_id,close,id,tool,provenance_class,output_hash} " +
-          "(code-point-sorted JSON, no whitespace) and compare to receipt.entry_digest.",
+          "(code-point-sorted JSON, no whitespace) and compare to receipt.entry_digest. " +
+          "tool is the tool name STRING (not the {name,version,scope} object as served on the receipt row).",
       },
     });
   } catch (e) {
@@ -1739,7 +1740,7 @@ app.get("/receipts", (req, res) => {
       returned: items.length,
       receipts: items,
       note: "Full receipt + independent verification steps at /verify/:uuid for any id listed. A CANARY row pinned at head is a self-issued liveness proof (not a crossing) — its presence proves the index serves rows.",
-      coverage_note: "Receipts minted from 2026-10-02 onward; paid crossings before that have no receipts.",
+      coverage_note: "Receipts minted from 2026-10-02 onward; paid crossings before that have no receipts. The pinned CANARY row's provenance_class is intentionally outside the conformant enum — a strict checker flagging the head row is reading it correctly; the flag means 'not a crossing', which is exactly what it is.",
       durability: {
         backup: "hourly",
         max_loss_window: "1h",
