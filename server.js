@@ -2907,6 +2907,11 @@ app.get("/skill.md", (req, res) => {
   }
 });
 
+// ---- 402index domain verification: serves the public claim hash (no redirect).
+app.get("/.well-known/402index-verify.txt", (req, res) => {
+  res.type("text/plain").send("34e962f137cd158720f9a0c7bd55ee561fa47712f1def8f8c7af5000b0e551e5");
+});
+
 // ---- x402 discovery manifest: how indexers (x402scan, agent402, 402index)
 // find the bridge. Free, unauthenticated, by design.
 app.get("/.well-known/x402", (req, res) => {
